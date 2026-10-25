@@ -64,6 +64,7 @@ pub extend SelectorFn with Selector::{select}
 /// getters the DOM spells `getElement(s)By…`.
 priv enum Builtin {
   Css
+  Xpath
   Id
   Class
   Tag
@@ -74,6 +75,7 @@ priv enum Builtin {
 impl Selector for Builtin with fn select(self, ctx : Selection, query : String) -> Selection raise Refused {
   match self {
     Css => ctx.css(query)
+    Xpath => ctx.xpath(query)
     Id => ctx.by_id(query)
     Class => ctx.by_class(query)
     Tag => ctx.by_tag(query)
@@ -84,6 +86,7 @@ impl Selector for Builtin with fn select(self, ctx : Selection, query : String) 
 ///|
 fn Document::seed_selectors(self : Document) -> Unit {
   self.selectors.set("css", Builtin::Css)
+  self.selectors.set("xpath", Builtin::Xpath)
   self.selectors.set("id", Builtin::Id)
   self.selectors.set("class", Builtin::Class)
   self.selectors.set("tag", Builtin::Tag)

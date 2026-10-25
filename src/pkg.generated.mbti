@@ -85,6 +85,8 @@ pub fn Document::smooth(Self) -> Unit
 pub fn Document::text(Self) -> String
 pub fn Document::unwrap(Self) -> Unit
 pub fn Document::wrap(Self, String) -> Unit
+pub fn Document::xpath(Self, String) -> Selection raise Refused
+pub fn Document::xpath_value(Self, String) -> XPathValue raise Refused
 
 pub struct Element {
   name : String
@@ -127,6 +129,8 @@ pub fn Element::text(Self) -> String
 pub fn Element::unwrap(Self) -> Bool
 pub fn Element::walk(Self, (Node) -> Unit) -> Unit
 pub fn Element::wrap(Self, String) -> Self?
+pub fn Element::xpath(Self, String) -> Selection raise Refused
+pub fn Element::xpath_value(Self, String) -> XPathValue raise Refused
 
 pub(all) enum Flavor {
   Xml
@@ -161,6 +165,8 @@ pub fn Node::is_text(Self) -> Bool
 pub fn Node::name(Self) -> String
 pub fn Node::selector(Self, String, String) -> Selection raise Refused
 pub fn Node::text(Self) -> String
+pub fn Node::xpath(Self, String) -> Selection raise Refused
+pub fn Node::xpath_value(Self, String) -> XPathValue raise Refused
 
 pub(all) struct ProcessingInstruction {
   target : String
@@ -214,6 +220,8 @@ pub fn Selection::smooth(Self) -> Unit
 pub fn Selection::text(Self) -> String
 pub fn Selection::unwrap(Self) -> Unit
 pub fn Selection::wrap(Self, String) -> Unit
+pub fn Selection::xpath(Self, String) -> Self raise Refused
+pub fn Selection::xpath_value(Self, String) -> XPathValue raise Refused
 
 pub struct SelectorFn {
   f : (Selection, String) -> Selection raise Refused
@@ -221,6 +229,13 @@ pub struct SelectorFn {
 pub fn SelectorFn::new((Selection, String) -> Selection raise Refused) -> Self
 pub fn SelectorFn::select(Self, Selection, String) -> Selection raise Refused
 pub impl Selector for SelectorFn
+
+pub(all) enum XPathValue {
+  Nodes(Selection)
+  Str(String)
+  Num(Double)
+  Flag(Bool)
+}
 
 // Type aliases
 

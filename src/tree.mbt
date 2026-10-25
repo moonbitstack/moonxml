@@ -193,24 +193,33 @@ pub fn Node::childrens(self : Node) -> Array[Node] {
 }
 
 ///|
-/// A node's text content: text and CDATA children concatenated, elements
-/// recursed, comments and processing instructions skipped — the DOM's
-/// `textContent`.
+/// A node's text content — the DOM's `textContent`: an element answers the
+/// text of its descendants, a text, CDATA, comment or processing-instruction
+/// node answers what it carries.
 pub fn Node::text(self : Node) -> String {
-  let out = StringBuilder()
-  fn walk(node : Node) -> Unit {
-    match node {
-      TextNode(text) => out.write_string(text)
-      CDataNode(text) => out.write_string(text)
-      ElementNode(data) =>
-        for child in data.childrens {
-          walk(child)
+  match self {
+    TextNode(text) => text
+    CDataNode(text) => text
+    CommentNode(text) => text
+    ProcessingInstructionNode(pi) => pi.data
+    DoctypeNode(_) => ""
+    ElementNode(_) => {
+      let out = StringBuilder()
+      fn walk(node : Node) -> Unit {
+        match node {
+          TextNode(text) => out.write_string(text)
+          CDataNode(text) => out.write_string(text)
+          ElementNode(data) =>
+            for child in data.childrens {
+              walk(child)
+            }
+          _ => ()
         }
-      _ => ()
+      }
+      walk(self)
+      out.to_string()
     }
   }
-  walk(self)
-  out.to_string()
 }
 
 ///|
