@@ -36,6 +36,11 @@
   /* register marks */
   --mark: #ab9463;
 
+  /* the scroll channel and the thumb that runs in it */
+  --scroll-track: color-mix(in srgb, var(--paper-deep) 62%, transparent);
+  --scroll-thumb: #ab9463;
+  --scroll-thumb-hot: var(--brick);
+
   --display: "Hoefler Text", "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
   --text: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
   --typewriter: "American Typewriter", "Courier New", "Nimbus Mono PS", "Liberation Mono", ui-monospace, monospace;
@@ -67,6 +72,10 @@
   --code-rule: #382f24;
 
   --mark: #4d4232;
+
+  --scroll-track: color-mix(in srgb, var(--paper-deep) 85%, transparent);
+  --scroll-thumb: #574a37;
+  --scroll-thumb-hot: #d4826a;
 }
 
 * { box-sizing: border-box; }
@@ -593,6 +602,48 @@ footer.site a { color: var(--ink-soft); text-decoration: none; border-bottom: 1p
 footer.site a:hover { color: var(--brick); border-bottom-color: var(--brick); }
 footer.site .spacer { margin-left: auto; }
 footer.site .colophon { flex-basis: 100%; font-size: 9px; letter-spacing: 0.16em; opacity: 0.85; }
+
+/* ------------------------------------------------------------- scrollbars
+   A scrollbar is furniture, so it gets the same treatment as a rule: a ruled
+   channel with a squared thumb running in it, never the system's grey.
+   Chromium and Safari take the pseudo-elements; Firefox, which has none, takes
+   the standard properties — and because the standard properties would win in
+   Chromium and flatten the design, they are only declared where the
+   pseudo-elements are missing. */
+
+html { scrollbar-gutter: stable; }
+
+::-webkit-scrollbar { width: 13px; height: 13px; }
+::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+  border-left: 1px solid var(--rule);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hot); background-clip: content-box; }
+::-webkit-scrollbar-thumb:active { background: var(--scroll-thumb-hot); background-clip: content-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* a listing's own channel: narrower, no track rule, and inset by two */
+pre::-webkit-scrollbar { width: 9px; height: 9px; }
+pre::-webkit-scrollbar-track { background: transparent; border-left: none; }
+pre::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 0;
+}
+pre::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hot); background-clip: content-box; }
+
+/* Firefox: no pseudo-elements to style, so the standard properties do it */
+@supports not selector(::-webkit-scrollbar) {
+  html { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) var(--scroll-track); }
+  pre { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; }
+}
 
 /* ------------------------------------------------------------- responsive */
 
