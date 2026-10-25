@@ -1,0 +1,9 @@
+// WHATWG HTML, https://html.spec.whatwg.org/multipage/parsing.html
+//
+// The tokenizer and the tree construction algorithm of the spec, not an
+// invention: tolerance is the browser's, because the tests that judge it are
+// the browsers'.
+import {
+  "moonbitstack/moonxml",
+  "moonbitlang/core/string",
+}
