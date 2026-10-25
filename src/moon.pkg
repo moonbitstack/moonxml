@@ -1,0 +1,8 @@
+// One event stream; the tree is its consumer. The engines and the writer sit
+// with the tree: MoonBit methods live with their type, and a selector engine
+// generic over a trait view of the tree would be a second representation of
+// it.
+import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/string",
+}

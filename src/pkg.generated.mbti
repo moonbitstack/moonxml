@@ -1,0 +1,230 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonxml"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn dump(Node) -> Bytes
+
+pub fn dump_html(Node) -> Bytes
+
+pub fn dumps(Node) -> String
+
+pub fn dumps_html(Node) -> String
+
+pub fn local_of(String) -> String
+
+pub fn namespace_of(String) -> String?
+
+pub fn strip_bom(String) -> String
+
+pub fn utf8_decode(Bytes) -> String raise Refused
+
+pub fn utf8_encode(String) -> Bytes
+
+// Errors
+pub(all) suberror Refused {
+  Malformed(at~ : Int32, why~ : String)
+  BadQuery(at~ : Int32, why~ : String)
+  UnknownSelector(name~ : String)
+  Unsupported(what~ : String)
+} derive(Eq, @debug.Debug)
+pub fn Refused::equal(Self, Self) -> Bool
+pub fn Refused::not_equal(Self, Self) -> Bool
+pub fn Refused::output(Self, &Logger) -> Unit
+pub fn Refused::to_repr(Self) -> @debug.Repr
+pub fn Refused::to_string(Self) -> String
+pub impl Show for Refused
+
+// Types and methods
+pub struct Document {
+  root : Element
+  // private fields
+}
+pub fn Document::add_class(Self, String) -> Unit
+pub fn Document::append(Self, Node) -> Unit
+pub fn Document::attr(Self, String) -> String?
+pub fn Document::by_class(Self, String) -> Selection
+pub fn Document::by_id(Self, String) -> Selection
+pub fn Document::by_name(Self, String) -> Selection
+pub fn Document::by_tag(Self, String) -> Selection
+pub fn Document::childrens(Self) -> Selection
+pub fn Document::clear(Self) -> Unit
+pub fn Document::closest(Self, String) -> Selection raise Refused
+pub fn Document::css(Self, String) -> Selection raise Refused
+pub fn Document::custom(Self, &Selector) -> Selection raise Refused
+pub fn Document::descendants(Self) -> Selection
+pub fn Document::document_element(Self) -> Element?
+pub fn Document::dump(Self) -> Bytes
+pub fn Document::dump_html(Self) -> Bytes
+pub fn Document::dumps(Self) -> String
+pub fn Document::dumps_html(Self) -> String
+pub fn Document::eq(Self, Int32) -> Selection
+pub fn Document::filter(Self, (Node) -> Bool) -> Selection
+pub fn Document::first(Self) -> Selection
+pub fn Document::flavor(Self) -> Flavor
+pub fn Document::html(Self) -> String
+pub fn Document::last(Self) -> Selection
+pub fn Document::length(Self) -> Int32
+pub fn Document::new(flavor? : Flavor) -> Self
+pub fn Document::parent(Self) -> Selection
+pub fn Document::prepend(Self, Node) -> Unit
+pub fn Document::register(Self, String, &Selector) -> Unit
+pub fn Document::remove(Self) -> Unit
+pub fn Document::remove_attr(Self, String) -> Unit
+pub fn Document::remove_class(Self, String) -> Unit
+pub fn Document::repairs(Self) -> Repairs
+pub fn Document::replace_with(Self, Node) -> Unit
+pub fn Document::selector(Self, String, String) -> Selection raise Refused
+pub fn Document::set_attr(Self, String, String) -> Unit
+pub fn Document::set_repairs(Self, Repairs) -> Unit
+pub fn Document::set_text(Self, String) -> Unit
+pub fn Document::smooth(Self) -> Unit
+pub fn Document::text(Self) -> String
+pub fn Document::unwrap(Self) -> Unit
+pub fn Document::wrap(Self, String) -> Unit
+
+pub struct Element {
+  name : String
+  attrs : Array[(String, String)]
+  childrens : Array[Node]
+  mut parent : Element?
+  mut closed : Bool
+  // private fields
+}
+pub fn Element::add_class(Self, String) -> Unit
+pub fn Element::append(Self, Node) -> Unit
+pub fn Element::attr(Self, String) -> String?
+pub fn Element::by_class(Self, String) -> Selection
+pub fn Element::by_id(Self, String) -> Selection
+pub fn Element::by_name(Self, String) -> Selection
+pub fn Element::by_tag(Self, String) -> Selection
+pub fn Element::classes(Self) -> Array[String]
+pub fn Element::clear(Self) -> Unit
+pub fn Element::closest(Self, String) -> Selection raise Refused
+pub fn Element::css(Self, String) -> Selection raise Refused
+pub fn Element::custom(Self, &Selector) -> Selection raise Refused
+pub fn Element::document(Self) -> Document?
+pub fn Element::filter(Self, (Node) -> Bool) -> Selection
+pub fn Element::has_attr(Self, String) -> Bool
+pub fn Element::has_class(Self, String) -> Bool
+pub fn Element::html(Self) -> String
+pub fn Element::insert(Self, Int32, Node) -> Unit
+pub fn Element::insert_after(Self, Node) -> Bool
+pub fn Element::insert_before(Self, Node) -> Bool
+pub fn Element::new(String, childrens? : Array[Node], attrs? : Array[(String, String)], closed? : Bool) -> Self
+pub fn Element::prepend(Self, Node) -> Unit
+pub fn Element::remove(Self) -> Bool
+pub fn Element::remove_attr(Self, String) -> Bool
+pub fn Element::remove_class(Self, String) -> Unit
+pub fn Element::replace_with(Self, Node) -> Bool
+pub fn Element::selector(Self, String, String) -> Selection raise Refused
+pub fn Element::set_attr(Self, String, String) -> Unit
+pub fn Element::smooth(Self) -> Unit
+pub fn Element::text(Self) -> String
+pub fn Element::unwrap(Self) -> Bool
+pub fn Element::walk(Self, (Node) -> Unit) -> Unit
+pub fn Element::wrap(Self, String) -> Self?
+
+pub(all) enum Flavor {
+  Xml
+  Html
+} derive(Eq, @debug.Debug)
+pub fn Flavor::equal(Self, Self) -> Bool
+pub fn Flavor::not_equal(Self, Self) -> Bool
+pub fn Flavor::output(Self, &Logger) -> Unit
+pub fn Flavor::to_repr(Self) -> @debug.Repr
+pub fn Flavor::to_string(Self) -> String
+pub impl Show for Flavor
+
+pub(all) enum Node {
+  ElementNode(Element)
+  TextNode(String)
+  CDataNode(String)
+  CommentNode(String)
+  ProcessingInstructionNode(ProcessingInstruction)
+  DoctypeNode(String)
+}
+pub fn Node::by_class(Self, String) -> Selection
+pub fn Node::by_id(Self, String) -> Selection
+pub fn Node::by_name(Self, String) -> Selection
+pub fn Node::by_tag(Self, String) -> Selection
+pub fn Node::childrens(Self) -> Array[Self]
+pub fn Node::closest(Self, String) -> Selection raise Refused
+pub fn Node::css(Self, String) -> Selection raise Refused
+pub fn Node::custom(Self, &Selector) -> Selection raise Refused
+pub fn Node::filter(Self, (Self) -> Bool) -> Selection
+pub fn Node::is_element(Self) -> Bool
+pub fn Node::is_text(Self) -> Bool
+pub fn Node::name(Self) -> String
+pub fn Node::selector(Self, String, String) -> Selection raise Refused
+pub fn Node::text(Self) -> String
+
+pub(all) struct ProcessingInstruction {
+  target : String
+  data : String
+}
+
+pub(all) struct Repairs {
+  mut implied : Int32
+  mut dropped : Int32
+  mut reparented : Int32
+  mut closed_at_eof : Int32
+}
+pub fn Repairs::any(Self) -> Bool
+pub fn Repairs::new() -> Self
+pub fn Repairs::total(Self) -> Int32
+
+pub struct Selection {
+  items : Array[Node]
+  // private fields
+}
+pub fn Selection::add_class(Self, String) -> Unit
+pub fn Selection::append(Self, Node) -> Unit
+pub fn Selection::attr(Self, String) -> String?
+pub fn Selection::by_class(Self, String) -> Self
+pub fn Selection::by_id(Self, String) -> Self
+pub fn Selection::by_name(Self, String) -> Self
+pub fn Selection::by_tag(Self, String) -> Self
+pub fn Selection::childrens(Self) -> Self
+pub fn Selection::clear(Self) -> Unit
+pub fn Selection::closest(Self, String) -> Self raise Refused
+pub fn Selection::css(Self, String) -> Self raise Refused
+pub fn Selection::custom(Self, &Selector) -> Self raise Refused
+pub fn Selection::descendants(Self) -> Self
+pub fn Selection::eq(Self, Int32) -> Self
+pub fn Selection::filter(Self, (Node) -> Bool) -> Self
+pub fn Selection::first(Self) -> Self
+pub fn Selection::html(Self) -> String
+pub fn Selection::last(Self) -> Self
+pub fn Selection::length(Self) -> Int32
+pub fn Selection::new() -> Self
+pub fn Selection::parent(Self) -> Self
+pub fn Selection::prepend(Self, Node) -> Unit
+pub fn Selection::remove(Self) -> Unit
+pub fn Selection::remove_attr(Self, String) -> Unit
+pub fn Selection::remove_class(Self, String) -> Unit
+pub fn Selection::replace_with(Self, Node) -> Unit
+pub fn Selection::selector(Self, String, String) -> Self raise Refused
+pub fn Selection::set_attr(Self, String, String) -> Unit
+pub fn Selection::set_text(Self, String) -> Unit
+pub fn Selection::smooth(Self) -> Unit
+pub fn Selection::text(Self) -> String
+pub fn Selection::unwrap(Self) -> Unit
+pub fn Selection::wrap(Self, String) -> Unit
+
+pub struct SelectorFn {
+  f : (Selection, String) -> Selection raise Refused
+}
+pub fn SelectorFn::new((Selection, String) -> Selection raise Refused) -> Self
+pub fn SelectorFn::select(Self, Selection, String) -> Selection raise Refused
+pub impl Selector for SelectorFn
+
+// Type aliases
+
+// Traits
+pub(open) trait Selector {
+  fn select(Self, Selection, String) -> Selection raise Refused
+}
