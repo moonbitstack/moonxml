@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API — moonxml</title>
+<meta name="description" content="Every public type, trait and function in moonxml, generated from the packages' interfaces.">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%23b23a1f'>&lt;/&gt;</text></svg>">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="lt">&lt;</span><b>moonxml</b><span class="gt">/&gt;</span></a>
+    <nav class="top-nav">
+      <a href="start.html">Start</a>
+      <a href="api.html" aria-current="page">API</a>
+      <a href="inside.html">Inside</a>
+      <a class="hide-sm" href="https://github.com/moonbitstack/moonxml">GitHub</a>
+      <button class="theme-toggle" id="theme" title="Switch theme" aria-label="Switch theme">◐</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" style="padding-top:44px">
+  <p class="eyebrow">187 public items</p>
+  <h1 style="font-size:clamp(32px,4vw,44px);margin-bottom:10px">The API</h1>
+  <p class="sub">Generated from each package's interface file, so it cannot describe something the code does not have — or miss something it does.</p>
+
+  <div class="api-layout" style="margin-top:34px">
+    <aside class="api-nav">
+      <input class="api-search" id="q" type="search" placeholder="filter…" aria-label="Filter the API">
+      <div id="nav-list">
+<h4><a href="#moonxml">moonxml</a></h4>
+<a href="#moonxml-dump">dump</a>
+<a href="#moonxml-dump-html">dump_html</a>
+<a href="#moonxml-dumps">dumps</a>
+<a href="#moonxml-dumps-html">dumps_html</a>
+<a href="#moonxml-local-of">local_of</a>
+<a href="#moonxml-namespace-of">namespace_of</a>
+<a href="#moonxml-strip-bom">strip_bom</a>
+<a href="#moonxml-utf8-decode">utf8_decode</a>
+<a href="#moonxml-utf8-encode">utf8_encode</a>
+<a href="#moonxml-refused">Refused</a>
+<a href="#moonxml-refused-equal">Refused::equal</a>
+<a href="#moonxml-refused-not-equal">Refused::not_equal</a>
+<a href="#moonxml-refused-output">Refused::output</a>
+<a href="#moonxml-refused-to-repr">Refused::to_repr</a>
+<a href="#moonxml-refused-to-string">Refused::to_string</a>
+<a href="#moonxml-pub-impl-show-for-refused">pub impl Show for Refused</a>
+<a href="#moonxml-document">Document</a>
+<a href="#moonxml-document-add-class">Document::add_class</a>
+<a href="#moonxml-document-append">Document::append</a>
+<a href="#moonxml-document-attr">Document::attr</a>
+<a href="#moonxml-document-by-class">Document::by_class</a>
+<a href="#moonxml-document-by-id">Document::by_id</a>
+<a href="#moonxml-document-by-name">Document::by_name</a>
+<a href="#moonxml-document-by-tag">Document::by_tag</a>
+<a href="#moonxml-document-childrens">Document::childrens</a>
+<a href="#moonxml-document-clear">Document::clear</a>
+<a href="#moonxml-document-closest">Document::closest</a>
+<a href="#moonxml-document-css">Document::css</a>
+<a href="#moonxml-document-custom">Document::custom</a>
+<a href="#moonxml-document-descendants">Document::descendants</a>
+<a href="#moonxml-document-document-element">Document::document_element</a>
+<a href="#moonxml-document-dump">Document::dump</a>
+<a href="#moonxml-document-dump-html">Document::dump_html</a>
+<a href="#moonxml-document-dumps">Document::dumps</a>
+<a href="#moonxml-document-dumps-html">Document::dumps_html</a>
+<a href="#moonxml-document-eq">Document::eq</a>
+<a href="#moonxml-document-events">Document::events</a>
+<a href="#moonxml-document-filter">Document::filter</a>
+<a href="#moonxml-document-first">Document::first</a>
+<a href="#moonxml-document-flavor">Document::flavor</a>
+<a href="#moonxml-document-html">Document::html</a>
+<a href="#moonxml-document-last">Document::last</a>
+<a href="#moonxml-document-length">Document::length</a>
+<a href="#moonxml-document-new">Document::new</a>
+<a href="#moonxml-document-parent">Document::parent</a>
+<a href="#moonxml-document-prepend">Document::prepend</a>
+<a href="#moonxml-document-push">Document::push</a>
+<a href="#moonxml-document-register">Document::register</a>
+<a href="#moonxml-document-remove">Document::remove</a>
+<a href="#moonxml-document-remove-attr">Document::remove_attr</a>
+<a href="#moonxml-document-remove-class">Document::remove_class</a>
+<a href="#moonxml-document-repairs">Document::repairs</a>
+<a href="#moonxml-document-replace-with">Document::replace_with</a>
+<a href="#moonxml-document-selector">Document::selector</a>
+<a href="#moonxml-document-set-attr">Document::set_attr</a>
+<a href="#moonxml-document-set-repairs">Document::set_repairs</a>
+<a href="#moonxml-document-set-text">Document::set_text</a>
+<a href="#moonxml-document-smooth">Document::smooth</a>
+<a href="#moonxml-document-text">Document::text</a>
+<a href="#moonxml-document-unwrap">Document::unwrap</a>
+<a href="#moonxml-document-wrap">Document::wrap</a>
+<a href="#moonxml-document-xpath">Document::xpath</a>
+<a href="#moonxml-document-xpath-value">Document::xpath_value</a>
+<a href="#moonxml-pub-impl-event-sink-for-document">pub impl @event.Sink for Document</a>
+<a href="#moonxml-element">Element</a>
+<a href="#moonxml-element-add-class">Element::add_class</a>
+<a href="#moonxml-element-append">Element::append</a>
+<a href="#moonxml-element-attr">Element::attr</a>
+<a href="#moonxml-element-by-class">Element::by_class</a>
+<a href="#moonxml-element-by-id">Element::by_id</a>
+<a href="#moonxml-element-by-name">Element::by_name</a>
+<a href="#moonxml-element-by-tag">Element::by_tag</a>
+<a href="#moonxml-element-classes">Element::classes</a>
+<a href="#moonxml-element-clear">Element::clear</a>
+<a href="#moonxml-element-closest">Element::closest</a>
+<a href="#moonxml-element-css">Element::css</a>
+<a href="#moonxml-element-custom">Element::custom</a>
+<a href="#moonxml-element-document">Element::document</a>
+<a href="#moonxml-element-filter">Element::filter</a>
+<a href="#moonxml-element-has-attr">Element::has_attr</a>
+<a href="#moonxml-element-has-class">Element::has_class</a>
+<a href="#moonxml-element-html">Element::html</a>
+<a href="#moonxml-element-insert">Element::insert</a>
+<a href="#moonxml-element-insert-after">Element::insert_after</a>
+<a href="#moonxml-element-insert-before">Element::insert_before</a>
+<a href="#moonxml-element-new">Element::new</a>
+<a href="#moonxml-element-prepend">Element::prepend</a>
+<a href="#moonxml-element-remove">Element::remove</a>
+<a href="#moonxml-element-remove-attr">Element::remove_attr</a>
+<a href="#moonxml-element-remove-class">Element::remove_class</a>
+<a href="#moonxml-element-replace-with">Element::replace_with</a>
+<a href="#moonxml-element-selector">Element::selector</a>
+<a href="#moonxml-element-set-attr">Element::set_attr</a>
+<a href="#moonxml-element-smooth">Element::smooth</a>
+<a href="#moonxml-element-text">Element::text</a>
+<a href="#moonxml-element-unwrap">Element::unwrap</a>
+<a href="#moonxml-element-walk">Element::walk</a>
+<a href="#moonxml-element-wrap">Element::wrap</a>
+<a href="#moonxml-element-xpath">Element::xpath</a>
+<a href="#moonxml-element-xpath-value">Element::xpath_value</a>
+<a href="#moonxml-flavor">Flavor</a>
+<a href="#moonxml-flavor-equal">Flavor::equal</a>
+<a href="#moonxml-flavor-not-equal">Flavor::not_equal</a>
+<a href="#moonxml-flavor-output">Flavor::output</a>
+<a href="#moonxml-flavor-to-repr">Flavor::to_repr</a>
+<a href="#moonxml-flavor-to-string">Flavor::to_string</a>
+<a href="#moonxml-pub-impl-show-for-flavor">pub impl Show for Flavor</a>
+<a href="#moonxml-node">Node</a>
+<a href="#moonxml-node-by-class">Node::by_class</a>
+<a href="#moonxml-node-by-id">Node::by_id</a>
+<a href="#moonxml-node-by-name">Node::by_name</a>
+<a href="#moonxml-node-by-tag">Node::by_tag</a>
+<a href="#moonxml-node-childrens">Node::childrens</a>
+<a href="#moonxml-node-closest">Node::closest</a>
+<a href="#moonxml-node-css">Node::css</a>
+<a href="#moonxml-node-custom">Node::custom</a>
+<a href="#moonxml-node-filter">Node::filter</a>
+<a href="#moonxml-node-is-element">Node::is_element</a>
+<a href="#moonxml-node-is-text">Node::is_text</a>
+<a href="#moonxml-node-name">Node::name</a>
+<a href="#moonxml-node-selector">Node::selector</a>
+<a href="#moonxml-node-text">Node::text</a>
+<a href="#moonxml-node-xpath">Node::xpath</a>
+<a href="#moonxml-node-xpath-value">Node::xpath_value</a>
+<a href="#moonxml-processinginstruction">ProcessingInstruction</a>
+<a href="#moonxml-repairs">Repairs</a>
+<a href="#moonxml-repairs-any">Repairs::any</a>
+<a href="#moonxml-repairs-new">Repairs::new</a>
+<a href="#moonxml-repairs-total">Repairs::total</a>
+<a href="#moonxml-selection">Selection</a>
+<a href="#moonxml-selection-add-class">Selection::add_class</a>
+<a href="#moonxml-selection-append">Selection::append</a>
+<a href="#moonxml--alias">#alias</a>
+<a href="#moonxml-selection-at">Selection::at</a>
+<a href="#moonxml-selection-attr">Selection::attr</a>
+<a href="#moonxml-selection-by-class">Selection::by_class</a>
+<a href="#moonxml-selection-by-id">Selection::by_id</a>
+<a href="#moonxml-selection-by-name">Selection::by_name</a>
+<a href="#moonxml-selection-by-tag">Selection::by_tag</a>
+<a href="#moonxml-selection-childrens">Selection::childrens</a>
+<a href="#moonxml-selection-clear">Selection::clear</a>
+<a href="#moonxml-selection-closest">Selection::closest</a>
+<a href="#moonxml-selection-css">Selection::css</a>
+<a href="#moonxml-selection-custom">Selection::custom</a>
+<a href="#moonxml-selection-descendants">Selection::descendants</a>
+<a href="#moonxml-selection-eq">Selection::eq</a>
+<a href="#moonxml-selection-filter">Selection::filter</a>
+<a href="#moonxml-selection-first">Selection::first</a>
+<a href="#moonxml-selection-html">Selection::html</a>
+<a href="#moonxml-selection-last">Selection::last</a>
+<a href="#moonxml-selection-length">Selection::length</a>
+<a href="#moonxml-selection-new">Selection::new</a>
+<a href="#moonxml-selection-parent">Selection::parent</a>
+<a href="#moonxml-selection-prepend">Selection::prepend</a>
+<a href="#moonxml-selection-remove">Selection::remove</a>
+<a href="#moonxml-selection-remove-attr">Selection::remove_attr</a>
+<a href="#moonxml-selection-remove-class">Selection::remove_class</a>
+<a href="#moonxml-selection-replace-with">Selection::replace_with</a>
+<a href="#moonxml-selection-selector">Selection::selector</a>
+<a href="#moonxml-selection-set-attr">Selection::set_attr</a>
+<a href="#moonxml-selection-set-text">Selection::set_text</a>
+<a href="#moonxml-selection-smooth">Selection::smooth</a>
+<a href="#moonxml-selection-text">Selection::text</a>
+<a href="#moonxml-selection-unwrap">Selection::unwrap</a>
+<a href="#moonxml-selection-wrap">Selection::wrap</a>
+<a href="#moonxml-selection-xpath">Selection::xpath</a>
+<a href="#moonxml-selection-xpath-value">Selection::xpath_value</a>
+<a href="#moonxml-selectorfn">SelectorFn</a>
+<a href="#moonxml-selectorfn-new">SelectorFn::new</a>
+<a href="#moonxml-selectorfn-select">SelectorFn::select</a>
+<a href="#moonxml-pub-impl-selector-for-selectorfn">pub impl Selector for SelectorFn</a>
+<a href="#moonxml-xpathvalue">XPathValue</a>
+<a href="#moonxml-xpathvalue-output">XPathValue::output</a>
+<a href="#moonxml-xpathvalue-to-string">XPathValue::to_string</a>
+<a href="#moonxml-pub-impl-show-for-xpathvalue">pub impl Show for XPathValue</a>
+<a href="#moonxml-selector">Selector</a>
+<h4><a href="#moonxml-html">html</a></h4>
+<a href="#moonxml-html-load">load</a>
+<a href="#moonxml-html-loads">loads</a>
+<a href="#moonxml-html-loads-fragment">loads_fragment</a>
+<a href="#moonxml-html-named-reference">named_reference</a>
+<h4><a href="#moonxml-xml">xml</a></h4>
+<a href="#moonxml-xml-depth-limit">depth_limit</a>
+<a href="#moonxml-xml-load">load</a>
+<a href="#moonxml-xml-loads">loads</a>
+<a href="#moonxml-xml-loads-fragment">loads_fragment</a>
+<a href="#moonxml-xml-scan">scan</a>
+<h4><a href="#moonxml-event">event</a></h4>
+<a href="#moonxml-event-event">Event</a>
+<a href="#moonxml-event-sink">Sink</a>
+      </div>
+    </aside>
+    <div id="items">
+<section id="moonxml">
+<div class="sec-head"><h2>moonxml</h2></div>
+<p class="sub">The tree, the chain, and the two engines. Everything you need unless you are reading a document.</p>
+<h3 class="group" data-group="traits">Traits</h3>
+<div class="api-item" id="moonxml-pub-impl-show-for-xpathvalue" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">impl</span> <span class="ty">Show</span> for <span class="ty">XPathValue</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selector" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">open</span>) <span class="kw">trait</span> <span class="ty">Selector</span> {
+  <span class="kw">fn</span> select(<span class="ty">Self</span>, <span class="ty">Selection</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span>
+}</span></pre>
+</div>
+<h3 class="group" data-group="errors">Errors</h3>
+<div class="api-item" id="moonxml-utf8-encode" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> utf8_encode(<span class="ty">String</span>) -&gt; <span class="ty">Bytes</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-refused" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">suberror</span> <span class="ty">Refused</span> {
+  <span class="ty">Malformed</span>(at~ : <span class="ty">Int32</span>, why~ : <span class="ty">String</span>)
+  <span class="ty">BadQuery</span>(at~ : <span class="ty">Int32</span>, why~ : <span class="ty">String</span>)
+  <span class="ty">UnknownSelector</span>(name~ : <span class="ty">String</span>)
+  <span class="ty">Unsupported</span>(what~ : <span class="ty">String</span>)
+} derive(<span class="ty">Eq</span>, @debug.<span class="ty">Debug</span>)</span></pre>
+</div>
+<div class="api-item" id="moonxml-refused-equal" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Refused</span>::equal(<span class="ty">Self</span>, <span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-refused-not-equal" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Refused</span>::not_equal(<span class="ty">Self</span>, <span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-refused-output" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Refused</span>::output(<span class="ty">Self</span>, &amp;<span class="ty">Logger</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-refused-to-repr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Refused</span>::to_repr(<span class="ty">Self</span>) -&gt; @debug.<span class="ty">Repr</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-refused-to-string" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Refused</span>::to_string(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<h3 class="group" data-group="types">Types</h3>
+<div class="api-item" id="moonxml-pub-impl-show-for-refused" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">impl</span> <span class="ty">Show</span> for <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">struct</span> <span class="ty">Document</span> {
+  root : <span class="ty">Element</span>
+  // private fields
+}</span></pre>
+</div>
+<div class="api-item" id="moonxml-document-add-class" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::add_class(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-append" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::append(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-attr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::attr(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">String</span>?</span></pre>
+</div>
+<div class="api-item" id="moonxml-document-by-class" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::by_class(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-by-id" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::by_id(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-by-name" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::by_name(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-by-tag" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::by_tag(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-childrens" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::childrens(<span class="ty">Self</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-clear" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::clear(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-closest" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::closest(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-css" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::css(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-custom" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::custom(<span class="ty">Self</span>, &amp;<span class="ty">Selector</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-descendants" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::descendants(<span class="ty">Self</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-document-element" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::document_element(<span class="ty">Self</span>) -&gt; <span class="ty">Element</span>?</span></pre>
+</div>
+<div class="api-item" id="moonxml-document-dump" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::dump(<span class="ty">Self</span>) -&gt; <span class="ty">Bytes</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-dump-html" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::dump_html(<span class="ty">Self</span>) -&gt; <span class="ty">Bytes</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-dumps" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::dumps(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-dumps-html" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::dumps_html(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-eq" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::eq(<span class="ty">Self</span>, <span class="ty">Int32</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-events" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::events(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[@event.<span class="ty">Event</span>]</span></pre>
+</div>
+<div class="api-item" id="moonxml-document-filter" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::filter(<span class="ty">Self</span>, (<span class="ty">Node</span>) -&gt; <span class="ty">Bool</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-first" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::first(<span class="ty">Self</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-flavor" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::flavor(<span class="ty">Self</span>) -&gt; <span class="ty">Flavor</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-html" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::html(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-last" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::last(<span class="ty">Self</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-length" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::length(<span class="ty">Self</span>) -&gt; <span class="ty">Int32</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-new" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::new(flavor? : <span class="ty">Flavor</span>) -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-parent" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::parent(<span class="ty">Self</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-prepend" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::prepend(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-push" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::push(<span class="ty">Self</span>, @event.<span class="ty">Event</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-register" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::register(<span class="ty">Self</span>, <span class="ty">String</span>, &amp;<span class="ty">Selector</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-remove" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::remove(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-remove-attr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::remove_attr(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-remove-class" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::remove_class(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-repairs" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::repairs(<span class="ty">Self</span>) -&gt; <span class="ty">Repairs</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-replace-with" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::replace_with(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-selector" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::selector(<span class="ty">Self</span>, <span class="ty">String</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-set-attr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::set_attr(<span class="ty">Self</span>, <span class="ty">String</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-set-repairs" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::set_repairs(<span class="ty">Self</span>, <span class="ty">Repairs</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-set-text" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::set_text(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-smooth" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::smooth(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-text" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::text(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-unwrap" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::unwrap(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-wrap" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::wrap(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-xpath" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::xpath(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-document-xpath-value" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::xpath_value(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">XPathValue</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-pub-impl-event-sink-for-document" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">impl</span> @event.<span class="ty">Sink</span> for <span class="ty">Document</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">struct</span> <span class="ty">Element</span> {
+  name : <span class="ty">String</span>
+  attrs : <span class="ty">Array</span>[(<span class="ty">String</span>, <span class="ty">String</span>)]
+  childrens : <span class="ty">Array</span>[<span class="ty">Node</span>]
+  <span class="kw">mut</span> parent : <span class="ty">Element</span>?
+  mut closed : <span class="ty">Bool</span>
+  // private fields
+}</span></pre>
+</div>
+<div class="api-item" id="moonxml-element-add-class" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::add_class(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-append" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::append(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-attr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::attr(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">String</span>?</span></pre>
+</div>
+<div class="api-item" id="moonxml-element-by-class" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::by_class(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-by-id" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::by_id(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-by-name" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::by_name(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-by-tag" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::by_tag(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-classes" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::classes(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[<span class="ty">String</span>]</span></pre>
+</div>
+<div class="api-item" id="moonxml-element-clear" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::clear(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-closest" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::closest(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-css" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::css(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-custom" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::custom(<span class="ty">Self</span>, &amp;<span class="ty">Selector</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-document" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::document(<span class="ty">Self</span>) -&gt; <span class="ty">Document</span>?</span></pre>
+</div>
+<div class="api-item" id="moonxml-element-filter" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::filter(<span class="ty">Self</span>, (<span class="ty">Node</span>) -&gt; <span class="ty">Bool</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-has-attr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::has_attr(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-has-class" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::has_class(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-html" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::html(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-insert" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::insert(<span class="ty">Self</span>, <span class="ty">Int32</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-insert-after" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::insert_after(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-insert-before" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::insert_before(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-new" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::new(<span class="ty">String</span>, childrens? : <span class="ty">Array</span>[<span class="ty">Node</span>], attrs? : <span class="ty">Array</span>[(<span class="ty">String</span>, <span class="ty">String</span>)], closed? : <span class="ty">Bool</span>) -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-prepend" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::prepend(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-remove" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::remove(<span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-remove-attr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::remove_attr(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-remove-class" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::remove_class(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-replace-with" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::replace_with(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-selector" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::selector(<span class="ty">Self</span>, <span class="ty">String</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-set-attr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::set_attr(<span class="ty">Self</span>, <span class="ty">String</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-smooth" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::smooth(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-text" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::text(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-unwrap" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::unwrap(<span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-walk" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::walk(<span class="ty">Self</span>, (<span class="ty">Node</span>) -&gt; <span class="ty">Unit</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-wrap" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::wrap(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span>?</span></pre>
+</div>
+<div class="api-item" id="moonxml-element-xpath" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::xpath(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-element-xpath-value" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::xpath_value(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">XPathValue</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-flavor" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">enum</span> <span class="ty">Flavor</span> {
+  <span class="ty">Xml</span>
+  <span class="ty">Html</span>
+} derive(<span class="ty">Eq</span>, @debug.<span class="ty">Debug</span>)</span></pre>
+</div>
+<div class="api-item" id="moonxml-flavor-equal" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavor</span>::equal(<span class="ty">Self</span>, <span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-flavor-not-equal" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavor</span>::not_equal(<span class="ty">Self</span>, <span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-flavor-output" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavor</span>::output(<span class="ty">Self</span>, &amp;<span class="ty">Logger</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-flavor-to-repr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavor</span>::to_repr(<span class="ty">Self</span>) -&gt; @debug.<span class="ty">Repr</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-flavor-to-string" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavor</span>::to_string(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-pub-impl-show-for-flavor" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">impl</span> <span class="ty">Show</span> for <span class="ty">Flavor</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">enum</span> <span class="ty">Node</span> {
+  <span class="ty">ElementNode</span>(<span class="ty">Element</span>)
+  <span class="ty">TextNode</span>(<span class="ty">String</span>)
+  <span class="ty">CDataNode</span>(<span class="ty">String</span>)
+  <span class="ty">CommentNode</span>(<span class="ty">String</span>)
+  <span class="ty">ProcessingInstructionNode</span>(<span class="ty">ProcessingInstruction</span>)
+  <span class="ty">DoctypeNode</span>(<span class="ty">String</span>)
+}</span></pre>
+</div>
+<div class="api-item" id="moonxml-node-by-class" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::by_class(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node-by-id" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::by_id(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node-by-name" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::by_name(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node-by-tag" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::by_tag(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node-childrens" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::childrens(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[<span class="ty">Self</span>]</span></pre>
+</div>
+<div class="api-item" id="moonxml-node-closest" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::closest(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node-css" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::css(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node-custom" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::custom(<span class="ty">Self</span>, &amp;<span class="ty">Selector</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node-filter" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::filter(<span class="ty">Self</span>, (<span class="ty">Self</span>) -&gt; <span class="ty">Bool</span>) -&gt; <span class="ty">Selection</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node-is-element" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::is_element(<span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node-is-text" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::is_text(<span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node-name" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::name(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node-selector" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::selector(<span class="ty">Self</span>, <span class="ty">String</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node-text" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::text(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node-xpath" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::xpath(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-node-xpath-value" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::xpath_value(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">XPathValue</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-processinginstruction" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">struct</span> <span class="ty">ProcessingInstruction</span> {
+  target : <span class="ty">String</span>
+  data : <span class="ty">String</span>
+}</span></pre>
+</div>
+<div class="api-item" id="moonxml-repairs" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">struct</span> <span class="ty">Repairs</span> {
+  <span class="kw">mut</span> implied : <span class="ty">Int32</span>
+  mut dropped : <span class="ty">Int32</span>
+  mut reparented : <span class="ty">Int32</span>
+  mut closed_at_eof : <span class="ty">Int32</span>
+}</span></pre>
+</div>
+<div class="api-item" id="moonxml-repairs-any" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Repairs</span>::any(<span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-repairs-new" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Repairs</span>::new() -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-repairs-total" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Repairs</span>::total(<span class="ty">Self</span>) -&gt; <span class="ty">Int32</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">struct</span> <span class="ty">Selection</span> {
+  items : <span class="ty">Array</span>[<span class="ty">Node</span>]
+  // private fields
+}</span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-add-class" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::add_class(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-append" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::append(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml--alias" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig">#alias(&quot;_[_]&quot;)</span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-at" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::at(<span class="ty">Self</span>, <span class="ty">Int32</span>) -&gt; <span class="ty">Node</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-attr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::attr(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">String</span>?</span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-by-class" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::by_class(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-by-id" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::by_id(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-by-name" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::by_name(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-by-tag" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::by_tag(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-childrens" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::childrens(<span class="ty">Self</span>) -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-clear" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::clear(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-closest" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::closest(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-css" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::css(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-custom" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::custom(<span class="ty">Self</span>, &amp;<span class="ty">Selector</span>) -&gt; <span class="ty">Self</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-descendants" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::descendants(<span class="ty">Self</span>) -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-eq" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::eq(<span class="ty">Self</span>, <span class="ty">Int32</span>) -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-filter" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::filter(<span class="ty">Self</span>, (<span class="ty">Node</span>) -&gt; <span class="ty">Bool</span>) -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-first" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::first(<span class="ty">Self</span>) -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-html" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::html(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-last" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::last(<span class="ty">Self</span>) -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-length" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::length(<span class="ty">Self</span>) -&gt; <span class="ty">Int32</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-new" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::new() -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-parent" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::parent(<span class="ty">Self</span>) -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-prepend" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::prepend(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-remove" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::remove(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-remove-attr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::remove_attr(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-remove-class" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::remove_class(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-replace-with" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::replace_with(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-selector" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::selector(<span class="ty">Self</span>, <span class="ty">String</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-set-attr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::set_attr(<span class="ty">Self</span>, <span class="ty">String</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-set-text" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::set_text(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-smooth" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::smooth(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-text" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::text(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-unwrap" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::unwrap(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-wrap" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::wrap(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-xpath" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::xpath(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selection-xpath-value" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::xpath_value(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">XPathValue</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selectorfn" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">struct</span> <span class="ty">SelectorFn</span> {
+  f : (<span class="ty">Selection</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span>
+}</span></pre>
+</div>
+<div class="api-item" id="moonxml-selectorfn-new" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">SelectorFn</span>::new((<span class="ty">Selection</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span>) -&gt; <span class="ty">Self</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-selectorfn-select" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">SelectorFn</span>::select(<span class="ty">Self</span>, <span class="ty">Selection</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-pub-impl-selector-for-selectorfn" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">impl</span> <span class="ty">Selector</span> for <span class="ty">SelectorFn</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-xpathvalue" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">enum</span> <span class="ty">XPathValue</span> {
+  <span class="ty">Nodes</span>(<span class="ty">Selection</span>)
+  <span class="ty">Str</span>(<span class="ty">String</span>)
+  <span class="ty">Num</span>(<span class="ty">Double</span>)
+  <span class="ty">Flag</span>(<span class="ty">Bool</span>)
+}</span></pre>
+</div>
+<div class="api-item" id="moonxml-xpathvalue-output" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">XPathValue</span>::output(<span class="ty">Self</span>, &amp;<span class="ty">Logger</span>) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-xpathvalue-to-string" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">XPathValue</span>::to_string(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<h3 class="group" data-group="values">Values</h3>
+<div class="api-item" id="moonxml-dump" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> dump(<span class="ty">Node</span>) -&gt; <span class="ty">Bytes</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-dump-html" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> dump_html(<span class="ty">Node</span>) -&gt; <span class="ty">Bytes</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-dumps" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> dumps(<span class="ty">Node</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-dumps-html" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> dumps_html(<span class="ty">Node</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-local-of" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> local_of(<span class="ty">String</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-namespace-of" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> namespace_of(<span class="ty">String</span>) -&gt; <span class="ty">String</span>?</span></pre>
+</div>
+<div class="api-item" id="moonxml-strip-bom" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> strip_bom(<span class="ty">String</span>) -&gt; <span class="ty">String</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-utf8-decode" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> utf8_decode(<span class="ty">Bytes</span>) -&gt; <span class="ty">String</span> raise <span class="ty">Refused</span></span></pre>
+</div>
+</section>
+<section id="moonxml-html">
+<div class="sec-head"><h2>moonxml/html</h2></div>
+<p class="sub">The WHATWG parser: tolerant, repairing, and never refusing.</p>
+<h3 class="group" data-group="traits">Traits</h3>
+<div class="api-item" id="moonxml-html-named-reference" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> named_reference(<span class="ty">String</span>) -&gt; <span class="ty">String</span>?</span></pre>
+</div>
+<h3 class="group" data-group="values">Values</h3>
+<div class="api-item" id="moonxml-html-load" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> load(<span class="ty">Bytes</span>) -&gt; @moonxml.<span class="ty">Document</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-html-loads" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads(<span class="ty">String</span>) -&gt; @moonxml.<span class="ty">Document</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-html-loads-fragment" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads_fragment(<span class="ty">String</span>) -&gt; @moonxml.<span class="ty">Document</span></span></pre>
+</div>
+</section>
+<section id="moonxml-xml">
+<div class="sec-head"><h2>moonxml/xml</h2></div>
+<p class="sub">The XML 1.0 parser: strict, with namespaces, and with the offset of the fault.</p>
+<h3 class="group" data-group="traits">Traits</h3>
+<div class="api-item" id="moonxml-xml-scan" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> scan(<span class="ty">String</span>, &amp;@event.<span class="ty">Sink</span>, fragment? : <span class="ty">Bool</span>) -&gt; <span class="ty">Unit</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
+</div>
+<h3 class="group" data-group="values">Values</h3>
+<div class="api-item" id="moonxml-xml-depth-limit" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> depth_limit() -&gt; <span class="ty">Int32</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-xml-load" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> load(<span class="ty">Bytes</span>) -&gt; @moonxml.<span class="ty">Document</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-xml-loads" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads(<span class="ty">String</span>) -&gt; @moonxml.<span class="ty">Document</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
+</div>
+<div class="api-item" id="moonxml-xml-loads-fragment" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads_fragment(<span class="ty">String</span>) -&gt; @moonxml.<span class="ty">Document</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
+</div>
+</section>
+<section id="moonxml-event">
+<div class="sec-head"><h2>moonxml/event</h2></div>
+<p class="sub">The streaming vocabulary — what a parser emits and what a sink receives.</p>
+<h3 class="group" data-group="traits">Traits</h3>
+<div class="api-item" id="moonxml-event-event" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">enum</span> <span class="ty">Event</span> {
+  <span class="ty">StartTag</span>(name~ : <span class="ty">String</span>, attrs~ : <span class="ty">Array</span>[(<span class="ty">String</span>, <span class="ty">String</span>)], self_closing~ : <span class="ty">Bool</span>)
+  <span class="ty">EndTag</span>(name~ : <span class="ty">String</span>)
+  <span class="ty">TextRun</span>(text~ : <span class="ty">String</span>)
+  <span class="ty">CDataRun</span>(text~ : <span class="ty">String</span>)
+  <span class="ty">CommentEvent</span>(text~ : <span class="ty">String</span>)
+  <span class="ty">ProcessingInstruction</span>(target~ : <span class="ty">String</span>, data~ : <span class="ty">String</span>)
+  <span class="ty">DoctypeEvent</span>(text~ : <span class="ty">String</span>)
+}</span></pre>
+</div>
+<div class="api-item" id="moonxml-event-sink" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">open</span>) <span class="kw">trait</span> <span class="ty">Sink</span> {
+  <span class="kw">fn</span> push(<span class="ty">Self</span>, <span class="ty">Event</span>) -&gt; <span class="ty">Unit</span>
+}</span></pre>
+</div>
+</section>
+    </div>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>Apache-2.0 · moonbitstack</span>
+    <span><a href="https://github.com/moonbitstack/moonxml">github.com/moonbitstack/moonxml</a></span>
+    <span class="spacer"><a href="index.html">top ↑</a></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem("moonxml-theme"); } catch (e) {}
+  var system = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  root.setAttribute("data-theme", saved || system);
+  document.getElementById("theme").addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("moonxml-theme", next); } catch (e) {}
+  });
+
+  var box = document.getElementById("q");
+  var items = Array.prototype.slice.call(document.querySelectorAll(".api-item"));
+  var groups = Array.prototype.slice.call(document.querySelectorAll(".group"));
+  box.addEventListener("input", function () {
+    var needle = box.value.trim().toLowerCase();
+    items.forEach(function (el) {
+      var hit = !needle || el.textContent.toLowerCase().indexOf(needle) !== -1;
+      el.classList.toggle("api-hidden", !hit);
+    });
+    groups.forEach(function (el) {
+      var next = el.nextElementSibling;
+      var any = false;
+      while (next && next.classList.contains("api-item")) {
+        if (!next.classList.contains("api-hidden")) { any = true; break; }
+        next = next.nextElementSibling;
+      }
+      el.classList.toggle("api-hidden", !any);
+    });
+  });
+})();
+</script>
+</body>
+</html>

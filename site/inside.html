@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inside — moonxml</title>
+<meta name="description" content="How moonxml is built: one event stream, two parsers, three engines, one selection.">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%23b23a1f'>&lt;/&gt;</text></svg>">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="lt">&lt;</span><b>moonxml</b><span class="gt">/&gt;</span></a>
+    <nav class="top-nav">
+      <a href="start.html">Start</a>
+      <a href="api.html">API</a>
+      <a href="inside.html" aria-current="page">Inside</a>
+      <a class="hide-sm" href="https://github.com/moonbitstack/moonxml">GitHub</a>
+      <button class="theme-toggle" id="theme" title="Switch theme" aria-label="Switch theme">◐</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="hero" style="padding-bottom:16px">
+    <p class="eyebrow">how it works</p>
+    <h1>Four packages,<br>one <em>direction</em> of dependence.</h1>
+    <p class="lede">Nothing here imports upward. The event vocabulary knows nothing; the tree builder knows the vocabulary; the parsers know the tree; the chain knows all of it and is known by none.</p>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><h2>The shape of the module</h2></div>
+    <div style="margin:24px 0 8px">
+      <svg viewBox="0 0 960 300" role="img" aria-label="Package graph: event depends on nothing, moonxml depends on event, html and xml depend on moonxml and event." style="width:100%;height:auto">
+        <defs>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+        <g font-family="ui-monospace, monospace" font-size="13" fill="currentColor">
+          <rect x="330" y="18" width="300" height="74" fill="none" stroke="#2f5d4c" stroke-width="1.5"/>
+          <text x="346" y="44" fill="#2f5d4c">moonbitstack/moonxml</text>
+          <text x="346" y="64" fill="#8b8574">Node · Element · Document · Selection</text>
+          <text x="346" y="82" fill="#8b8574">css · xpath · writer · chain</text>
+
+          <rect x="330" y="212" width="300" height="60" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <text x="346" y="238">moonxml/event</text>
+          <text x="346" y="258" fill="#8b8574">Event · Sink — depends on nothing</text>
+
+          <rect x="30" y="118" width="230" height="60" fill="none" stroke="#b23a1f" stroke-width="1.5"/>
+          <text x="46" y="144" fill="#b23a1f">moonxml/html</text>
+          <text x="46" y="163" fill="#8b8574">@html.loads — tolerant</text>
+
+          <rect x="700" y="118" width="230" height="60" fill="none" stroke="#b23a1f" stroke-width="1.5"/>
+          <text x="716" y="144" fill="#b23a1f">moonxml/xml</text>
+          <text x="716" y="163" fill="#8b8574">@xml.loads — strict</text>
+
+          <g stroke="currentColor" stroke-width="1.2" fill="none" marker-end="url(#ar2)">
+            <line x1="145" y1="118" x2="145" y2="96"/>
+            <line x1="145" y1="96" x2="326" y2="96"/>
+            <line x1="815" y1="118" x2="815" y2="96"/>
+            <line x1="815" y1="96" x2="634" y2="96"/>
+            <line x1="480" y1="212" x2="480" y2="96"/>
+          </g>
+          <text x="700" y="200" font-size="11" fill="#8b8574">both build the same tree</text>
+        </g>
+      </svg>
+    </div>
+    <p class="sub">A selector engine generic over a trait view of the tree would be a second representation of the tree, and two representations drift. So the engines live beside the tree, and the parsers sit above it.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>HTML: the spec's algorithm, written down</h2></div>
+    <p class="sub">The tokenizer folds states that share a shape — there are no separate states for every attribute-value flavour — but the tree construction is the specification's list of insertion modes, in the specification's order, with the specification's repairs.</p>
+    <div class="cols two">
+      <div>
+        <h3>Why it is not "lenient XML"</h3>
+        <p>A lenient XML parser produces one repaired tree. WHATWG produces <em>the</em> tree: a specific one, which is why two browsers agree about <code>&lt;table&gt;&lt;div&gt;x&lt;div&gt;</code> and a lenient parser does not.</p>
+      </div>
+      <div>
+        <h3>What "repair" means concretely</h3>
+        <p>Implied <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, <code>&lt;body&gt;</code> and <code>&lt;tbody&gt;</code>; cells that close themselves; stray content fostered in front of a table; formatting reopened after a block closed it; misnested markup rearranged by the adoption agency.</p>
+      </div>
+    </div>
+    <div class="callout"><b>Judged by the corpus.</b> html5lib's tree-construction tests are part of the test suite, generated into a fixture by <code>scripts/make_html5lib_fixtures.py</code>. The test asserts a floor and the floor only rises; the cases that still differ are listed in the README.</div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>The chain: one shape, narrowing</h2></div>
+    <p class="sub">A <code>Selection</code> is the nodes and the document they came from. Every query takes a selection and answers a selection, so the type never changes and the chain never stops.</p>
+    <div style="margin:24px 0 6px">
+      <svg viewBox="0 0 960 210" role="img" aria-label="A selection narrows through css, xpath and a custom selector, then a single item is a node, from which the chain continues." style="width:100%;height:auto">
+        <g font-family="ui-monospace, monospace" font-size="12.5" fill="currentColor">
+          <g stroke-width="1.3" fill="none">
+            <rect x="10" y="40" width="120" height="52" stroke="currentColor"/>
+            <rect x="170" y="40" width="120" height="52" stroke="currentColor"/>
+            <rect x="330" y="40" width="120" height="52" stroke="#b23a1f"/>
+            <rect x="490" y="40" width="120" height="52" stroke="#b23a1f"/>
+            <rect x="650" y="40" width="120" height="52" stroke="#2f5d4c"/>
+            <rect x="810" y="40" width="130" height="52" stroke="currentColor" stroke-dasharray="4 3"/>
+          </g>
+          <text x="24" y="63">Document</text>
+          <text x="24" y="81" fill="#8b8574">1 node</text>
+
+          <text x="184" y="63">.css("li")</text>
+          <text x="184" y="81" fill="#8b8574">n nodes</text>
+
+          <text x="344" y="63" fill="#b23a1f">.xpath("..")</text>
+          <text x="344" y="81" fill="#8b8574">m nodes</text>
+
+          <text x="504" y="63" fill="#b23a1f">.selector(x)</text>
+          <text x="504" y="81" fill="#8b8574">k nodes</text>
+
+          <text x="664" y="63" fill="#2f5d4c">.items[0]</text>
+          <text x="664" y="81" fill="#8b8574">a Node</text>
+
+          <text x="824" y="63">.css("b")…</text>
+          <text x="824" y="81" fill="#8b8574">and on</text>
+
+          <g stroke="currentColor" stroke-width="1.2" marker-end="url(#ar2)">
+            <line x1="130" y1="66" x2="164" y2="66"/>
+            <line x1="290" y1="66" x2="324" y2="66"/>
+            <line x1="450" y1="66" x2="484" y2="66"/>
+            <line x1="610" y1="66" x2="644" y2="66"/>
+            <line x1="770" y1="66" x2="804" y2="66" stroke-dasharray="4 3"/>
+          </g>
+          <text x="10" y="130" fill="#8b8574">Selection ──────────────────────────────────────────────▶ Node, then Selection again</text>
+          <text x="10" y="160" fill="#8b8574">· results in document order · deduplicated by identity · empty stays empty</text>
+        </g>
+      </svg>
+    </div>
+    <h3>Identity, not equality</h3>
+    <p class="sub">Nodes are compared with <code>physical_equal</code>, never by value: two <code>&lt;li&gt;coffee&lt;/li&gt;</code> elements are different nodes, and a set that contains both must keep both.</p>
+    <h3>XPath's two answers</h3>
+    <p class="sub">XPath can answer a number. A chain cannot: it is always a set of nodes. So <code>xpath()</code> answers the node-set, and <code>xpath_value()</code> answers the typed <code>XPathValue</code> — nodes, string, number or boolean — for the queries that are questions rather than selections.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><h2>Writing back</h2></div>
+    <div class="cols two">
+      <div>
+        <h3>XML: exact</h3>
+        <p>Attribute order, CDATA as CDATA, comments, processing instructions with their raw data, the doctype including an internal subset, <code>&lt;a/&gt;</code> versus <code>&lt;a&gt;&lt;/a&gt;</code>. Names are Clark-spelled in the tree and prefixed on the way out, using the prefix the document declared; a namespace nothing declared gets <code>ns1</code> and a declaration on the element that needed it.</p>
+      </div>
+      <div>
+        <h3>HTML: by the rules</h3>
+        <p>Void elements take no close tag, raw-text elements are written raw, <code>&amp;</code> becomes <code>&amp;amp;</code> and a no-break space becomes <code>&amp;nbsp;</code> — WHATWG's own serialisation, so what you write is what a browser would read back as the same tree.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><h2>What the tests hold down</h2></div>
+    <table>
+      <thead><tr><th>Suite</th><th>What it pins</th></tr></thead>
+      <tbody>
+        <tr><td>Tree and chain</td><td>Every verb, on both sides — the node it creates and the parent pointers it leaves behind.</td></tr>
+        <tr><td>CSS engine</td><td>Every combinator, every attribute operator, every pseudo-class implemented — and the parse errors for the ones refused.</td></tr>
+        <tr><td>XPath 1.0</td><td>Axes including the reverse ones, predicate positions per context node, the comparison rules of §3.4, number formatting of §4.2.</td></tr>
+        <tr><td>XML</td><td>Byte-for-byte round trips, namespaces, and the well-formedness errors with their offsets.</td></tr>
+        <tr><td>HTML</td><td>html5lib's tree-construction corpus, and a hand-written case for every repair above.</td></tr>
+      </tbody>
+    </table>
+    <p class="sub">All of it runs on all four backends — wasm, wasm-gc, js, native — in CI, with <code>--deny-warn</code> and a formatting check that fails the build.</p>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>Apache-2.0 · moonbitstack</span>
+    <span><a href="https://github.com/moonbitstack/moonxml">github.com/moonbitstack/moonxml</a></span>
+    <span class="spacer"><a href="index.html">top ↑</a></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem("moonxml-theme"); } catch (e) {}
+  var system = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  root.setAttribute("data-theme", saved || system);
+  document.getElementById("theme").addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("moonxml-theme", next); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

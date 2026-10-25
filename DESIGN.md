@@ -62,6 +62,10 @@ shape:
    cycle — so they sit above the root, exactly as `@json` and `@jsonc` sit
    above `@moonjson`'s shared core.
 
+The root package is the module root itself (`moon.pkg` beside `moon.mod`), with
+`event/`, `xml/` and `html/` as its subdirectories and `examples/` beside them,
+so that `moon run examples/tour` resolves inside the same module.
+
 ## 3. The tree
 
 ```moonbit

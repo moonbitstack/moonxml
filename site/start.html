@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Start — moonxml</title>
+<meta name="description" content="A guided tour of moonxml: parse, query, edit, write back, and stream, in seven steps.">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%23b23a1f'>&lt;/&gt;</text></svg>">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="lt">&lt;</span><b>moonxml</b><span class="gt">/&gt;</span></a>
+    <nav class="top-nav">
+      <a href="start.html" aria-current="page">Start</a>
+      <a href="api.html">API</a>
+      <a href="inside.html">Inside</a>
+      <a class="hide-sm" href="https://github.com/moonbitstack/moonxml">GitHub</a>
+      <button class="theme-toggle" id="theme" title="Switch theme" aria-label="Switch theme">◐</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero" style="padding-bottom:20px">
+    <p class="eyebrow">guided tour</p>
+    <h1>Seven steps to a<br>document you can <em>edit</em>.</h1>
+    <p class="lede">Each step is a program you can paste into a file and run. Nothing here is an aside: by step seven you have used every part of the library.</p>
+    <p class="sub" style="margin-top:20px">The same tour ships as a runnable example: <code>moon run examples/tour</code>.</p>
+  </div>
+
+  <section style="border-top:1px solid var(--rule)">
+    <ol class="steps">
+
+      <li>
+        <h3>Read a page</h3>
+        <p>HTML is read the way a browser reads it — the document you hand over need not be closed, quoted, or correct.</p>
+        <p class="filename">step1.mbt</p>
+<pre><span class="k">let</span> page = <span class="f">@html.loads</span>(<span class="s">"&lt;ul id=list&gt;&lt;li&gt;coffee&lt;li&gt;tea&lt;/ul&gt;"</span>)
+println(page.<span class="f">css</span>(<span class="s">"li"</span>).<span class="f">length</span>())      <span class="cm">// 2</span>
+println(page.<span class="f">dumps</span>())</pre>
+        <p class="filename">output</p>
+<pre>2
+&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;&lt;ul id=<span class="s">"list"</span>&gt;&lt;li&gt;coffee&lt;/li&gt;&lt;li&gt;tea&lt;/li&gt;&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;</pre>
+        <div class="callout"><b>The parser told you what it fixed.</b> <code>page.repairs()</code> counts the elements it implied, the tags it dropped, the content it moved, and what it closed at the end of the file.</div>
+      </li>
+
+      <li>
+        <h3>Query by CSS</h3>
+        <p>Selectors 4, minus the parts that need a live browser to answer.</p>
+        <p class="filename">step2.mbt</p>
+<pre>page.<span class="f">css</span>(<span class="s">"#list li"</span>)              <span class="cm">// descendant</span>
+page.<span class="f">css</span>(<span class="s">"li + li"</span>)                <span class="cm">// next sibling</span>
+page.<span class="f">css</span>(<span class="s">"li:first-child"</span>)
+page.<span class="f">css</span>(<span class="s">"ul :not(.done)"</span>)
+page.<span class="f">css</span>(<span class="s">"a[href^='https']"</span>)       <span class="cm">// attribute prefix</span>
+page.<span class="f">css</span>(<span class="s">"ul:has(li.done)"</span>)        <span class="cm">// a parent, by its child</span>
+page.<span class="f">css</span>(<span class="s">"li:nth-child(2n+1)"</span>)</pre>
+        <p>A pseudo-class that only a browser can answer — <code>:hover</code>, <code>:visited</code> — is a <code>Refused</code> parse error, not a silent miss.</p>
+      </li>
+
+      <li>
+        <h3>Query by XPath</h3>
+        <p>The whole of XPath 1.0, and a typed answer when you want one.</p>
+        <p class="filename">step3.mbt</p>
+<pre><span class="cm">// a node-set, as a selection you can chain on</span>
+page.<span class="f">xpath</span>(<span class="s">"//li[2]"</span>).<span class="f">text</span>()
+
+<span class="cm">// anything else, as the value it is</span>
+<span class="k">let</span> count = page.<span class="f">xpath_value</span>(<span class="s">"count(//li)"</span>)   <span class="cm">// Num(2.0)</span>
+<span class="k">let</span> yes   = page.<span class="f">xpath_value</span>(<span class="s">"//li = 'tea'"</span>)  <span class="cm">// Flag(true)</span></pre>
+      </li>
+
+      <li>
+        <h3>Chain the two</h3>
+        <p>Every query answers the same shape, so nothing stops you mixing them — or stepping down into a node and carrying on.</p>
+        <p class="filename">step4.mbt</p>
+<pre>page.<span class="f">css</span>(<span class="s">"#list"</span>).<span class="f">xpath</span>(<span class="s">".//li[1]"</span>).<span class="f">text</span>()   <span class="cm">// "coffee"</span>
+page.<span class="f">xpath</span>(<span class="s">"//ul"</span>).<span class="f">childrens</span>().<span class="f">length</span>()       <span class="cm">// 2</span>
+page.<span class="f">by_tag</span>(<span class="s">"li"</span>).<span class="f">items</span>[<span class="s">0</span>].<span class="f">css</span>(<span class="s">"b"</span>)       <span class="cm">// a node, queried again</span></pre>
+        <p>Results come back in document order, deduplicated by identity, and an empty selection stays empty — it does not become “the whole document”.</p>
+      </li>
+
+      <li>
+        <h3>Edit the tree</h3>
+        <p>The verbs work on whatever the query returned. Parents stay true: a node you move knows where it went.</p>
+        <p class="filename">step5.mbt</p>
+<pre>page.<span class="f">css</span>(<span class="s">"li"</span>).<span class="f">first</span>().<span class="f">set_text</span>(<span class="s">"espresso"</span>)
+page.<span class="f">css</span>(<span class="s">"li"</span>).<span class="f">last</span>().<span class="f">add_class</span>(<span class="s">"done"</span>)
+
+<span class="k">let</span> cocoa = <span class="f">@moonxml.Element</span>::<span class="f">new</span>(<span class="s">"li"</span>,
+  childrens = [<span class="f">@moonxml.TextNode</span>(<span class="s">"cocoa"</span>)])
+page.<span class="f">css</span>(<span class="s">"ul"</span>).<span class="f">append</span>(<span class="f">@moonxml.ElementNode</span>(cocoa))
+
+page.<span class="f">css</span>(<span class="s">"li"</span>).<span class="f">first</span>().<span class="f">wrap</span>(<span class="s">"strong"</span>)   <span class="cm">// one node, one wrapper</span></pre>
+        <p class="filename">output</p>
+<pre>&lt;ul id=<span class="s">"list"</span>&gt;&lt;strong&gt;&lt;li&gt;espresso&lt;/li&gt;&lt;/strong&gt;&lt;li class=<span class="s">"done"</span>&gt;tea&lt;/li&gt;&lt;li&gt;cocoa&lt;/li&gt;&lt;/ul&gt;</pre>
+      </li>
+
+      <li>
+        <h3>Your own selector</h3>
+        <p>Selection logic that is yours belongs in the chain, not in a loop beside it.</p>
+        <p class="filename">step6.mbt</p>
+<pre><span class="k">let</span> by_length = <span class="f">@moonxml.SelectorFn</span>::<span class="f">new</span>((ctx, _q) =&gt; {
+  ctx.<span class="f">css</span>(<span class="s">"a[href]"</span>).<span class="f">filter</span>(node =&gt; <span class="k">match</span> node {
+    <span class="f">@moonxml.ElementNode</span>(data) =&gt; <span class="k">match</span> data.<span class="f">attr</span>(<span class="s">"href"</span>) {
+      <span class="f">Some</span>(href) =&gt; href.<span class="f">has_prefix</span>(<span class="s">"https://"</span>)
+      <span class="f">None</span> =&gt; <span class="k">false</span>
+    }
+    _ =&gt; <span class="k">false</span>
+  })
+})
+
+page.<span class="f">register</span>(<span class="s">"external"</span>, by_length)
+page.<span class="f">selector</span>(<span class="s">"external"</span>, <span class="s">""</span>).<span class="f">text</span>()</pre>
+        <p><code>register</code> is per document, so two documents can disagree about what a name means. <code>custom</code> runs a selector you never registered, when a name would be noise.</p>
+      </li>
+
+      <li>
+        <h3>Or read XML, or build nothing at all</h3>
+        <p>XML is strict: a document either reads whole or is refused with the offset of the fault. What it keeps, it keeps exactly.</p>
+        <p class="filename">step7.mbt</p>
+<pre><span class="k">let</span> src  = <span class="s">"&lt;feed xmlns:a='urn:a'&gt;&lt;a:entry id='1'/&gt;&lt;/feed&gt;"</span>
+<span class="k">let</span> feed = <span class="f">@xml.loads</span>(src)
+
+feed.<span class="f">css</span>(<span class="s">"entry"</span>).<span class="f">items</span>[<span class="s">0</span>].<span class="f">name</span>()   <span class="cm">// {urn:a}entry</span>
+feed.<span class="f">css</span>(<span class="s">"{urn:a}entry"</span>).<span class="f">length</span>()     <span class="cm">// 1</span>
+feed.<span class="f">dumps</span>() == src                    <span class="cm">// true, byte for byte</span></pre>
+        <p>And when you only need to look at the document rather than keep it:</p>
+        <p class="filename">step7b.mbt</p>
+<pre><span class="k">struct</span> Tagger { <span class="k">mut</span> tags : Int }
+
+<span class="k">impl</span> <span class="f">@event.Sink</span> <span class="k">for</span> Tagger <span class="k">with</span> <span class="f">push</span>(self, event) {
+  <span class="k">match</span> event {
+    <span class="f">@event.StartTag</span>(_) =&gt; self.tags = self.tags + 1
+    _ =&gt; ()
+  }
+}
+
+<span class="k">let</span> tagger = { tags: 0 }
+<span class="f">@xml.scan</span>(<span class="s">"&lt;a&gt;&lt;b/&gt;&lt;c/&gt;&lt;/a&gt;"</span>, tagger)
+println(tagger.tags)                    <span class="cm">// 3, no tree built</span></pre>
+
+        <div class="callout"><b>Next:</b> the <a href="api.html">complete API</a>, or <a href="inside.html">how the parsers and the chain work</a>.</div>
+      </li>
+
+    </ol>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>Apache-2.0 · moonbitstack</span>
+    <span><a href="https://github.com/moonbitstack/moonxml">github.com/moonbitstack/moonxml</a></span>
+    <span class="spacer"><a href="index.html">top ↑</a></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem("moonxml-theme"); } catch (e) {}
+  var system = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  root.setAttribute("data-theme", saved || system);
+  document.getElementById("theme").addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("moonxml-theme", next); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>
