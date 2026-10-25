@@ -172,7 +172,7 @@ TEMPLATE = """<!DOCTYPE html>
 <title>API — moonxml</title>
 <meta name="description" content="Every public type, trait and function in moonxml, generated from the packages' interfaces.">
 <link rel="stylesheet" href="assets/site.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%237a2b20'>&lt;/&gt;</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%237d2f22'>&lt;/&gt;</text></svg>">
 </head>
 <body>
 
@@ -218,6 +218,7 @@ __BODY__
     <span>Apache-2.0 · moonbitstack</span>
     <span><a href="https://github.com/moonbitstack/moonxml">github.com/moonbitstack/moonxml</a></span>
     <span class="spacer"><a href="index.html">top ↑</a></span>
+    <span class="colophon">Set in Iowan Old Style and Hoefler Text, labels in typewriter capitals · printed to the web on kraft</span>
   </div>
 </footer>
 
