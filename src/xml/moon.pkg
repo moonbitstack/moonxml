@@ -1,0 +1,11 @@
+// XML 1.0, https://www.w3.org/TR/REC-xml/
+// Namespaces 1.0, https://www.w3.org/TR/xml-names/
+//
+// Strict: well-formedness first. The scanner emits events; the tree builder
+// in the root package consumes them, so tolerance cannot drift into a second
+// parser.
+import {
+  "moonbitstack/moonxml",
+  "moonbitstack/moonxml/event",
+  "moonbitlang/core/string",
+}

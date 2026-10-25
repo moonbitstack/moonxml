@@ -1,0 +1,24 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonxml/event"
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum Event {
+  StartTag(name~ : String, attrs~ : Array[(String, String)], self_closing~ : Bool)
+  EndTag(name~ : String)
+  TextRun(text~ : String)
+  CDataRun(text~ : String)
+  CommentEvent(text~ : String)
+  ProcessingInstruction(target~ : String, data~ : String)
+  DoctypeEvent(text~ : String)
+}
+
+// Type aliases
+
+// Traits
+pub(open) trait Sink {
+  fn push(Self, Event) -> Unit
+}

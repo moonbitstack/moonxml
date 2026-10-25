@@ -72,6 +72,7 @@ pub struct Document {
   priv selectors : Map[String, &Selector]
   priv mut flavor : Flavor
   priv mut repairs : Repairs
+  priv mut nesting : Array[Element]
 }
 
 ///|
@@ -85,6 +86,7 @@ pub fn Document::new(flavor~ : Flavor = Xml) -> Document {
     selectors: Map([]),
     flavor,
     repairs: Repairs::new(),
+    nesting: [],
   }
   root.home = Some(doc)
   doc.seed_selectors()

@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonxml/xml"
+
+import {
+  "moonbitstack/moonxml",
+  "moonbitstack/moonxml/event",
+}
+
+// Values
+pub fn depth_limit() -> Int32
+
+pub fn load(Bytes) -> @moonxml.Document raise @moonxml.Refused
+
+pub fn loads(String) -> @moonxml.Document raise @moonxml.Refused
+
+pub fn loads_fragment(String) -> @moonxml.Document raise @moonxml.Refused
+
+pub fn scan(String, &@event.Sink, fragment? : Bool) -> Unit raise @moonxml.Refused
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

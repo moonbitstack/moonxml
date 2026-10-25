@@ -3,6 +3,7 @@ package "moonbitstack/moonxml"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitstack/moonxml/event",
 }
 
 // Values
@@ -62,6 +63,7 @@ pub fn Document::dump_html(Self) -> Bytes
 pub fn Document::dumps(Self) -> String
 pub fn Document::dumps_html(Self) -> String
 pub fn Document::eq(Self, Int32) -> Selection
+pub fn Document::events(Self) -> Array[@event.Event]
 pub fn Document::filter(Self, (Node) -> Bool) -> Selection
 pub fn Document::first(Self) -> Selection
 pub fn Document::flavor(Self) -> Flavor
@@ -71,6 +73,7 @@ pub fn Document::length(Self) -> Int32
 pub fn Document::new(flavor? : Flavor) -> Self
 pub fn Document::parent(Self) -> Selection
 pub fn Document::prepend(Self, Node) -> Unit
+pub fn Document::push(Self, @event.Event) -> Unit
 pub fn Document::register(Self, String, &Selector) -> Unit
 pub fn Document::remove(Self) -> Unit
 pub fn Document::remove_attr(Self, String) -> Unit
@@ -87,6 +90,7 @@ pub fn Document::unwrap(Self) -> Unit
 pub fn Document::wrap(Self, String) -> Unit
 pub fn Document::xpath(Self, String) -> Selection raise Refused
 pub fn Document::xpath_value(Self, String) -> XPathValue raise Refused
+pub impl @event.Sink for Document
 
 pub struct Element {
   name : String

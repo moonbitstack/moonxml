@@ -1,0 +1,2 @@
+// The streaming vocabulary: what both parsers emit and what a caller's own
+// sink implements. It depends on nothing, which is why it is a package.
