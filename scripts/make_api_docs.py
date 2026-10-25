@@ -172,7 +172,7 @@ TEMPLATE = """<!DOCTYPE html>
 <title>API — moonxml</title>
 <meta name="description" content="Every public type, trait and function in moonxml, generated from the packages' interfaces.">
 <link rel="stylesheet" href="assets/site.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%23b23a1f'>&lt;/&gt;</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%237a2b20'>&lt;/&gt;</text></svg>">
 </head>
 <body>
 
@@ -193,6 +193,11 @@ TEMPLATE = """<!DOCTYPE html>
   <p class="eyebrow">__TOTAL__ public items</p>
   <h1 style="font-size:clamp(32px,4vw,44px);margin-bottom:10px">The API</h1>
   <p class="sub">Generated from each package's interface file, so it cannot describe something the code does not have — or miss something it does.</p>
+  <div class="colophon-line">
+    <span><b>four packages</b></span><span class="sep">·</span>
+    <span>every public item</span><span class="sep">·</span>
+    <span>generated, not typed</span>
+  </div>
 
   <div class="api-layout" style="margin-top:34px">
     <aside class="api-nav">
@@ -205,6 +210,7 @@ __NAV__
 __BODY__
     </div>
   </div>
+  <p class="fleuron">❦</p>
 </main>
 
 <footer class="site">

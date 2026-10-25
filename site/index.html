@@ -6,7 +6,7 @@
 <title>moonxml — HTML, XML and SVG for MoonBit</title>
 <meta name="description" content="One mutable tree for HTML, XML and SVG in MoonBit. Read it the way a browser reads it, query it by CSS selector or XPath 1.0, edit it in place, write it back exactly.">
 <link rel="stylesheet" href="assets/site.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%23b23a1f'>&lt;/&gt;</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%237a2b20'>&lt;/&gt;</text></svg>">
 </head>
 <body>
 
@@ -17,7 +17,7 @@
       <a href="start.html">Start</a>
       <a href="api.html">API</a>
       <a href="inside.html">Inside</a>
-      <a class="hide-sm" href="https://github.com/moonbitstack/moonxml" aria-label="Repository">GitHub</a>
+      <a class="hide-sm" href="https://github.com/moonbitstack/moonxml">GitHub</a>
       <button class="theme-toggle" id="theme" title="Switch theme" aria-label="Switch theme">◐</button>
     </nav>
   </div>
@@ -28,18 +28,20 @@
   <div class="hero">
     <div class="hero-grid">
       <div>
-        <p class="eyebrow">MoonBit · document library</p>
+        <p class="eyebrow">MoonBit · a document library</p>
         <h1>Read the web.<br>Query it like a <em>tree</em>.</h1>
         <p class="lede">moonxml parses HTML the way a browser does — repairing as it goes — and XML the way a validator does, then hands you one mutable tree to walk, query and rewrite.</p>
-        <div class="hero-facts">
-          <span><b>CSS Selectors 4</b> static subset</span>
-          <span><b>XPath 1.0</b> complete</span>
-          <span><b>WHATWG</b> HTML</span>
-          <span><b>XML 1.0</b> + namespaces</span>
+        <div class="colophon-line">
+          <span><b>HTML</b></span><span class="sep">·</span>
+          <span><b>XML</b></span><span class="sep">·</span>
+          <span><b>SVG</b></span><span class="sep">·</span>
+          <span>one tree</span><span class="sep">·</span>
+          <span>CSS &amp; XPath</span><span class="sep">·</span>
+          <span>Apache-2.0</span>
         </div>
       </div>
       <div>
-        <p class="filename">tour.mbt</p>
+        <p class="filename">listing i — tour.mbt</p>
 <pre><span class="k">let</span> page = <span class="f">@html.loads</span>(<span class="s">"&lt;ul id=list&gt;&lt;li&gt;one&lt;li&gt;two&lt;/ul&gt;"</span>)
 
 <span class="cm">// two list items, though the document closed none</span>
@@ -56,36 +58,45 @@ page.<span class="f">dumps</span>()</pre>
   </div>
 
   <section>
-    <div class="sec-head"><span class="sec-num">01</span><h2>One tree, two syntaxes</h2></div>
-    <p class="sub">HTML is not well-formed and never has been; XML is and must be. Both become the same node kinds, so the query you wrote for a page works on a feed.</p>
-    <div class="cols two">
+    <div class="chapter">
+      <div class="chapter-mark">I<span>the tree</span></div>
       <div>
-        <p class="filename">elements, text, and the rest</p>
+        <h2>One tree, two syntaxes</h2>
+        <p class="sub dropcap">HTML is not well-formed and never has been; XML is and must be. Both become the same node kinds, so the query you wrote for a page works on a feed — the node does not remember which parser made it.</p>
+        <div class="cols two">
+          <div>
+            <p class="filename">node kinds</p>
 <pre><span class="k">pub(all) enum</span> Node {
-  ElementNode(Element)
-  TextNode(String)
-  CDataNode(String)
-  CommentNode(String)
-  ProcessingInstructionNode(ProcessingInstruction)
-  DoctypeNode(String)
+  <span class="f">ElementNode</span>(Element)
+  <span class="f">TextNode</span>(String)
+  <span class="f">CDataNode</span>(String)
+  <span class="f">CommentNode</span>(String)
+  <span class="f">ProcessingInstructionNode</span>(…)
+  <span class="f">DoctypeNode</span>(String)
 }</pre>
-      </div>
-      <div>
-        <p class="filename">a name, its attributes in order, its children</p>
+          </div>
+          <div>
+            <p class="filename">element</p>
 <pre><span class="k">pub struct</span> Element {
   name      : String            <span class="cm">// {uri}local</span>
   attrs     : Array[(String, String)]
   childrens : Array[Node]
   ...
 }</pre>
-        <p class="sub" style="margin-top:14px">Names are <b>James Clark</b> spelled — <code>{urn:a}entry</code>, not <code>a:entry</code> — so a node means the same thing whichever prefix the document chose.</p>
+          </div>
+        </div>
+        <p class="sub" style="margin-top:18px;margin-bottom:0">Names are <b>James Clark</b> spelled — <code>{urn:a}entry</code>, not <code>a:entry</code> — so a node means the same thing whichever prefix the document chose.</p>
       </div>
     </div>
   </section>
 
   <section>
-    <div class="sec-head"><span class="sec-num">02</span><h2>The chain never breaks</h2></div>
-    <p class="sub">Every query narrows the nodes you have and returns the same selection shape, so a chain can mix engines and still land on a node you can edit.</p>
+    <div class="chapter">
+      <div class="chapter-mark">II<span>the chain</span></div>
+      <div>
+        <h2>The chain never breaks</h2>
+        <p class="sub">Every query narrows the nodes you have and answers the same shape, so a chain can mix engines and still land on a node you can edit.</p>
+        <p class="filename">listing ii — one selection, narrowed</p>
 <pre><span class="n">1</span>page.<span class="f">xpath</span>(<span class="s">"//table"</span>)        <span class="cm">  1 · xpath</span>
 <span class="n">2</span>    .<span class="f">css</span>(<span class="s">"tr:nth-child(2)"</span>)  <span class="cm">  2 · css</span>
 <span class="n">3</span>    .<span class="f">selector</span>(<span class="s">"mine"</span>, <span class="s">""</span>)      <span class="cm">  3 · a selector you registered</span>
@@ -94,123 +105,149 @@ page.<span class="f">dumps</span>()</pre>
 <span class="n">6</span>    .<span class="f">childrens</span>()[<span class="s">1</span>]           <span class="cm">  6 · walk down, one node</span>
 <span class="n">7</span>    .<span class="f">css</span>(<span class="s">"span"</span>)             <span class="cm">  7 · and query again</span>
 <span class="n">8</span>    .<span class="f">add_class</span>(<span class="s">"picked"</span>)      <span class="cm">  8 · edit in place</span></pre>
-    <div class="cols three">
-      <div class="feature">
-        <h3>CSS</h3>
-        <p>Type, class, id, attributes with every operator and the case flag, four combinators, <code>:not</code>/<code>:is</code>/<code>:where</code>/<code>:has</code>, the structural pseudo-classes, <code>an+b</code>.</p>
-      </div>
-      <div class="feature">
-        <h3>XPath 1.0</h3>
-        <p>All thirteen axes, node tests, predicates with expressions, the operator table, the core functions — and typed answers: nodes, strings, numbers, booleans.</p>
-      </div>
-      <div class="feature">
-        <h3>Yours</h3>
-        <p>Implement <code>Selector</code>, register it by name, call it in the chain like a built-in. <code>SelectorFn</code> covers the ones that are just a closure.</p>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="sec-head"><span class="sec-num">03</span><h2>Editing is not a second library</h2></div>
-    <p class="sub">The verbs a scraping job needs, on the same selection the query returned. Parents stay true, so a node you moved knows where it is.</p>
-    <table>
-      <thead><tr><th>Group</th><th>Verbs</th></tr></thead>
-      <tbody>
-        <tr><td>Structure</td><td><code>append</code> <code>prepend</code> <code>insert</code> <code>insert_before</code> <code>insert_after</code> <code>replace_with</code> <code>remove</code> <code>unwrap</code> <code>wrap</code> <code>clear</code> <code>smooth</code></td></tr>
-        <tr><td>Attributes</td><td><code>set_attr</code> <code>remove_attr</code> <code>add_class</code> <code>remove_class</code> <code>attr</code> <code>has_attr</code> <code>has_class</code></td></tr>
-        <tr><td>Content</td><td><code>set_text</code> <code>text</code> <code>html</code> <code>dumps</code> <code>dumps_html</code></td></tr>
-        <tr><td>Navigation</td><td><code>childrens</code> <code>parent</code> <code>descendants</code> <code>closest</code> <code>siblings</code> <code>first</code> <code>last</code> <code>eq</code> <code>filter</code></td></tr>
-      </tbody>
-    </table>
-  </section>
-
-  <section>
-    <div class="sec-head"><span class="sec-num">04</span><h2>Two ways to read a document</h2></div>
-    <p class="sub">Build the tree, or do not build it at all. The XML scanner emits events to any sink, which is how the tree builder itself works — one parser, no drift.</p>
-    <div style="display:grid;grid-template-columns:1fr;gap:8px;margin:26px 0 8px">
-      <svg viewBox="0 0 980 190" role="img" aria-label="The parser pipeline: source text goes to a scanner, which emits events to a sink, which may be a tree builder that the chain then queries." style="width:100%;height:auto">
-        <defs>
-          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
-          </marker>
-        </defs>
-        <g font-family="ui-monospace, monospace" font-size="12.5" fill="currentColor">
-          <rect x="2" y="52" width="150" height="70" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3"/>
-          <text x="16" y="78">source</text>
-          <text x="16" y="98" fill="#8b8574">html | xml</text>
-
-          <rect x="196" y="42" width="170" height="90" fill="none" stroke="#b23a1f" stroke-width="1.5"/>
-          <text x="212" y="70" fill="#b23a1f">scanner</text>
-          <text x="212" y="90" fill="#8b8574">tokenizer</text>
-          <text x="212" y="108" fill="#8b8574">tree construction</text>
-
-          <rect x="410" y="52" width="150" height="70" fill="none" stroke="currentColor" stroke-width="1"/>
-          <text x="426" y="80">Event</text>
-          <text x="426" y="100" fill="#8b8574">StartTag, TextRun…</text>
-
-          <rect x="604" y="42" width="160" height="90" fill="none" stroke="#2f5d4c" stroke-width="1.5"/>
-          <text x="620" y="70" fill="#2f5d4c">Sink</text>
-          <text x="620" y="90" fill="#8b8574">your counter, or</text>
-          <text x="620" y="108" fill="#8b8574">Document::push</text>
-
-          <rect x="808" y="42" width="168" height="90" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          <text x="824" y="70">Document</text>
-          <text x="824" y="90" fill="#8b8574">css · xpath · edit</text>
-          <text x="824" y="108" fill="#8b8574">dumps</text>
-
-          <g stroke="currentColor" stroke-width="1.2" marker-end="url(#ar)">
-            <line x1="156" y1="87" x2="190" y2="87"/>
-            <line x1="370" y1="87" x2="404" y2="87"/>
-            <line x1="564" y1="87" x2="598" y2="87"/>
-            <line x1="768" y1="87" x2="802" y2="87" stroke-dasharray="4 3"/>
-          </g>
-          <text x="772" y="150" font-size="11" fill="#8b8574">optional</text>
-        </g>
-      </svg>
-    </div>
-  </section>
-
-  <section>
-    <div class="sec-head"><span class="sec-num">05</span><h2>Small, and stated plainly</h2></div>
-    <div class="cols three">
-      <div class="feature">
-        <h3>Two dependencies</h3>
-        <p><code>moonbitlang/core</code> and nothing else. No transitive surprises in your lockfile.</p>
-      </div>
-      <div class="feature">
-        <h3>Fails loudly, once</h3>
-        <p>One error family, <code>Refused</code>. A broken XML document names the offset; a bad selector names the fault. HTML never refuses — it repairs, and tells you what it repaired.</p>
-      </div>
-      <div class="feature">
-        <h3>Four backends</h3>
-        <p>wasm, wasm-gc, js and native, tested on all of them, because a parser moves bytes and bytes are where backends differ.</p>
+        <div class="cols three">
+          <div class="feature">
+            <h3>CSS</h3>
+            <p>Type, class, id, attributes with every operator and the case flag, four combinators, <code>:not</code>/<code>:is</code>/<code>:where</code>/<code>:has</code>, the structural pseudo-classes, <code>an+b</code>.</p>
+          </div>
+          <div class="feature">
+            <h3>XPath 1.0</h3>
+            <p>All thirteen axes, node tests, predicates with expressions, the operator table, the core functions — and typed answers: nodes, strings, numbers, booleans.</p>
+          </div>
+          <div class="feature">
+            <h3>Yours</h3>
+            <p>Implement <code>Selector</code>, register it by name, call it in the chain like a built-in. <code>SelectorFn</code> covers the ones that are just a closure.</p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
   <section>
-    <div class="sec-head"><span class="sec-num">06</span><h2>Install</h2></div>
-    <div class="cols two">
+    <div class="chapter">
+      <div class="chapter-mark">III<span>the verbs</span></div>
       <div>
-        <p class="filename">shell</p>
+        <h2>Editing is not a second library</h2>
+        <p class="sub">The verbs a scraping job needs, on the same selection the query returned. Parents stay true, so a node you moved knows where it is.</p>
+        <table>
+          <thead><tr><th>Group</th><th>Verbs</th></tr></thead>
+          <tbody>
+            <tr><td>Structure</td><td><code>append</code> <code>prepend</code> <code>insert</code> <code>insert_before</code> <code>insert_after</code> <code>replace_with</code> <code>remove</code> <code>unwrap</code> <code>wrap</code> <code>clear</code> <code>smooth</code></td></tr>
+            <tr><td>Attributes</td><td><code>set_attr</code> <code>remove_attr</code> <code>add_class</code> <code>remove_class</code> <code>attr</code> <code>has_attr</code> <code>has_class</code></td></tr>
+            <tr><td>Content</td><td><code>set_text</code> <code>text</code> <code>html</code> <code>dumps</code> <code>dumps_html</code></td></tr>
+            <tr><td>Navigation</td><td><code>childrens</code> <code>parent</code> <code>descendants</code> <code>closest</code> <code>first</code> <code>last</code> <code>eq</code> <code>filter</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="chapter">
+      <div class="chapter-mark">IV<span>the reading</span></div>
+      <div>
+        <h2>Two ways to read a document</h2>
+        <p class="sub">Build the tree, or do not build it at all. The XML scanner emits events to any sink, which is how the tree builder itself works — one parser, and no drift between it and a second one written for streaming.</p>
+
+        <div class="plate">
+          <p class="plate-cap">Plate I <em>— the reading of a document, from text to tree</em></p>
+          <svg viewBox="0 0 980 190" role="img" aria-label="Source text goes to a scanner, which emits events to a sink, which is a tree builder that the chain then queries." style="width:100%;height:auto">
+            <defs>
+              <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+              </marker>
+            </defs>
+            <g font-family="ui-monospace, monospace" font-size="12" fill="currentColor">
+              <rect x="2" y="52" width="150" height="70" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3"/>
+              <text x="16" y="78">source</text>
+              <text x="16" y="98" fill="currentColor" opacity="0.55">html | xml</text>
+
+              <rect x="196" y="42" width="170" height="90" fill="none" stroke="#7a2b20" stroke-width="1.6"/>
+              <text x="212" y="70" fill="#7a2b20">scanner</text>
+              <text x="212" y="90" fill="currentColor" opacity="0.55">tokenizer</text>
+              <text x="212" y="108" fill="currentColor" opacity="0.55">tree construction</text>
+
+              <rect x="410" y="52" width="150" height="70" fill="none" stroke="currentColor" stroke-width="1"/>
+              <text x="426" y="80">Event</text>
+              <text x="426" y="100" fill="currentColor" opacity="0.55">StartTag, TextRun…</text>
+
+              <rect x="604" y="42" width="160" height="90" fill="none" stroke="#47573a" stroke-width="1.6"/>
+              <text x="620" y="70" fill="#47573a">Sink</text>
+              <text x="620" y="90" fill="currentColor" opacity="0.55">your counter, or</text>
+              <text x="620" y="108" fill="currentColor" opacity="0.55">Document::push</text>
+
+              <rect x="808" y="42" width="168" height="90" fill="none" stroke="currentColor" stroke-width="1.6"/>
+              <text x="824" y="70">Document</text>
+              <text x="824" y="90" fill="currentColor" opacity="0.55">css · xpath · edit</text>
+              <text x="824" y="108" fill="currentColor" opacity="0.55">dumps</text>
+
+              <g stroke="currentColor" stroke-width="1.2" marker-end="url(#ar)">
+                <line x1="156" y1="87" x2="190" y2="87"/>
+                <line x1="370" y1="87" x2="404" y2="87"/>
+                <line x1="564" y1="87" x2="598" y2="87"/>
+                <line x1="768" y1="87" x2="802" y2="87" stroke-dasharray="4 3"/>
+              </g>
+              <text x="772" y="150" font-size="10.5" opacity="0.55">optional</text>
+            </g>
+          </svg>
+          <p class="plate-note">A caller who only wants to count tags writes one <code>Sink</code> and never allocates a node.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="chapter">
+      <div class="chapter-mark">V<span>the limits</span></div>
+      <div>
+        <h2>Small, and stated plainly</h2>
+        <div class="cols three">
+          <div class="feature">
+            <h3>Two dependencies</h3>
+            <p><code>moonbitlang/core</code> and nothing else. No transitive surprises in your lockfile.</p>
+          </div>
+          <div class="feature">
+            <h3>Fails loudly, once</h3>
+            <p>One error family, <code>Refused</code>: a broken XML document names the byte, a bad selector names the fault. HTML never refuses — it repairs, and says what it repaired.</p>
+          </div>
+          <div class="feature">
+            <h3>Four backends</h3>
+            <p>wasm, wasm-gc, js and native, tested on all of them, because a parser moves bytes and bytes are where backends differ.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="chapter">
+      <div class="chapter-mark">VI<span>the copy</span></div>
+      <div>
+        <h2>Install</h2>
+        <div class="cols two">
+          <div>
+            <p class="filename">shell</p>
 <pre>moon add moonbitstack/moonxml</pre>
-      </div>
-      <div>
-        <p class="filename">moon.pkg</p>
+          </div>
+          <div>
+            <p class="filename">moon.pkg</p>
 <pre><span class="k">import</span> {
   <span class="s">"moonbitstack/moonxml"</span>       <span class="cm">// tree, chain, engines</span>
   <span class="s">"moonbitstack/moonxml/html"</span>  <span class="cm">// @html.loads</span>
   <span class="s">"moonbitstack/moonxml/xml"</span>   <span class="cm">// @xml.loads</span>
 }</pre>
+          </div>
+        </div>
+        <p class="sub" style="margin-top:22px;margin-bottom:0">
+          <a href="start.html" style="color:var(--oxblood)">Start the guided tour →</a> &nbsp;·&nbsp;
+          <a href="api.html" style="color:var(--ink-soft)">the complete API</a> &nbsp;·&nbsp;
+          <a href="inside.html" style="color:var(--ink-soft)">how it works</a>
+        </p>
       </div>
     </div>
-    <p class="sub" style="margin-top:20px">
-      <a href="start.html" style="color:var(--vermillion)">Start the guided tour →</a> &nbsp;·&nbsp;
-      <a href="api.html" style="color:var(--ink-soft)">the complete API</a> &nbsp;·&nbsp;
-      <a href="inside.html" style="color:var(--ink-soft)">how it works</a>
-    </p>
   </section>
 
+  <p class="fleuron">❦</p>
 </main>
 
 <footer class="site">
@@ -218,6 +255,7 @@ page.<span class="f">dumps</span>()</pre>
     <span>Apache-2.0 · moonbitstack</span>
     <span><a href="https://github.com/moonbitstack/moonxml">github.com/moonbitstack/moonxml</a></span>
     <span class="spacer"><a href="index.html">top ↑</a></span>
+    <span class="colophon">Set in Palatino and Iowan Old Style · 120 tests on four backends · printed to the web</span>
   </div>
 </footer>
 

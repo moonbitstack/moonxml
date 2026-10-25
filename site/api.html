@@ -6,7 +6,7 @@
 <title>API — moonxml</title>
 <meta name="description" content="Every public type, trait and function in moonxml, generated from the packages' interfaces.">
 <link rel="stylesheet" href="assets/site.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%23b23a1f'>&lt;/&gt;</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%237a2b20'>&lt;/&gt;</text></svg>">
 </head>
 <body>
 
@@ -27,6 +27,11 @@
   <p class="eyebrow">187 public items</p>
   <h1 style="font-size:clamp(32px,4vw,44px);margin-bottom:10px">The API</h1>
   <p class="sub">Generated from each package's interface file, so it cannot describe something the code does not have — or miss something it does.</p>
+  <div class="colophon-line">
+    <span><b>four packages</b></span><span class="sep">·</span>
+    <span>every public item</span><span class="sep">·</span>
+    <span>generated, not typed</span>
+  </div>
 
   <div class="api-layout" style="margin-top:34px">
     <aside class="api-nav">
@@ -72,7 +77,7 @@
 <a href="#moonxml-document-events">Document::events</a>
 <a href="#moonxml-document-filter">Document::filter</a>
 <a href="#moonxml-document-first">Document::first</a>
-<a href="#moonxml-document-flavor">Document::flavor</a>
+<a href="#moonxml-document-flavour">Document::flavour</a>
 <a href="#moonxml-document-html">Document::html</a>
 <a href="#moonxml-document-last">Document::last</a>
 <a href="#moonxml-document-length">Document::length</a>
@@ -133,13 +138,13 @@
 <a href="#moonxml-element-wrap">Element::wrap</a>
 <a href="#moonxml-element-xpath">Element::xpath</a>
 <a href="#moonxml-element-xpath-value">Element::xpath_value</a>
-<a href="#moonxml-flavor">Flavor</a>
-<a href="#moonxml-flavor-equal">Flavor::equal</a>
-<a href="#moonxml-flavor-not-equal">Flavor::not_equal</a>
-<a href="#moonxml-flavor-output">Flavor::output</a>
-<a href="#moonxml-flavor-to-repr">Flavor::to_repr</a>
-<a href="#moonxml-flavor-to-string">Flavor::to_string</a>
-<a href="#moonxml-pub-impl-show-for-flavor">pub impl Show for Flavor</a>
+<a href="#moonxml-flavour">Flavour</a>
+<a href="#moonxml-flavour-equal">Flavour::equal</a>
+<a href="#moonxml-flavour-not-equal">Flavour::not_equal</a>
+<a href="#moonxml-flavour-output">Flavour::output</a>
+<a href="#moonxml-flavour-to-repr">Flavour::to_repr</a>
+<a href="#moonxml-flavour-to-string">Flavour::to_string</a>
+<a href="#moonxml-pub-impl-show-for-flavour">pub impl Show for Flavour</a>
 <a href="#moonxml-node">Node</a>
 <a href="#moonxml-node-by-class">Node::by_class</a>
 <a href="#moonxml-node-by-id">Node::by_id</a>
@@ -374,9 +379,9 @@
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::first(<span class="ty">Self</span>) -&gt; <span class="ty">Selection</span></span></pre>
 </div>
-<div class="api-item" id="moonxml-document-flavor" data-kind="fn">
+<div class="api-item" id="moonxml-document-flavour" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::flavor(<span class="ty">Self</span>) -&gt; <span class="ty">Flavor</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::flavour(<span class="ty">Self</span>) -&gt; <span class="ty">Flavour</span></span></pre>
 </div>
 <div class="api-item" id="moonxml-document-html" data-kind="fn">
 <span class="kind">fn</span>
@@ -392,7 +397,7 @@
 </div>
 <div class="api-item" id="moonxml-document-new" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::new(flavor? : <span class="ty">Flavor</span>) -&gt; <span class="ty">Self</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::new(flavour? : <span class="ty">Flavour</span>) -&gt; <span class="ty">Self</span></span></pre>
 </div>
 <div class="api-item" id="moonxml-document-parent" data-kind="fn">
 <span class="kind">fn</span>
@@ -625,36 +630,36 @@
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::xpath_value(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">XPathValue</span> raise <span class="ty">Refused</span></span></pre>
 </div>
-<div class="api-item" id="moonxml-flavor" data-kind="type">
+<div class="api-item" id="moonxml-flavour" data-kind="type">
 <span class="kind">type</span>
-<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">enum</span> <span class="ty">Flavor</span> {
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">enum</span> <span class="ty">Flavour</span> {
   <span class="ty">Xml</span>
   <span class="ty">Html</span>
 } derive(<span class="ty">Eq</span>, @debug.<span class="ty">Debug</span>)</span></pre>
 </div>
-<div class="api-item" id="moonxml-flavor-equal" data-kind="fn">
+<div class="api-item" id="moonxml-flavour-equal" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavor</span>::equal(<span class="ty">Self</span>, <span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavour</span>::equal(<span class="ty">Self</span>, <span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
 </div>
-<div class="api-item" id="moonxml-flavor-not-equal" data-kind="fn">
+<div class="api-item" id="moonxml-flavour-not-equal" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavor</span>::not_equal(<span class="ty">Self</span>, <span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavour</span>::not_equal(<span class="ty">Self</span>, <span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
 </div>
-<div class="api-item" id="moonxml-flavor-output" data-kind="fn">
+<div class="api-item" id="moonxml-flavour-output" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavor</span>::output(<span class="ty">Self</span>, &amp;<span class="ty">Logger</span>) -&gt; <span class="ty">Unit</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavour</span>::output(<span class="ty">Self</span>, &amp;<span class="ty">Logger</span>) -&gt; <span class="ty">Unit</span></span></pre>
 </div>
-<div class="api-item" id="moonxml-flavor-to-repr" data-kind="fn">
+<div class="api-item" id="moonxml-flavour-to-repr" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavor</span>::to_repr(<span class="ty">Self</span>) -&gt; @debug.<span class="ty">Repr</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavour</span>::to_repr(<span class="ty">Self</span>) -&gt; @debug.<span class="ty">Repr</span></span></pre>
 </div>
-<div class="api-item" id="moonxml-flavor-to-string" data-kind="fn">
+<div class="api-item" id="moonxml-flavour-to-string" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavor</span>::to_string(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavour</span>::to_string(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
 </div>
-<div class="api-item" id="moonxml-pub-impl-show-for-flavor" data-kind="fn">
+<div class="api-item" id="moonxml-pub-impl-show-for-flavour" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">impl</span> <span class="ty">Show</span> for <span class="ty">Flavor</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">impl</span> <span class="ty">Show</span> for <span class="ty">Flavour</span></span></pre>
 </div>
 <div class="api-item" id="moonxml-node" data-kind="type">
 <span class="kind">type</span>
@@ -1056,6 +1061,7 @@
 </section>
     </div>
   </div>
+  <p class="fleuron">❦</p>
 </main>
 
 <footer class="site">
