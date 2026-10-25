@@ -11,3 +11,5 @@ license = "Apache-2.0"
 keywords = [ "html", "xml", "svg", "xpath", "css-selector", "moonbit" ]
 
 description = "moonxml — HTML, XML and SVG for MoonBit: parse, query by XPath or CSS selector, and edit one mutable tree. Tolerant the way WHATWG says to be."
+
+source = "src"
