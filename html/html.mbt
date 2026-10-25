@@ -92,7 +92,7 @@ pub fn load(bytes : Bytes) -> @moonxml.Document {
 ///|
 /// Read a fragment in the body context, the way `innerHTML` does.
 pub fn loads_fragment(text : String) -> @moonxml.Document {
-  let doc = @moonxml.Document::new(flavor=@moonxml.Html)
+  let doc = @moonxml.Document::new(flavour=@moonxml.Html)
   let builder : Builder = {
     doc,
     stack: [doc.root],
@@ -119,7 +119,7 @@ pub fn loads_fragment(text : String) -> @moonxml.Document {
 
 ///|
 fn parse(text : String) -> @moonxml.Document {
-  let doc = @moonxml.Document::new(flavor=@moonxml.Html)
+  let doc = @moonxml.Document::new(flavour=@moonxml.Html)
   let builder : Builder = {
     doc,
     stack: [doc.root],

@@ -25,7 +25,7 @@ priv struct Scan {
 ///|
 /// Read a document and answer its tree.
 pub fn loads(text : String) -> @moonxml.Document raise @moonxml.Refused {
-  let doc = @moonxml.Document::new(flavor=@moonxml.Xml)
+  let doc = @moonxml.Document::new(flavour=@moonxml.Xml)
   scan(text, doc, fragment=false)
   doc
 }
@@ -43,7 +43,7 @@ pub fn load(bytes : Bytes) -> @moonxml.Document raise @moonxml.Refused {
 pub fn loads_fragment(
   text : String,
 ) -> @moonxml.Document raise @moonxml.Refused {
-  let doc = @moonxml.Document::new(flavor=@moonxml.Xml)
+  let doc = @moonxml.Document::new(flavour=@moonxml.Xml)
   scan(text, doc, fragment=true)
   doc
 }

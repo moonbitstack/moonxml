@@ -293,7 +293,7 @@ pub fn Selection::text(self : Selection) -> String {
 }
 
 ///|
-/// The inner HTML of the first selected element, written in the flavor its
+/// The inner HTML of the first selected element, written in the flavour its
 /// document was read as; `""` when the selection holds no element.
 pub fn Selection::html(self : Selection) -> String {
   for node in self.items {
@@ -313,7 +313,7 @@ pub fn Element::html(self : Element) -> String {
 fn inner_html(element : Element) -> String {
   let out = StringBuilder()
   let html = match element.document() {
-    Some(doc) => doc.flavor is Html
+    Some(doc) => doc.flavour is Html
     None => false
   }
   for child in element.childrens {

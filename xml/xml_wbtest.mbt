@@ -43,7 +43,7 @@ test "a document becomes a tree" {
 ///|
 test "a well-formed document writes back byte for byte" {
   // Attribute values are written double-quoted: a document that used single
-  // quotes normalises on the first write and is byte-stable from then on.
+  // quotes normalizes on the first write and is byte-stable from then on.
   let cases = [
     "<a/>", "<a></a>", "<a b=\"1\" c=\"2\"/>", "<a c=\"2\" b=\"1\"></a>", "<?xml version=\"1.0\"?><r><x/></r>",
     "<!DOCTYPE html><html><body><p>hi</p></body></html>", "<r><![CDATA[x < y & z]]></r>",
@@ -58,7 +58,7 @@ test "a well-formed document writes back byte for byte" {
 
 ///|
 test "character references decode, and that is the one deviation" {
-  // The DOM means them decoded; a document written with them normalises on
+  // The DOM means them decoded; a document written with them normalizes on
   // the first write and is byte-stable from then on.
   let doc = loads("<r>&#65;&#x42;</r>")
   assert_eq(doc.css("r").text(), "AB")
@@ -164,5 +164,10 @@ test "the chain reads an XML document like any other" {
   assert_eq(doc.css("entry").length(), 2)
   assert_eq(doc.xpath("//entry[@id='2']/title").text(), "Two")
   assert_eq(doc.css("entry").xpath("@id").text(), "12")
-  assert_eq(doc.flavor(), @moonxml.Xml)
+  assert_eq(doc.flavour(), @moonxml.Xml)
+}
+
+///|
+test "the depth bound is stated, not buried" {
+  assert_eq(depth_limit(), 512)
 }

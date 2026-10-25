@@ -857,7 +857,7 @@ fn eval_expr(
       for node in right {
         merged.push(node)
       }
-      Nodes(selection_for(normalise(merged), doc))
+      Nodes(selection_for(normalize(merged), doc))
     }
     Filter(base~, predicates~) => {
       let base_value = eval_expr(base, ctx, doc)
@@ -973,7 +973,7 @@ fn walk_steps(
         gathered.push(found)
       }
     }
-    current = normalise(gathered)
+    current = normalize(gathered)
   }
   current
 }
@@ -1683,7 +1683,7 @@ fn id_function(
       })
     _ => ()
   }
-  Nodes(selection_for(normalise(found), doc))
+  Nodes(selection_for(normalize(found), doc))
 }
 
 ///|
@@ -1895,7 +1895,7 @@ fn f64_nan() -> Double {
 /// Deduplicate by identity and sort into document order. The rank of a node is
 /// its place in a pre-order walk of the root it hangs from; the walk is taken
 /// once per call, and only when there is something to sort.
-fn normalise(nodes : Array[Node]) -> Array[Node] {
+fn normalize(nodes : Array[Node]) -> Array[Node] {
   if nodes.length() <= 1 {
     return nodes
   }
@@ -1988,7 +1988,7 @@ pub fn Selection::xpath(
       other => out.push(TextNode(to_string_value(other)))
     }
   }
-  selection_for(normalise(out), self.doc)
+  selection_for(normalize(out), self.doc)
 }
 
 ///|

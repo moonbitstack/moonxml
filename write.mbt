@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
-/// Serialisation. The format-library verbs: `dumps` writes a tree to text,
+/// Serialization. The format-library verbs: `dumps` writes a tree to text,
 /// `dump` answers bytes, `loads` and `load` read one back (those live with
 /// their parsers, in `moonxml/xml` and `moonxml/html`).
 ///
@@ -11,11 +11,11 @@
 /// survive, and a well-formed document that is not edited comes back
 /// byte-identical — the one deviation is that character references are
 /// decoded, as a DOM means them to be. The HTML writer follows WHATWG's
-/// serialisation rules, and its criterion is the fixpoint: write, read, write
+/// serialization rules, and its criterion is the fixpoint: write, read, write
 /// again gives the same bytes.
 
 ///|
-/// The XML serialisation of a node.
+/// The XML serialization of a node.
 pub fn dumps(node : Node) -> String {
   let out = StringBuilder()
   write_xml(node, out)
@@ -23,13 +23,13 @@ pub fn dumps(node : Node) -> String {
 }
 
 ///|
-/// The XML serialisation of a node, as bytes.
+/// The XML serialization of a node, as bytes.
 pub fn dump(node : Node) -> Bytes {
   utf8_encode(dumps(node))
 }
 
 ///|
-/// The HTML serialisation of a node, WHATWG's rules.
+/// The HTML serialization of a node, WHATWG's rules.
 pub fn dumps_html(node : Node) -> String {
   let out = StringBuilder()
   write_html(node, out, raw=false)
@@ -37,15 +37,15 @@ pub fn dumps_html(node : Node) -> String {
 }
 
 ///|
-/// The HTML serialisation of a node, as bytes.
+/// The HTML serialization of a node, as bytes.
 pub fn dump_html(node : Node) -> Bytes {
   utf8_encode(dumps_html(node))
 }
 
 ///|
-/// A whole document, in the flavor it was read as.
+/// A whole document, in the flavour it was read as.
 pub fn Document::dumps(self : Document) -> String {
-  match self.flavor {
+  match self.flavour {
     Xml => {
       let out = StringBuilder()
       for child in self.root.childrens {
@@ -185,7 +185,7 @@ fn qualify(
   prefix + ":" + tail
 }
 
-// The HTML writer, WHATWG's serialisation rules.
+// The HTML writer, WHATWG's serialization rules.
 
 ///|
 fn write_html(node : Node, out : StringBuilder, raw~ : Bool) -> Unit {

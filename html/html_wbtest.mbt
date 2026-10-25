@@ -297,8 +297,15 @@ test "the chain reads an HTML document like any other" {
   let doc = loads(
     "<!DOCTYPE html><html><body><div id='a'><p class='x'>one</p></div></body></html>",
   )
-  assert_eq(doc.flavor(), @moonxml.Html)
+  assert_eq(doc.flavour(), @moonxml.Html)
   assert_eq(doc.css("#a .x").text(), "one")
   assert_eq(doc.xpath("//p").text(), "one")
   assert_eq(doc.by_id("a").css("p").attr("class"), Some("x"))
+}
+
+///|
+test "the named reference table answers only what it carries" {
+  assert_eq(named_reference("amp"), Some("&"))
+  assert_eq(named_reference("nbsp"), Some("\u{A0}"))
+  assert_eq(named_reference("notarealname"), None)
 }

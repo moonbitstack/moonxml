@@ -25,19 +25,19 @@ pub(all) struct ProcessingInstruction {
 
 ///|
 /// How a document was read, and therefore how it writes itself back.
-pub(all) enum Flavor {
+pub(all) enum Flavour {
   Xml
   Html
 } derive(Eq, Debug)
 
 ///|
-pub extend Flavor with Eq::{equal, not_equal}
+pub extend Flavour with Eq::{equal, not_equal}
 
 ///|
-pub extend Flavor with Debug::{to_repr}
+pub extend Flavour with Debug::{to_repr}
 
 ///|
-pub impl Show for Flavor with fn output(self, logger) {
+pub impl Show for Flavour with fn output(self, logger) {
   logger.write_string(
     match self {
       Xml => "xml"
@@ -47,7 +47,7 @@ pub impl Show for Flavor with fn output(self, logger) {
 }
 
 ///|
-pub extend Flavor with Show::{output, to_string}
+pub extend Flavour with Show::{output, to_string}
 
 ///|
 /// An element: the `{uri}local` name — the James Clark spelling, chosen over
@@ -65,26 +65,26 @@ pub struct Element {
 
 ///|
 /// A document: the virtual root (named `#document`) holding the top-level
-/// nodes, the flavor it was read as, the selector registry, and — for HTML —
+/// nodes, the flavour it was read as, the selector registry, and — for HTML —
 /// the tally of what the parser repaired.
 pub struct Document {
   root : Element
   priv selectors : Map[String, &Selector]
-  priv mut flavor : Flavor
+  priv mut flavour : Flavour
   priv mut repairs : Repairs
   priv mut nesting : Array[Element]
 }
 
 ///|
 /// A fresh document. A tree built by hand has no syntax it was read from, so
-/// it writes back with XML's exact rules; ask for `flavor=Html` when the tree
+/// it writes back with XML's exact rules; ask for `flavour=Html` when the tree
 /// came from HTML.
-pub fn Document::new(flavor~ : Flavor = Xml) -> Document {
+pub fn Document::new(flavour~ : Flavour = Xml) -> Document {
   let root = Element::new("#document")
   let doc : Document = {
     root,
     selectors: Map([]),
-    flavor,
+    flavour,
     repairs: Repairs::new(),
     nesting: [],
   }
@@ -121,9 +121,9 @@ pub fn Document::document_element(self : Document) -> Element? {
 }
 
 ///|
-/// The flavor this document writes itself back in.
-pub fn Document::flavor(self : Document) -> Flavor {
-  self.flavor
+/// The flavour this document writes itself back in.
+pub fn Document::flavour(self : Document) -> Flavour {
+  self.flavour
 }
 
 ///|

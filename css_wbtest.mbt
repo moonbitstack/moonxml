@@ -4,7 +4,7 @@
 ///|
 /// A page to select against: three lists, nested boxes, a table, a form.
 fn page() -> Document {
-  let doc = Document::new(flavor=Html)
+  let doc = Document::new(flavour=Html)
   let html = Element::new("html")
   let body = Element::new("body")
   let nav = Element::new("ul", attrs=[("id", "nav"), ("class", "menu wide")])
@@ -199,7 +199,7 @@ test "the context is never a candidate" {
 
 ///|
 test "namespaced names match by local part" {
-  let doc = Document::new(flavor=Xml)
+  let doc = Document::new(flavour=Xml)
   let svg = Element::new("{http://www.w3.org/2000/svg}svg")
   let rect = Element::new("{http://www.w3.org/2000/svg}rect")
   svg.append(ElementNode(rect))

@@ -5,7 +5,7 @@
 /// The tree's shape and the editing verbs, each tested on both sides:
 /// applied, and the tree still consistent afterwards.
 fn sample() -> Document {
-  let doc = Document::new(flavor=Html)
+  let doc = Document::new(flavour=Html)
   let html = Element::new("html")
   let head = Element::new("head")
   let body = Element::new("body")
@@ -248,8 +248,8 @@ test "repairs start empty and are answerable" {
 }
 
 ///|
-test "the flavor decides how a document writes back" {
+test "the flavour decides how a document writes back" {
   let doc = sample()
-  assert_eq(doc.flavor(), Html)
-  assert_eq(Document::new().flavor(), Xml)
+  assert_eq(doc.flavour(), Html)
+  assert_eq(Document::new().flavour(), Xml)
 }

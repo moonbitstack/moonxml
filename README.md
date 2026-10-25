@@ -97,7 +97,7 @@ Selection-level verbs (`append`, `set_text`, …) apply to every matched node; t
 | | |
 |:--|:--|
 | [`examples/tour`](examples/tour/main.mbt) | the whole surface in one run: `moon run examples/tour` |
-| [`examples/scrape`](examples/scrape/main.mbt) | a page in, a table out: query, filter, reshape, serialise |
+| [`examples/scrape`](examples/scrape/main.mbt) | a page in, a table out: query, filter, reshape, serialize |
 | [`examples/rewrite`](examples/rewrite/main.mbt) | read a feed, edit every entry, write it back byte-faithfully |
 
 ## What is not here yet

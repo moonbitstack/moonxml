@@ -6,7 +6,7 @@
 /// attribute or two and a comment: the grammar, every axis, the predicates,
 /// the operator precedence, the core function library and the typed answer.
 fn library() -> Document {
-  let doc = Document::new(flavor=Xml)
+  let doc = Document::new(flavour=Xml)
   let catalog = Element::new("catalog", attrs=[("lang", "en")])
   let book1 = Element::new("book", attrs=[("id", "b1"), ("year", "1998")])
   let title1 = Element::new("title", childrens=[TextNode("Lions")])

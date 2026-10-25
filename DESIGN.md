@@ -93,12 +93,12 @@ pub struct Element {
 
 pub struct Document {
   root : Element                             // the virtual container, named #document
-  mut flavor : Flavor                        // Xml | Html — how to write it back
+  mut flavour : Flavour                        // Xml | Html — how to write it back
   priv selectors : Map[String, &Selector]    // built-ins plus whatever the caller registers
   priv mut repairs : Repairs                 // what the HTML parser fixed
 }
 
-pub(all) enum Flavor { Xml; Html }
+pub(all) enum Flavour { Xml; Html }
 ```
 
 Decisions, each with its reason:
@@ -246,7 +246,7 @@ every selected element, on `Selection`:
 | `unwrap()` | replace self with its children |
 | `wrap(name)` | wrap self in a fresh element |
 | `clear()` | drop all children |
-| `smooth()` | fuse adjacent text nodes — what serialisation wants after edits |
+| `smooth()` | fuse adjacent text nodes — what serialization wants after edits |
 | `set_attr(n, v)` `remove_attr(n)` `add_class(c)` `remove_class(c)` | attributes |
 | `set_text(s)` | replace all children with one text node |
 
@@ -309,7 +309,7 @@ pub trait Sink {
 | | XML rules | HTML rules (WHATWG §13) |
 |:--|:--|:--|
 | entry | `dumps(node)` `dump(node)` | `dumps_html(node)` `dump_html(node)` |
-| document | `document.dumps()` — in the flavor it was read as | `document.dumps_html()` |
+| document | `document.dumps()` — in the flavour it was read as | `document.dumps_html()` |
 | attributes | in document order, double-quoted, `&` `<` `"` escaped | same; an empty value written bare |
 | empty element | `<a/>` when `closed`, else `<a></a>` | void elements carry no end tag |
 | text | `&` and `<` escaped (`>` only in `]]>`) | `&` `<` `>` and U+00A0 escaped, except in `script`/`style` raw text |
@@ -321,8 +321,8 @@ preserved), the doctype (raw text preserved) and self-closing syntax all
 survive. The one deliberate deviation: character references are decoded
 (`&#65;` reads as `A` and writes as `A`), because that is what a DOM means and
 the alternative is keeping source text inside every text node. HTML has no
-byte-identity promise — its criterion is the fixpoint: serialising a parsed
-document, parsing that, and serialising again gives the same bytes.
+byte-identity promise — its criterion is the fixpoint: serializing a parsed
+document, parsing that, and serializing again gives the same bytes.
 
 ## 9. Failures
 
@@ -349,7 +349,7 @@ parameter with a sourced default. The complete set:
 |:--|:--:|:--|
 | `depth~` (both parsers) | 512 | Chrome and WebKit stop at 512 nested elements; the same bound guards both parsers against a stack-eating document |
 
-Priority, the organisation's rule, stated once and honoured everywhere:
+Priority, the organization's rule, stated once and honoured everywhere:
 
 ```
 library preset  <  the record passed in  <  the same-named argument of this call

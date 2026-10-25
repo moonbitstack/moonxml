@@ -5,7 +5,7 @@
 /// The chain: heterogeneous narrowing, the registry, the caller's own
 /// selector, and the node-level forms that keep a chain from stopping.
 fn doc() -> Document {
-  let page = Document::new(flavor=Html)
+  let page = Document::new(flavour=Html)
   let html = Element::new("html")
   let body = Element::new("body")
   let nav = Element::new("ul", attrs=[("id", "nav")])
