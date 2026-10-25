@@ -1,0 +1,6 @@
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonxml",
+  "moonbitstack/moonxml/xml",
+}

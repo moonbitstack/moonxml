@@ -278,3 +278,12 @@ test "the document itself is a context" {
   assert_eq(page.length(), 1)
   assert_eq(page.descendants().length(), 11)
 }
+
+///|
+test "a selection can be indexed" {
+  let page = doc()
+  assert_eq(page.by_tag("li").length(), 2)
+  assert_eq(page.by_tag("li")[1].name(), "li")
+  // out of range is a detached empty element, not a panic
+  assert_eq(page.by_tag("li")[9].name(), "")
+}

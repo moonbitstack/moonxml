@@ -2,5 +2,8 @@
 pkgtype(kind: "executable")
 
 import {
-  "moonbitstack/moonxml/lib",
+  "moonbitstack/moonxml",
+  "moonbitstack/moonxml/event",
+  "moonbitstack/moonxml/html",
+  "moonbitstack/moonxml/xml",
 }

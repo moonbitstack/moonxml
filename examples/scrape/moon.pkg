@@ -1,0 +1,7 @@
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonxml",
+  "moonbitstack/moonxml/html",
+  "moonbitlang/core/string",
+}

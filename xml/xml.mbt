@@ -303,9 +303,13 @@ fn start_tag(
   }
   scanner.scopes.push(scope)
   let name = resolve(scanner, qname, true)
+  // The declarations stay on the element: names are Clark, but the document's
+  // own choice of prefix is what writing it back has to reproduce.
   let attrs : Array[(String, String)] = []
   for pair in raw {
-    if pair.0 != "xmlns" && !pair.0.has_prefix("xmlns:") {
+    if pair.0 == "xmlns" || pair.0.has_prefix("xmlns:") {
+      attrs.push(pair)
+    } else {
       attrs.push((resolve(scanner, pair.0, false), pair.1))
     }
   }

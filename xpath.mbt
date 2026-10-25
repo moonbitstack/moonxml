@@ -85,6 +85,19 @@ pub(all) enum XPathValue {
   Flag(Bool)
 }
 
+///|
+pub impl Show for XPathValue with fn output(self, logger) {
+  match self {
+    Nodes(nodes) => logger.write_string("\{nodes.items.length()} nodes")
+    Str(text) => logger.write_string(text)
+    Num(number) => logger.write_string(number.to_string())
+    Flag(flag) => logger.write_string(if flag { "true" } else { "false" })
+  }
+}
+
+///|
+pub extend XPathValue with Show::{output, to_string}
+
 // The lexer. The one rule that needs care is XPath's own: `*`, `div`, `mod`,
 // `and` and `or` are operators after an operand and names before one.
 

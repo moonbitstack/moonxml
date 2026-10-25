@@ -81,11 +81,44 @@ pub fn Document::dump_html(self : Document) -> Bytes {
 
 ///|
 fn write_xml(node : Node, out : StringBuilder) -> Unit {
+  write_xml_in(node, out, [])
+}
+
+///|
+/// Write one node given the namespace declarations in force: `{uri}local`
+/// becomes a prefixed name again, using the prefix the document declared when
+/// there is one and inventing `ns1` when there is not.
+fn write_xml_in(
+  node : Node,
+  out : StringBuilder,
+  scope : Array[(String, String)],
+) -> Unit {
   match node {
     ElementNode(data) => {
-      out.write_string("<" + data.name)
+      let local_scope = scope.copy()
       for pair in data.attrs {
-        out.write_string(" " + pair.0 + "=\"" + escape_xml_attr(pair.1) + "\"")
+        if pair.0 == "xmlns" {
+          local_scope.push(("", pair.1))
+        } else if pair.0.has_prefix("xmlns:") {
+          local_scope.push((pair.0[6:pair.0.length()].to_owned(), pair.1))
+        }
+      }
+      let declared : Array[(String, String)] = []
+      let tag = qualify(data.name, local_scope, declared, false)
+      out.write_string("<" + tag)
+      for pair in declared {
+        out.write_string(
+          " xmlns:" + pair.0 + "=\"" + escape_xml_attr(pair.1) + "\"",
+        )
+      }
+      for pair in data.attrs {
+        out.write_string(
+          " " +
+          qualify(pair.0, local_scope, declared, true) +
+          "=\"" +
+          escape_xml_attr(pair.1) +
+          "\"",
+        )
       }
       if data.childrens.is_empty() && data.closed {
         out.write_string("/>")
@@ -93,9 +126,11 @@ fn write_xml(node : Node, out : StringBuilder) -> Unit {
       }
       out.write_string(">")
       for child in data.childrens {
-        write_xml(child, out)
+        write_xml_in(child, out, local_scope)
       }
-      out.write_string("</" + data.name + ">")
+      out.write_string(
+        "</" + qualify(data.name, local_scope, declared, false) + ">",
+      )
     }
     TextNode(text) => out.write_string(escape_xml_text(text))
     CDataNode(text) => out.write_string("<![CDATA[" + text + "]]>")
@@ -104,6 +139,50 @@ fn write_xml(node : Node, out : StringBuilder) -> Unit {
       out.write_string("<?" + pi.target + pi.data + "?>")
     DoctypeNode(text) => out.write_string("<!DOCTYPE " + text + ">")
   }
+}
+
+///|
+/// A name as it is written: unchanged when it carries no namespace, prefixed
+/// when it does. A name whose namespace nothing declares gets a declaration on
+/// the element being written, collected in `declared`.
+fn qualify(
+  name : String,
+  scope : Array[(String, String)],
+  declared : Array[(String, String)],
+  is_attr : Bool,
+) -> String {
+  let uri = match namespace_of(name) {
+    Some(found) => found
+    None => return name
+  }
+  let tail = local_of(name)
+  for pair in scope {
+    if pair.1 == uri && (!is_attr || !pair.0.is_empty()) {
+      if pair.0.is_empty() {
+        return tail
+      }
+      return pair.0 + ":" + tail
+    }
+  }
+  let mut k = 1
+  let mut prefix = ""
+  let mut chosen = false
+  while !chosen {
+    prefix = "ns\{k}"
+    let mut taken = false
+    for pair in scope {
+      if pair.0 == prefix {
+        taken = true
+      }
+    }
+    chosen = !taken
+    if !chosen {
+      k = k + 1
+    }
+  }
+  scope.push((prefix, uri))
+  declared.push((prefix, uri))
+  prefix + ":" + tail
 }
 
 // The HTML writer, WHATWG's serialisation rules.

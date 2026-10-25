@@ -188,6 +188,19 @@ pub fn Selection::custom(
 // Narrowing.
 
 ///|
+/// `selection[i]` in the chain: the node at that position, so a chain can step
+/// down into one node and carry on. Out of range answers a detached empty
+/// element rather than panicking.
+#alias("_[_]")
+pub fn Selection::at(self : Selection, index : Int32) -> Node {
+  if index >= 0 && index < self.items.length() {
+    self.items[index]
+  } else {
+    ElementNode(Element::new(""))
+  }
+}
+
+///|
 /// The first selected node; empty stays empty.
 pub fn Selection::first(self : Selection) -> Selection {
   if self.items.is_empty() {

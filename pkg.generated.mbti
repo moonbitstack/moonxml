@@ -193,6 +193,8 @@ pub struct Selection {
 }
 pub fn Selection::add_class(Self, String) -> Unit
 pub fn Selection::append(Self, Node) -> Unit
+#alias("_[_]")
+pub fn Selection::at(Self, Int32) -> Node
 pub fn Selection::attr(Self, String) -> String?
 pub fn Selection::by_class(Self, String) -> Self
 pub fn Selection::by_id(Self, String) -> Self
@@ -240,6 +242,9 @@ pub(all) enum XPathValue {
   Num(Double)
   Flag(Bool)
 }
+pub fn XPathValue::output(Self, &Logger) -> Unit
+pub fn XPathValue::to_string(Self) -> String
+pub impl Show for XPathValue
 
 // Type aliases
 
