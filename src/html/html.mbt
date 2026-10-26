@@ -85,7 +85,7 @@ pub fn loads(text : String) -> @moonxml.Document {
 ///|
 /// Read a document from bytes; UTF-8, with a leading byte-order mark skipped.
 pub fn load(bytes : Bytes) -> @moonxml.Document {
-  let text = @moonxml.utf8_decode(bytes) catch { _ => "" }
+  let text = @utf8.decode_lossy(bytes, ignore_bom=true)
   parse(text)
 }
 
@@ -107,7 +107,7 @@ pub fn loads_fragment(text : String) -> @moonxml.Document {
     text_only: false,
   }
   let lexer : Lexer = {
-    text: @moonxml.strip_bom(text),
+    text: @text.strip_bom(text),
     raw: "",
     rcdata: false,
     builder,
@@ -134,7 +134,7 @@ fn parse(text : String) -> @moonxml.Document {
     text_only: false,
   }
   let lexer : Lexer = {
-    text: @moonxml.strip_bom(text),
+    text: @text.strip_bom(text),
     raw: "",
     rcdata: false,
     builder,

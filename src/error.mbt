@@ -16,6 +16,9 @@ pub(all) suberror Refused {
   /// A named gap rather than a syntax error: an XPath variable with no
   /// binding, and the like.
   Unsupported(what~ : String)
+  /// The input went past a configured bound: `got` against `limit`, noticed at
+  /// offset `at`.
+  Exceeded(at~ : Int32, limit~ : Int32, got~ : Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -32,6 +35,8 @@ pub impl Show for Refused with fn output(self, logger) {
       BadQuery(at~, why~) => "bad query at \{at}: \{why}"
       UnknownSelector(name~) => "no selector registered as \{name}"
       Unsupported(what~) => "unsupported: \{what}"
+      Exceeded(at~, limit~, got~) =>
+        "\{got} exceeds the limit of \{limit} at \{at}"
     },
   )
 }

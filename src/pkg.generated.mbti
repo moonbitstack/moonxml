@@ -19,18 +19,13 @@ pub fn local_of(String) -> String
 
 pub fn namespace_of(String) -> String?
 
-pub fn strip_bom(String) -> String
-
-pub fn utf8_decode(Bytes) -> String raise Refused
-
-pub fn utf8_encode(String) -> Bytes
-
 // Errors
 pub(all) suberror Refused {
   Malformed(at~ : Int32, why~ : String)
   BadQuery(at~ : Int32, why~ : String)
   UnknownSelector(name~ : String)
   Unsupported(what~ : String)
+  Exceeded(at~ : Int32, limit~ : Int32, got~ : Int32)
 } derive(Eq, @debug.Debug)
 pub fn Refused::equal(Self, Self) -> Bool
 pub fn Refused::not_equal(Self, Self) -> Bool

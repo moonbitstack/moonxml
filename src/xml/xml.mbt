@@ -20,20 +20,38 @@ priv struct Scan {
   sink : &@event.Sink
   scopes : Array[Array[(String, String)]]
   fragment : Bool
+  limit : Int32
 }
 
 ///|
-/// Read a document and answer its tree.
-pub fn loads(text : String) -> @moonxml.Document raise @moonxml.Refused {
+/// How deep elements may nest before a document is refused. Chrome and WebKit
+/// stop at 512 nested elements; a document deeper than that is a stack to eat,
+/// not a document.
+pub let limit : Int32 = 512
+
+///|
+/// Read a document and answer its tree. `limit` bounds the element nesting.
+pub fn loads(
+  text : String,
+  limit~ : Int32 = limit,
+) -> @moonxml.Document raise @moonxml.Refused {
   let doc = @moonxml.Document::new(flavour=@moonxml.Xml)
-  scan(text, doc, fragment=false)
+  scan(text, doc, fragment=false, limit~)
   doc
 }
 
 ///|
 /// Read a document from bytes; UTF-8, with a leading byte-order mark skipped.
-pub fn load(bytes : Bytes) -> @moonxml.Document raise @moonxml.Refused {
-  loads(@moonxml.strip_bom(@moonxml.utf8_decode(bytes)))
+/// `limit` is as for `loads`.
+pub fn load(
+  bytes : Bytes,
+  limit~ : Int32 = limit,
+) -> @moonxml.Document raise @moonxml.Refused {
+  match @text.decode(bytes) {
+    Ok(text) => loads(text, limit~)
+    Err(at) =>
+      raise @moonxml.Malformed(at~, why="the bytes are not valid UTF-8")
+  }
 }
 
 ///|
@@ -42,25 +60,29 @@ pub fn load(bytes : Bytes) -> @moonxml.Document raise @moonxml.Refused {
 /// which is the point: it is for a snippet.
 pub fn loads_fragment(
   text : String,
+  limit~ : Int32 = limit,
 ) -> @moonxml.Document raise @moonxml.Refused {
   let doc = @moonxml.Document::new(flavour=@moonxml.Xml)
-  scan(text, doc, fragment=true)
+  scan(text, doc, fragment=true, limit~)
   doc
 }
 
 ///|
-/// Stream a document's events into a sink, building nothing.
+/// Stream a document's events into a sink, building nothing. `limit` is as for
+/// `loads`.
 pub fn scan(
   text : String,
   sink : &@event.Sink,
   fragment~ : Bool = false,
+  limit~ : Int32 = limit,
 ) -> Unit raise @moonxml.Refused {
   let scanner : Scan = {
-    text: @moonxml.strip_bom(text),
+    text: @text.strip_bom(text),
     at: 0,
     sink,
     scopes: [[]],
     fragment,
+    limit,
   }
   scan_document(scanner)
 }
@@ -177,11 +199,8 @@ fn fragment_body(scanner : Scan) -> Unit raise @moonxml.Refused {
 ///|
 /// An element, its content, and its close: the recursive heart.
 fn content(scanner : Scan, depth : Int32) -> Unit raise @moonxml.Refused {
-  if depth > depth_limit() {
-    raise @moonxml.Malformed(
-      at=scanner.at,
-      why="the element nesting exceeds \{depth_limit()}",
-    )
+  if depth > scanner.limit {
+    raise @moonxml.Exceeded(at=scanner.at, limit=scanner.limit, got=depth)
   }
   let (name, attrs, self_closing) = start_tag(scanner)
   scanner.sink.push(@event.StartTag(name~, attrs~, self_closing~))
@@ -221,14 +240,6 @@ fn content(scanner : Scan, depth : Int32) -> Unit raise @moonxml.Refused {
       text_run(scanner)
     }
   }
-}
-
-///|
-/// The nesting bound both parsers share: Chrome and WebKit stop at 512 nested
-/// elements, and a document deeper than that is a stack to eat, not a
-/// document.
-pub fn depth_limit() -> Int32 {
-  512
 }
 
 ///|

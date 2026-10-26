@@ -1,0 +1,15 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonxml/internal/text"
+
+// Values
+pub fn decode(BytesView) -> Result[String, Int32]
+
+pub fn strip_bom(String) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

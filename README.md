@@ -26,7 +26,7 @@ page.css("li").last().add_class("done")
 page.dumps()
 ```
 
-HTML is read the way a browser reads it; XML is read the way a validator reads it; both become the same node kinds, so a query written for a page works on a feed.
+HTML is read the way a browser reads it; XML is read strictly, as XML 1.0 requires; both become the same node kinds, so a query written for a page works on a feed.
 
 ## Why this shape
 
@@ -35,7 +35,7 @@ HTML is read the way a browser reads it; XML is read the way a validator reads i
 | **One tree, two syntaxes** | `Node` is element, text, CDATA, comment, processing instruction or doctype. Nothing about a node says which parser made it. |
 | **One chain** | Every query answers a `Selection`, so `css` → `xpath` → `selector` → `custom` → `items[i]` → `childrens()[j]` → `css` again never changes type. |
 | **Two engines, and yours** | CSS Selectors 4's statically decidable subset, all of XPath 1.0, and a `Selector` trait you implement and register by name. |
-| **Editing, not re-parsing** | bs4's verb set on the same selection the query returned, with parent pointers kept true. |
+| **Editing, not re-parsing** | A full set of editing verbs on the same selection the query returned, with parent pointers kept true. |
 | **Two ways to read** | Build the tree, or stream `Event`s into your own `Sink` and build nothing. The tree builder is itself a sink: one parser, no drift. |
 | **One error family** | `Refused`: malformed input names its offset, a bad selector names its fault. HTML never refuses — it repairs, and tells you what it repaired. |
 
@@ -88,7 +88,7 @@ Selection-level verbs (`append`, `set_text`, …) apply to every matched node; t
 
 **HTML** — WHATWG's tokenizer and tree construction: implied `html`/`head`/`body`/`tbody`, cells that close themselves, foster parenting in front of tables, formatting reopened after a block closed it, the adoption agency for misnested markup, character references with the Windows-1252 repair. What it fixed is countable afterwards on `document.repairs()`.
 
-**XML** — XML 1.0 with Namespaces 1.0, strict: a document reads whole or is refused with the offset of the fault. Names become James Clark's `{uri}local`, and writing back reproduces attribute order, CDATA, comments, processing instructions, the doctype with its internal subset, and `<a/>` versus `<a></a>`.
+**XML** — XML 1.0 with Namespaces 1.0, strict: a document reads whole or is refused with the offset of the fault. Names become `{uri}local`, and writing back reproduces attribute order, CDATA, comments, processing instructions, the doctype with its internal subset, and `<a/>` versus `<a></a>`.
 
 **Streaming** — `@xml.scan(text, sink)` emits `Event`s to any `Sink`; `document.events()` reads a finished tree back as the same stream.
 
@@ -96,9 +96,9 @@ Selection-level verbs (`append`, `set_text`, …) apply to every matched node; t
 
 | | |
 |:--|:--|
-| [`examples/tour`](examples/tour/main.mbt) | the whole surface in one run: `moon run examples/tour` |
-| [`examples/scrape`](examples/scrape/main.mbt) | a page in, a table out: query, filter, reshape, serialize |
-| [`examples/rewrite`](examples/rewrite/main.mbt) | read a feed, edit every entry, write it back byte-faithfully |
+| [`src/examples/tour`](src/examples/tour/main.mbt) | the whole surface in one run: `moon run src/examples/tour` |
+| [`src/examples/scrape`](src/examples/scrape/main.mbt) | a page in, a table out: query, filter, reshape, serialize |
+| [`src/examples/rewrite`](src/examples/rewrite/main.mbt) | read a feed, edit every entry, write it back byte-faithfully |
 
 ## What is not here yet
 
@@ -107,21 +107,6 @@ Selection-level verbs (`append`, `set_text`, …) apply to every matched node; t
 - **`:hover`, `:visited` as behaviour.** The state pseudo-classes are answered from attributes; the ones that need a live browser are a parse error rather than a silent miss.
 
 The HTML tests assert a floor against html5lib's corpus — **817 of 1105 documents** in the fixture reproduce exactly — and the fixture is generated, so the number can only be raised.
-
-## Development
-
-```shell
-moon check --target all --deny-warn
-moon build --target all
-moon test  --target all
-moon fmt  && git diff --exit-code
-moon info --target all && git diff --exit-code
-
-python3 scripts/make_html5lib_fixtures.py ../.ref/html5lib-tests/tree-construction html/html_corpus_wbtest.mbt
-python3 scripts/make_api_docs.py .
-```
-
-`DESIGN.md` records the interfaces and why they are shaped that way; it was written before the first line of implementation.
 
 ## Licence
 

@@ -7,5 +7,6 @@
 import {
   "moonbitstack/moonxml",
   "moonbitstack/moonxml/event",
+  "moonbitstack/moonxml/internal/text",
   "moonbitlang/core/string",
 }

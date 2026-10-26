@@ -18,39 +18,18 @@ test "names: the Clark spelling and its two halves" {
 }
 
 ///|
-test "utf8 and the byte-order mark" {
-  let bytes = utf8_encode("héllo 😀")
-  assert_eq(utf8_decode(bytes), "héllo 😀")
-  assert_eq(strip_bom("\u{FEFF}<a/>"), "<a/>")
-  assert_eq(strip_bom("<a/>"), "<a/>")
-}
-
-///|
-test "utf8 refuses malformed bytes at the fault" {
-  let bad : Bytes = b"A\xFF"
-  let refused = try {
-    ignore(utf8_decode(bad))
-    false
-  } catch {
-    Malformed(at~, why~) => at == 1 && !why.is_empty()
-    _ => false
-  }
-  assert_eq(refused, true)
-}
-
-///|
 test "the byte writers answer the same text as the string writers" {
   let doc = Document::new(flavour=Html)
   let p = Element::new("p", childrens=[TextNode("a & b")])
   doc.root.append(ElementNode(p))
   assert_eq(dumps(ElementNode(p)), "<p>a &amp; b</p>")
   assert_eq(dumps_html(ElementNode(p)), "<p>a &amp; b</p>")
-  assert_eq(dump(ElementNode(p)), utf8_encode(dumps(ElementNode(p))))
-  assert_eq(dump_html(ElementNode(p)), utf8_encode(dumps_html(ElementNode(p))))
+  assert_eq(dump(ElementNode(p)), @utf8.encode(dumps(ElementNode(p))))
+  assert_eq(dump_html(ElementNode(p)), @utf8.encode(dumps_html(ElementNode(p))))
   assert_eq(doc.dumps(), "<p>a &amp; b</p>")
   assert_eq(doc.dumps_html(), "<p>a &amp; b</p>")
-  assert_eq(doc.dump(), utf8_encode(doc.dumps()))
-  assert_eq(doc.dump_html(), utf8_encode(doc.dumps_html()))
+  assert_eq(doc.dump(), @utf8.encode(doc.dumps()))
+  assert_eq(doc.dump_html(), @utf8.encode(doc.dumps_html()))
 }
 
 ///|

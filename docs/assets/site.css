@@ -515,6 +515,8 @@ td code { white-space: nowrap; }
 .api-item .sig .kw { color: var(--olive); }
 .api-item .sig .ty { color: var(--brick); }
 .api-item .sig .nm { font-weight: 600; }
+.api-item .doc { margin: 6px 0 0; font-size: 14px; color: var(--ink-soft); max-width: 72ch; }
+.api-item .doc code { font-size: 12.5px; }
 .api-item .kind {
   font-family: var(--typewriter);
   font-size: 9px;

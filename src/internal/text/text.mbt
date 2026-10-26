@@ -2,22 +2,32 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
-/// UTF-8, the one encoding, over core's codec — wrapped so its failure
-/// arrives as this library's own `Refused`, with the offset of the byte that
-/// spoiled the sequence, and a byte-order mark is the reader's business rather
-/// than the caller's.
-pub fn utf8_decode(source : Bytes) -> String raise Refused {
-  @utf8.decode(source, ignore_bom=true) catch {
-    _ =>
-      raise Malformed(at=fault_at(source), why="the bytes are not valid UTF-8")
+/// `bytes` as UTF-8 with a leading byte-order mark dropped, or the offset of
+/// the first byte that spoils a sequence: core says *that* a document is not
+/// UTF-8, the parsers need to say *where*.
+pub fn decode(bytes : BytesView) -> Result[String, Int32] {
+  try @utf8.decode(bytes, ignore_bom=true) catch {
+    _ => Err(fault_at(bytes))
+  } noraise {
+    text => Ok(text)
   }
+}
+
+///|
+/// A leading byte-order mark stripped from text, the one repair a reader makes
+/// before reading a document.
+pub fn strip_bom(text : String) -> String {
+  if text.length() >= 1 && text.at(0) == 0xFEFF {
+    return text[1:text.length()].to_owned()
+  }
+  text
 }
 
 ///|
 /// Where the first byte that cannot begin or continue a UTF-8 sequence sits.
 /// core's decoder says *that* a document is not UTF-8; this says *where*, which
 /// is the difference between an error a caller can act on and one it cannot.
-fn fault_at(source : Bytes) -> Int32 {
+fn fault_at(source : BytesView) -> Int32 {
   let n = source.length()
   let mut i = 0
   while i < n {
@@ -55,19 +65,4 @@ fn fault_at(source : Bytes) -> Int32 {
     i = i + more + 1
   }
   n
-}
-
-///|
-pub fn utf8_encode(text : String) -> Bytes {
-  @utf8.encode(text)
-}
-
-///|
-/// A leading byte-order mark is stripped from text, the one repair a reader
-/// makes before reading a document.
-pub fn strip_bom(text : String) -> String {
-  if text.length() >= 1 && text.at(0) == 0xFEFF {
-    return text[1:text.length()].to_owned()
-  }
-  text
 }

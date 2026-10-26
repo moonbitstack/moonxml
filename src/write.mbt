@@ -25,7 +25,7 @@ pub fn dumps(node : Node) -> String {
 ///|
 /// The XML serialization of a node, as bytes.
 pub fn dump(node : Node) -> Bytes {
-  utf8_encode(dumps(node))
+  @utf8.encode(dumps(node))
 }
 
 ///|
@@ -39,7 +39,7 @@ pub fn dumps_html(node : Node) -> String {
 ///|
 /// The HTML serialization of a node, as bytes.
 pub fn dump_html(node : Node) -> Bytes {
-  utf8_encode(dumps_html(node))
+  @utf8.encode(dumps_html(node))
 }
 
 ///|
@@ -59,7 +59,7 @@ pub fn Document::dumps(self : Document) -> String {
 
 ///|
 pub fn Document::dump(self : Document) -> Bytes {
-  utf8_encode(self.dumps())
+  @utf8.encode(self.dumps())
 }
 
 ///|
@@ -74,7 +74,7 @@ pub fn Document::dumps_html(self : Document) -> String {
 
 ///|
 pub fn Document::dump_html(self : Document) -> Bytes {
-  utf8_encode(self.dumps_html())
+  @utf8.encode(self.dumps_html())
 }
 
 // The XML writer.

@@ -309,3 +309,9 @@ test "the named reference table answers only what it carries" {
   assert_eq(named_reference("nbsp"), Some("\u{A0}"))
   assert_eq(named_reference("notarealname"), None)
 }
+
+///|
+test "bytes that are not UTF-8 read as replacement characters" {
+  let doc = load(b"<p>a\xFFb</p>")
+  assert_eq(doc.css("p").text(), "a\u{FFFD}b")
+}

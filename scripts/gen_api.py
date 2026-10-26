@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Generate site/api.html from the packages' generated interfaces.
+"""Generate docs/api.html from the packages' generated interfaces and the
+`///` comments in their sources.
 
 `moon info` writes one `pkg.generated.mbti` per package; that file *is* the
 public API, so the reference page is generated from it rather than written by
 hand and left to drift. Run after `moon info`:
 
     moon info --target all
-    python3 scripts/make_api_docs.py
+    python3 scripts/gen_api.py
 """
 
 import html
@@ -15,13 +16,13 @@ import re
 import sys
 
 PACKAGES = [
-    ("moonxml", "pkg.generated.mbti",
+    ("moonxml", "src/pkg.generated.mbti",
      "The tree, the chain, and the two engines. Everything you need unless you are reading a document."),
-    ("moonxml/html", "html/pkg.generated.mbti",
+    ("moonxml/html", "src/html/pkg.generated.mbti",
      "The WHATWG parser: tolerant, repairing, and never refusing."),
-    ("moonxml/xml", "xml/pkg.generated.mbti",
+    ("moonxml/xml", "src/xml/pkg.generated.mbti",
      "The XML 1.0 parser: strict, with namespaces, and with the offset of the fault."),
-    ("moonxml/event", "event/pkg.generated.mbti",
+    ("moonxml/event", "src/event/pkg.generated.mbti",
      "The streaming vocabulary — what a parser emits and what a sink receives."),
 ]
 
@@ -64,6 +65,8 @@ def parse(path):
                     out.append((section, current))
                     current = []
                 continue
+            if depth == 0 and line.startswith("#"):
+                continue
             if depth == 0 and current and not line.startswith(" "):
                 out.append((section, current))
                 current = []
@@ -76,6 +79,43 @@ def parse(path):
     return [(s, "\n".join(body)) for s, body in out if s]
 
 
+DECL = re.compile(
+    r"^pub(?:\((?:all|open)\))?\s+(?:fn(?:\[[^\]]*\])?|let|struct|enum|suberror|trait|type)\s+"
+    r"([A-Za-z_]\w*(?:::[A-Za-z_]\w*)?)"
+)
+
+
+BOILERPLATE = re.compile(r"::(equal|not_equal|output|to_string|to_repr|hash|compare)\(")
+IMPL = re.compile(r"pub impl (?:@\w+\.)?(\w+) for (\w+)")
+
+
+def docs_of(folder):
+    """The `///` comment above each public declaration, by its name."""
+    out = {}
+    for name in sorted(os.listdir(folder)):
+        if not name.endswith(".mbt") or name.endswith("_test.mbt") or name.endswith("_wbtest.mbt"):
+            continue
+        pending = []
+        with open(os.path.join(folder, name), encoding="utf-8") as handle:
+            for raw in handle:
+                stripped = raw.strip()
+                if stripped == "///|":
+                    pending = []
+                elif stripped.startswith("///"):
+                    pending.append(stripped[3:].strip())
+                else:
+                    match = DECL.match(raw)
+                    if match and pending:
+                        out[match.group(1)] = " ".join(pending)
+                    pending = []
+    return out
+
+
+def prose(text):
+    text = html.escape(text, quote=False)
+    return re.sub(r"`([^`]+)`", r"<code>\1</code>", text)
+
+
 def highlight(sig):
     text = html.escape(sig)
     for word in KEYWORDS:
@@ -85,7 +125,7 @@ def highlight(sig):
 
 
 def item_title(sig):
-    match = re.match(r"(?:pub\S*\s+)?(?:fn|struct|enum|trait|suberror|type)\s+([A-Za-z0-9_:]+)", sig)
+    match = re.match(r"(?:pub\S*\s+)?(?:fn|struct|enum|trait|suberror|type|let)\s+([A-Za-z0-9_:]+)", sig)
     if match:
         return match.group(1)
     return sig.split("(")[0]
@@ -93,6 +133,7 @@ def item_title(sig):
 
 def render(pkg, path, intro, out):
     items = parse(path)
+    docs = docs_of(os.path.dirname(path))
     out.append('<section id="%s">' % pkg.replace("/", "-"))
     out.append('<div class="sec-head"><h2>%s</h2></div>' % html.escape(pkg))
     out.append('<p class="sub">%s</p>' % html.escape(intro))
@@ -107,24 +148,30 @@ def render(pkg, path, intro, out):
             continue
         out.append('<h3 class="group" data-group="%s">%s</h3>' % (section, section.capitalize()))
         for sig in group:
+            if BOILERPLATE.search(sig):
+                continue
             title = item_title(sig)
             anchor = "%s-%s" % (pkg.replace("/", "-"), re.sub(r"[^A-Za-z0-9]+", "-", title).lower())
             kind = "type" if "{" in sig else "fn"
             out.append('<div class="api-item" id="%s" data-kind="%s">' % (anchor, kind))
             out.append('<span class="kind">%s</span>' % ("type" if kind == "type" else "fn"))
             out.append('<pre><span class="sig">%s</span></pre>' % highlight(sig))
+            impl = IMPL.match(sig)
+            doc = docs.get(title) or (impl and "`%s` implements `%s`." % (impl.group(2), impl.group(1)))
+            if doc:
+                out.append('<p class="doc">%s</p>' % prose(doc))
             out.append("</div>")
     out.append("</section>")
 
     return [
-        (pkg.replace("/", "-"), pkg.split("/")[-1], g, [item_title(s) for s in group])
+        (pkg.replace("/", "-"), pkg.split("/")[-1], g, [item_title(s) for s in group if not BOILERPLATE.search(s)])
         for g, group in by_group.items()
     ]
 
 
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else "."
-    out_path = os.path.join(root, "site", "api.html")
+    out_path = os.path.join(root, "docs", "api.html")
 
     body = []
     nav = []

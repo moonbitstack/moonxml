@@ -5,5 +5,7 @@
 // the browsers'.
 import {
   "moonbitstack/moonxml",
+  "moonbitstack/moonxml/internal/text",
+  "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/string",
 }

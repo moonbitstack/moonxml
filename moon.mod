@@ -8,6 +8,8 @@ repository = "https://github.com/moonbitstack/moonxml"
 
 license = "Apache-2.0"
 
-keywords = [ "html", "xml", "svg", "xpath", "css-selector", "moonbit" ]
+keywords = [ "html", "xml", "xpath" ]
 
-description = "moonxml — HTML, XML and SVG for MoonBit: parse, query by XPath or CSS selector, and edit one mutable tree. Tolerant the way WHATWG says to be."
+description = "HTML, XML and SVG for MoonBit."
+
+source = "src"

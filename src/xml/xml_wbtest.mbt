@@ -149,7 +149,7 @@ test "the streaming read sees events without a tree" {
 
 ///|
 test "bytes, the byte-order mark and fragments" {
-  let doc = load(@moonxml.utf8_encode("\u{FEFF}<a>x</a>"))
+  let doc = load(b"\xEF\xBB\xBF<a>x</a>")
   assert_eq(doc.css("a").text(), "x")
   let fragment = loads_fragment("<a/>text<b/>")
   assert_eq(fragment.root.childrens.length(), 3)
@@ -169,5 +169,27 @@ test "the chain reads an XML document like any other" {
 
 ///|
 test "the depth bound is stated, not buried" {
-  assert_eq(depth_limit(), 512)
+  assert_eq(limit, 512)
+  let deep = "<a>".repeat(4) + "</a>".repeat(4)
+  assert_eq(loads(deep).css("a").length(), 4)
+  let refused = try {
+    ignore(loads(deep, limit=3))
+    false
+  } catch {
+    @moonxml.Exceeded(limit~, got~, ..) => limit == 3 && got == 4
+    _ => false
+  }
+  assert_eq(refused, true)
+}
+
+///|
+test "bytes that are not UTF-8 are refused at the fault" {
+  let refused = try {
+    ignore(load(b"<a>\xFF</a>"))
+    false
+  } catch {
+    @moonxml.Malformed(at~, ..) => at == 3
+    _ => false
+  }
+  assert_eq(refused, true)
 }
