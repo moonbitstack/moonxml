@@ -10,6 +10,6 @@ license = "Apache-2.0"
 
 keywords = [ "html", "xml", "xpath" ]
 
-description = "HTML, XML and SVG for MoonBit."
+description = "HTML, XML and SVG for MoonBit: parse, query and edit."
 
 source = "src"
