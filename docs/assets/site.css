@@ -473,6 +473,72 @@ td code { white-space: nowrap; }
 .yes { color: var(--olive); }
 .no { color: var(--ink-faint); }
 
+/* ------------------------------------------------- the selector board */
+
+/* the document itself, set on a lifted sheet inside the ruled page */
+.demo-box {
+  border: 1px solid var(--rule-strong);
+  background: color-mix(in srgb, var(--paper-lift) 88%, transparent);
+  padding: 20px 26px 24px;
+  margin: 0 0 24px;
+}
+.demo-cap {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--typewriter);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 9px;
+  margin-bottom: 18px;
+}
+.demo-box > article { margin: 0; }
+.demo-box > article > :last-child { margin-bottom: 0; }
+.demo-box h1 { font-size: 30px; margin-bottom: 4px; }
+.demo-box ul, .demo-box table { margin-bottom: 12px; }
+.demo-box form { margin: 0 0 12px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 14px; }
+.demo-box label { font-family: var(--typewriter); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); }
+.demo-box input, .demo-box select { font: inherit; font-size: 14px; padding: 3px 7px; border: 1px solid var(--rule-strong); background: var(--paper); color: var(--ink); }
+.demo-box input[disabled] { opacity: 0.55; }
+.demo-box .btn { font: inherit; font-size: 14px; padding: 4px 14px; border: 1px solid var(--brick); background: none; color: var(--brick); }
+.demo-box .flag { display: inline-block; width: 12px; height: 12px; border: 1px solid var(--rule-strong); }
+.demo-box .note { font-size: 14px; color: var(--ink-soft); }
+.demo-box a { color: var(--brick); text-decoration: underline; text-underline-offset: 2px; }
+
+/* the answers, one query a row */
+.demos { margin-bottom: 26px; }
+.demos th:nth-child(1) { width: 40%; }
+.demos th:nth-child(2) { width: 58px; }
+.demos td { font-size: 13.5px; line-height: 1.5; padding: 8px 16px 8px 0; }
+.demos td code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  color: var(--brick);
+  font-size: 12px;
+}
+.demos .n {
+  font-family: var(--typewriter);
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  padding-right: 22px;
+}
+.demos .eng {
+  font-family: var(--typewriter);
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--olive);
+  margin-right: 9px;
+  padding: 1px 4px;
+  border: 1px solid color-mix(in srgb, var(--olive) 35%, transparent);
+}
+.demos .none { color: var(--ink-faint); font-style: italic; }
+
 /* --------------------------------------------------------------- api page */
 
 .api-layout { display: grid; grid-template-columns: 196px 1fr; gap: 50px; align-items: start; }

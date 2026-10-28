@@ -1,0 +1,8 @@
+// The selector demonstration: every built-in selector, run against one
+// document, printed as the rows docs/selectors.html is built from.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonxml",
+  "moonbitstack/moonxml/html",
+}

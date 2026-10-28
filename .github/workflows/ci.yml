@@ -56,3 +56,7 @@ jobs:
       - name: the API page matches the sources
         run: |
           python3 scripts/gen_api.py . && git diff --exit-code docs/api.html
+
+      - name: the selector board matches the engine
+        run: |
+          python3 scripts/gen_selectors.py && git diff --exit-code docs/selectors.html

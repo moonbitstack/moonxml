@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Selectors — moonxml</title>
+<meta name="description" content="Every selector moonxml implements, run against one document: CSS, XPath, the chain, and the values and attributes they answer with.">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%237d2f22'>&lt;/&gt;</text></svg>">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="lt">&lt;</span><b>moonxml</b><span class="gt">/&gt;</span></a>
+    <nav class="top-nav">
+      <a href="start.html">Start</a>
+      <a href="selectors.html" aria-current="page">Selectors</a>
+      <a href="api.html">API</a>
+      <a href="inside.html">Inside</a>
+      <a class="hide-sm" href="https://github.com/moonbitstack/moonxml">GitHub</a>
+      <button class="theme-toggle" id="theme" title="Switch theme" aria-label="Switch theme">◐</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero" style="padding-bottom:20px">
+    <p class="eyebrow">the selector board</p>
+    <h1>Every selector, run<br>against one <em>document</em>.</h1>
+    <p class="lede">These tables are not examples of what the engines should answer — they are what they answered. Each row is a query, the number of nodes it returned, and those nodes, printed by a program that ran against the document in the box below.</p>
+    <div class="colophon-line">
+      <span><b>85 rows</b></span><span class="sep">·</span>
+      <span>CSS Selectors</span><span class="sep">·</span>
+      <span>XPath 1.0</span><span class="sep">·</span>
+      <span>the chain</span>
+    </div>
+  </div>
+
+  <section style="border-top:1px solid var(--rule)">
+    <div class="sec-head"><span class="sec-num">01</span><h2>The document</h2></div>
+    <div class="demo-box">
+      <div class="demo-cap"><span>the article, rendered</span><span>42 elements · 85 queries below</span></div>
+      <article id="shop" class="catalogue" data-region="eu">
+        <header id="masthead" class="masthead">
+          <h1>Field Notes</h1>
+          <p class="dek">Coffee, tea, and the machinery of both</p>
+        </header>
+        <ul id="items" class="list">
+          <li class="item" data-kind="bean" data-price="18">Yirgacheffe</li>
+          <li class="item" data-kind="bean" data-price="22" lang="en-GB">Huila</li>
+          <li class="item sold" data-kind="leaf" data-price="9">Sencha</li>
+          <li class="item" data-kind="leaf" data-price="14">Assam</li>
+          <li class="item" data-kind="blend" data-price="16"><a href="/b/1">House</a></li>
+        </ul>
+        <form id="order" action="/order" method="post">
+          <label for="qty">Quantity</label>
+          <input id="qty" name="qty" type="number" value="2" required>
+          <input id="gift" name="gift" type="checkbox" disabled>
+          <select name="grind">
+            <option value="fine">Fine</option>
+            <option value="coarse" selected>Coarse</option>
+          </select>
+          <button id="send" type="submit" class="btn primary">Order</button>
+          <span id="hollow" class="flag"></span>
+        </form>
+        <table id="prices">
+          <caption>Per 250 g</caption>
+          <thead><tr><th>Item</th><th>Price</th></tr></thead>
+          <tbody>
+            <tr data-band="high"><td>Huila</td><td>22</td></tr>
+            <tr data-band="low"><td>Sencha</td><td>9</td></tr>
+          </tbody>
+        </table>
+        <p class="note">Prices in <abbr title="United States dollars">USD</abbr>, roasted weekly.</p>
+        <section id="aside">
+          <h2>Notes</h2>
+          <p>One shipment a week.</p>
+        </section>
+      </article>
+    </div>
+    <p class="filename">the document, in full</p>
+<pre>&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;title&gt;Field Notes&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;article id=&quot;shop&quot; class=&quot;catalogue&quot; data-region=&quot;eu&quot;&gt;
+  &lt;header id=&quot;masthead&quot; class=&quot;masthead&quot;&gt;
+    &lt;h1&gt;Field Notes&lt;/h1&gt;
+    &lt;p class=&quot;dek&quot;&gt;Coffee, tea, and the machinery of both&lt;/p&gt;
+  &lt;/header&gt;
+  &lt;ul id=&quot;items&quot; class=&quot;list&quot;&gt;
+    &lt;li class=&quot;item&quot; data-kind=&quot;bean&quot; data-price=&quot;18&quot;&gt;Yirgacheffe&lt;/li&gt;
+    &lt;li class=&quot;item&quot; data-kind=&quot;bean&quot; data-price=&quot;22&quot; lang=&quot;en-GB&quot;&gt;Huila&lt;/li&gt;
+    &lt;li class=&quot;item sold&quot; data-kind=&quot;leaf&quot; data-price=&quot;9&quot;&gt;Sencha&lt;/li&gt;
+    &lt;li class=&quot;item&quot; data-kind=&quot;leaf&quot; data-price=&quot;14&quot;&gt;Assam&lt;/li&gt;
+    &lt;li class=&quot;item&quot; data-kind=&quot;blend&quot; data-price=&quot;16&quot;&gt;&lt;a href=&quot;/b/1&quot;&gt;House&lt;/a&gt;&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;form id=&quot;order&quot; action=&quot;/order&quot; method=&quot;post&quot;&gt;
+    &lt;label for=&quot;qty&quot;&gt;Quantity&lt;/label&gt;
+    &lt;input id=&quot;qty&quot; name=&quot;qty&quot; type=&quot;number&quot; value=&quot;2&quot; required&gt;
+    &lt;input id=&quot;gift&quot; name=&quot;gift&quot; type=&quot;checkbox&quot; disabled&gt;
+    &lt;select name=&quot;grind&quot;&gt;
+      &lt;option value=&quot;fine&quot;&gt;Fine&lt;/option&gt;
+      &lt;option value=&quot;coarse&quot; selected&gt;Coarse&lt;/option&gt;
+    &lt;/select&gt;
+    &lt;button id=&quot;send&quot; type=&quot;submit&quot; class=&quot;btn primary&quot;&gt;Order&lt;/button&gt;
+    &lt;span id=&quot;hollow&quot; class=&quot;flag&quot;&gt;&lt;/span&gt;
+  &lt;/form&gt;
+  &lt;table id=&quot;prices&quot;&gt;
+    &lt;caption&gt;Per 250 g&lt;/caption&gt;
+    &lt;thead&gt;&lt;tr&gt;&lt;th&gt;Item&lt;/th&gt;&lt;th&gt;Price&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;tr data-band=&quot;high&quot;&gt;&lt;td&gt;Huila&lt;/td&gt;&lt;td&gt;22&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr data-band=&quot;low&quot;&gt;&lt;td&gt;Sencha&lt;/td&gt;&lt;td&gt;9&lt;/td&gt;&lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+  &lt;p class=&quot;note&quot;&gt;Prices in &lt;abbr title=&quot;United States dollars&quot;&gt;USD&lt;/abbr&gt;, roasted weekly.&lt;/p&gt;
+  &lt;section id=&quot;aside&quot;&gt;
+    &lt;h2&gt;Notes&lt;/h2&gt;
+    &lt;p&gt;One shipment a week.&lt;/p&gt;
+  &lt;/section&gt;
+&lt;/article&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+    <p class="sub">A node is labelled <code>tag#id.class "text"</code> when it is an element, and <code>#text "…"</code> when it is not — <code>#text (blank)</code> is the whitespace between two tags, which is a node like any other. The <code>head</code>, <code>title</code> and <code>html</code> rows select from the whole document, not from the article shown.</p>
+  </section>
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>The simple selectors</h2></div>
+    <p class="sub">Type, the universal, class, id, and every attribute form: present, equal, a word, a prefix, a suffix, a substring, a language, and the case-sensitivity flag. A selector list answers the union, in document order.</p>
+<table class="demos">
+<thead><tr><th>Query</th><th>Nodes</th><th>Answer</th></tr></thead>
+<tbody>
+<tr><td><code>*</code></td><td class="n">42</td><td>html · head &quot;Field Notes&quot; · title &quot;Field Notes&quot; · body · article#shop.catalogue · +37</td></tr>
+<tr><td><code>li</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr><td><code>.item</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr><td><code>.sold</code></td><td class="n">1</td><td>li.item &quot;Sencha&quot;</td></tr>
+<tr><td><code>#items</code></td><td class="n">1</td><td>ul#items.list</td></tr>
+<tr><td><code>[data-price]</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr><td><code>[data-price=&quot;18&quot;]</code></td><td class="n">1</td><td>li.item &quot;Yirgacheffe&quot;</td></tr>
+<tr><td><code>[data-price^=&quot;1&quot;]</code></td><td class="n">3</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr><td><code>[data-price$=&quot;2&quot;]</code></td><td class="n">1</td><td>li.item &quot;Huila&quot;</td></tr>
+<tr><td><code>[data-price*=&quot;4&quot;]</code></td><td class="n">1</td><td>li.item &quot;Assam&quot;</td></tr>
+<tr><td><code>[lang|=&quot;en&quot;]</code></td><td class="n">2</td><td>html · li.item &quot;Huila&quot;</td></tr>
+<tr><td><code>[class~=&quot;sold&quot;]</code></td><td class="n">1</td><td>li.item &quot;Sencha&quot;</td></tr>
+<tr><td><code>[data-kind=&quot;BEAN&quot; i]</code></td><td class="n">2</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot;</td></tr>
+<tr><td><code>[data-kind=&quot;BEAN&quot; s]</code></td><td class="n">0</td><td class="none">nothing</td></tr>
+<tr><td><code>[data-kind=&quot;bean&quot;]</code></td><td class="n">2</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot;</td></tr>
+<tr><td><code>li, td</code></td><td class="n">9</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot; · +4</td></tr>
+</tbody></table>
+  </section>
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>Combinators</h2></div>
+    <p class="sub">Descendant, child, the adjacent sibling and the general one. A compound on either side works the same way, so the last row here is a chain of three.</p>
+<table class="demos">
+<thead><tr><th>Query</th><th>Nodes</th><th>Answer</th></tr></thead>
+<tbody>
+<tr><td><code>#items &gt; li</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr><td><code>#items li</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr><td><code>li + li</code></td><td class="n">4</td><td>li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr><td><code>li ~ li</code></td><td class="n">4</td><td>li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr><td><code>#shop &gt; ul &gt; li</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr><td><code>#prices tr &gt; td:last-child</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
+</tbody></table>
+  </section>
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><h2>Pseudo-classes</h2></div>
+    <p class="sub">The ones a document can settle: position among siblings, the functionals — <code>:not</code>, <code>:is</code>, <code>:where</code>, <code>:has</code> — and the form states. <code>:hover</code> and <code>:visited</code> are not here because they need a browser, and the engine refuses them by name rather than answering wrongly.</p>
+<table class="demos">
+<thead><tr><th>Query</th><th>Nodes</th><th>Answer</th></tr></thead>
+<tbody>
+<tr><td><code>li:first-child</code></td><td class="n">1</td><td>li.item &quot;Yirgacheffe&quot;</td></tr>
+<tr><td><code>li:last-child</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
+<tr><td><code>li:nth-child(2)</code></td><td class="n">1</td><td>li.item &quot;Huila&quot;</td></tr>
+<tr><td><code>li:nth-child(odd)</code></td><td class="n">3</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Sencha&quot; · li.item &quot;House&quot;</td></tr>
+<tr><td><code>li:nth-child(3n+1)</code></td><td class="n">2</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Assam&quot;</td></tr>
+<tr><td><code>li:nth-last-child(1)</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
+<tr><td><code>td:nth-of-type(2)</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
+<tr><td><code>p:first-of-type</code></td><td class="n">3</td><td>p.dek · p.note · p &quot;One shipment a week.&quot;</td></tr>
+<tr><td><code>td:last-of-type</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
+<tr><td><code>#aside &gt; p:only-of-type</code></td><td class="n">1</td><td>p &quot;One shipment a week.&quot;</td></tr>
+<tr><td><code>:root</code></td><td class="n">1</td><td>html</td></tr>
+<tr><td><code>#hollow:empty</code></td><td class="n">1</td><td>span#hollow.flag</td></tr>
+<tr><td><code>option:checked</code></td><td class="n">1</td><td>option &quot;Coarse&quot;</td></tr>
+<tr><td><code>input:disabled</code></td><td class="n">1</td><td>input#gift</td></tr>
+<tr><td><code>input:enabled</code></td><td class="n">1</td><td>input#qty</td></tr>
+<tr><td><code>input:required</code></td><td class="n">1</td><td>input#qty</td></tr>
+<tr><td><code>input:optional</code></td><td class="n">1</td><td>input#gift</td></tr>
+<tr><td><code>li &gt; a:only-child</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
+<tr><td><code>td:nth-last-of-type(1)</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
+<tr><td><code>a:link</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
+<tr><td><code>a:any-link</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
+<tr><td><code>li:not(.sold)</code></td><td class="n">4</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr><td><code>li:is(.sold, [data-kind=&quot;blend&quot;])</code></td><td class="n">2</td><td>li.item &quot;Sencha&quot; · li.item &quot;House&quot;</td></tr>
+<tr><td><code>:where(.item, .btn)</code></td><td class="n">6</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot; · button#send.btn &quot;Order&quot;</td></tr>
+<tr><td><code>#order:has(option[selected])</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr><td><code>li:has(&gt; a)</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
+<tr><td><code>li:has(+ li.sold)</code></td><td class="n">1</td><td>li.item &quot;Huila&quot;</td></tr>
+</tbody></table>
+  </section>
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><h2>The chain</h2></div>
+    <p class="sub">Every query answers a <code>Selection</code>, so queries compose: narrow a selection again, switch engine mid-flight, take the first or the last, step to the parent, to the children, to the nearest ancestor. <code>pricey</code> in one of these rows is a selector registered at run time.</p>
+<table class="demos">
+<thead><tr><th>Query</th><th>Nodes</th><th>Answer</th></tr></thead>
+<tbody>
+<tr><td><code>page.css(&quot;#items&quot;).css(&quot;li[data-kind=leaf]&quot;)</code></td><td class="n">2</td><td>li.item &quot;Sencha&quot; · li.item &quot;Assam&quot;</td></tr>
+<tr><td><code>page.css(&quot;tbody tr&quot;).xpath(&quot;./td[2]&quot;)</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
+<tr><td><code>page.css(&quot;li&quot;).first()</code></td><td class="n">1</td><td>li.item &quot;Yirgacheffe&quot;</td></tr>
+<tr><td><code>page.css(&quot;li&quot;).last()</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
+<tr><td><code>page.css(&quot;li&quot;).eq(2)</code></td><td class="n">1</td><td>li.item &quot;Sencha&quot;</td></tr>
+<tr><td><code>page.css(&quot;td&quot;).parent()</code></td><td class="n">2</td><td>tr &quot;Huila22&quot; · tr &quot;Sencha9&quot;</td></tr>
+<tr><td><code>page.css(&quot;#prices&quot;).children()</code></td><td class="n">7</td><td>#text (blank) · caption &quot;Per 250 g&quot; · #text (blank) · thead &quot;ItemPrice&quot; · #text (blank) · +2</td></tr>
+<tr><td><code>page.css(&quot;abbr&quot;).closest(&quot;p&quot;)</code></td><td class="n">1</td><td>p.note</td></tr>
+<tr><td><code>page.by_id(&quot;order&quot;)</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr><td><code>page.by_tag(&quot;option&quot;)</code></td><td class="n">2</td><td>option &quot;Fine&quot; · option &quot;Coarse&quot;</td></tr>
+<tr><td><code>page.by_class(&quot;sold&quot;)</code></td><td class="n">1</td><td>li.item &quot;Sencha&quot;</td></tr>
+<tr><td><code>page.by_name(&quot;grind&quot;)</code></td><td class="n">1</td><td>select &quot;Fine Coarse&quot;</td></tr>
+<tr><td><code>page.selector(&quot;pricey&quot;, &quot;&quot;)</code></td><td class="n">3</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;House&quot;</td></tr>
+<tr><td><code>page.css(&quot;li&quot;).items[4].css(&quot;a&quot;)</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
+<tr><td><span class="eng">xpath</span><code>page.xpath(&quot;//li[last()]&quot;)</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
+<tr><td><span class="eng">xpath</span><code>page.xpath(&quot;//tr[td[2] &gt; 15]&quot;)</code></td><td class="n">1</td><td>tr &quot;Huila22&quot;</td></tr>
+</tbody></table>
+  </section>
+  <section>
+    <div class="sec-head"><span class="sec-num">06</span><h2>Values and attributes</h2></div>
+    <p class="sub">A selection answers the text it holds, the attribute it was asked for, and the markup inside it; <code>xpath_value</code> answers a count, a string, a node-set or a boolean, typed. Note that <code>text()</code> on a group concatenates — the library does not guess where one node's text ends.</p>
+<table class="demos">
+<thead><tr><th>Query</th><th>Nodes</th><th>Answer</th></tr></thead>
+<tbody>
+<tr><td><span class="eng">text</span><code>page.css(&quot;#items li&quot;).text()</code></td><td class="n">—</td><td>YirgacheffeHuilaSenchaAssamHouse</td></tr>
+<tr><td><span class="eng">text</span><code>page.css(&quot;li.sold&quot;).text()</code></td><td class="n">—</td><td>Sencha</td></tr>
+<tr><td><span class="eng">attr</span><code>page.css(&quot;li.sold&quot;).attr(&quot;data-price&quot;)</code></td><td class="n">—</td><td>9</td></tr>
+<tr><td><span class="eng">attr</span><code>page.css(&quot;li&quot;).attr(&quot;data-kind&quot;)</code></td><td class="n">—</td><td>bean</td></tr>
+<tr><td><span class="eng">attr</span><code>page.css(&quot;abbr&quot;).attr(&quot;title&quot;)</code></td><td class="n">—</td><td>United States dollars</td></tr>
+<tr><td><span class="eng">attr</span><code>page.css(&quot;option[selected]&quot;).attr(&quot;value&quot;)</code></td><td class="n">—</td><td>coarse</td></tr>
+<tr><td><span class="eng">attr</span><code>page.css(&quot;#prices tbody tr&quot;).attr(&quot;data-band&quot;)</code></td><td class="n">—</td><td>high</td></tr>
+<tr><td><span class="eng">html</span><code>page.css(&quot;#items li&quot;).last().html()</code></td><td class="n">—</td><td>&lt;a href=&quot;/b/1&quot;&gt;House&lt;/a&gt;</td></tr>
+<tr><td><span class="eng">html</span><code>page.css(&quot;#order&quot;).html()</code></td><td class="n">—</td><td>&lt;label for=&quot;qty&quot;&gt;Quantity&lt;/label&gt; &lt;input id=&quot;qty&quot; name=&quot;qty&quot; type=&quot;number&quot; value=&quot;2&quot; required&gt; &lt;input id=&quot;gift&quot; name=&quot;gift&quot; type=&quot;checkbox&quot; disabled&gt; &lt;select name=&quot;grind&quot;&gt; &lt;option value=&quot;fine&quot;&gt;Fine&lt;/option&gt; &lt;option value=&quot;coarse&quot; selected&gt;Coarse&lt;/option&gt; &lt;/select&gt; &lt;button id=&quot;send&quot; type=&quot;submit&quot; class=&quot;btn primary&quot;&gt;Order&lt;/button&gt; &lt;span id=&quot;hollow&quot; class=&quot;flag&quot;&gt;&lt;/span&gt;</td></tr>
+<tr><td><span class="eng">xpath</span><code>page.xpath_value(&quot;count(//li)&quot;)</code></td><td class="n">—</td><td>5</td></tr>
+<tr><td><span class="eng">xpath</span><code>page.xpath_value(&quot;string(//abbr/@title)&quot;)</code></td><td class="n">—</td><td>United States dollars</td></tr>
+<tr><td><span class="eng">xpath</span><code>page.xpath_value(&quot;//li[@data-price &gt; 15]&quot;)</code></td><td class="n">—</td><td>3 nodes</td></tr>
+<tr><td><span class="eng">xpath</span><code>page.xpath_value(&quot;//li[@data-price &gt; 15] and count(//li) = 5&quot;)</code></td><td class="n">—</td><td>true</td></tr>
+</tbody></table>
+  </section>
+  <section>
+    <div class="sec-head"><span class="sec-num">07</span><h2>One node, seven ways</h2></div>
+    <p class="sub">Seven queries, two engines, one element. This is the point of a single tree: the node does not know or care which query found it.</p>
+<table class="demos">
+<thead><tr><th>Query</th><th>Nodes</th><th>Answer</th></tr></thead>
+<tbody>
+<tr><td><code>#order</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr><td><code>form</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr><td><code>form[action=&quot;/order&quot;]</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr><td><code>#shop &gt; form</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr><td><code>article :is(form)</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr><td><span class="eng">xpath</span><code>//form</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr><td><span class="eng">xpath</span><code>//*[@action]</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+</tbody></table>
+  </section>
+  <section>
+    <div class="sec-head"><span class="sec-num">08</span><h2>What is not on this board</h2></div>
+    <p class="sub"><code>:hover</code>, <code>:active</code>, <code>:focus</code>, <code>:visited</code> and <code>:target</code> describe a browser's state, not a document's, so the engine refuses them by name — <code>@moonxml.Refused.BadQuery</code> with the offset — instead of answering a question it cannot see. Everything a tree can settle is above; <code>page.css("a:hover")</code> is a sentence the library will not pretend to understand.</p>
+  </section>
+
+  <p class="fleuron">❦</p>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>Apache-2.0 · moonbitstack</span>
+    <span><a href="https://github.com/moonbitstack/moonxml">github.com/moonbitstack/moonxml</a></span>
+    <span class="spacer"><a href="index.html">top ↑</a></span>
+    <span class="colophon">Set in Iowan Old Style and Hoefler Text, labels in typewriter capitals · printed to the web on kraft</span>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var saved = null;
+    try { saved = localStorage.getItem("moonxml-theme"); } catch (e) {}
+    var system = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    root.setAttribute("data-theme", saved || system);
+    document.getElementById("theme").addEventListener("click", function () {
+      var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      try { localStorage.setItem("moonxml-theme", next); } catch (e) {}
+    });
+  })();
+</script>
+</body>
+</html>
