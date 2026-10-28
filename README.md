@@ -128,11 +128,41 @@ a position means one thing.
 
 ## Parsers
 
-**HTML** — WHATWG's tokenizer and tree construction: implied `html`/`head`/`body`/`tbody`, cells that close themselves, foster parenting in front of tables, formatting reopened after a block closed it, the adoption agency for misnested markup, character references with the Windows-1252 repair. What it fixed is countable afterwards on `document.repairs()`.
+**HTML** — WHATWG's tokenizer and tree construction, whole: implied
+`html`/`head`/`body`/`tbody`, cells that close themselves, foster parenting in
+front of tables, formatting reopened after a block closed it, the adoption
+agency for misnested markup, character references with the Windows-1252 repair.
+Foreign content is parsed as foreign: `<svg>` and `<math>` carry their
+namespaces, their tags and attributes are spelled the way SVG and MathML spell
+them, and the integration points (`foreignObject`, `desc`, `title`, `mi`,
+`mtext`, `annotation-xml`) are where HTML resumes. A `<template>`'s contents
+live in a fragment of their own, on `element.content()`, so what is inside a
+template is inert until someone puts it in the document. Framesets are
+documents too. What the parser fixed is countable afterwards on
+`document.repairs()`.
 
-**XML** — XML 1.0 with Namespaces 1.0, strict: a document reads whole or is refused with the offset of the fault. Names become `{uri}local`, and writing back reproduces attribute order, CDATA, comments, processing instructions, the doctype with its internal subset, and `<a/>` versus `<a></a>`.
+**XML** — XML 1.0 with Namespaces 1.0, strict: a document reads whole or is
+refused with the offset of the fault. Names become `{uri}local`, and writing
+back reproduces attribute order, CDATA, comments, processing instructions, the
+doctype with its internal subset, and `<a/>` versus `<a></a>`.
 
-**Streaming** — `@xml.scan(text, sink)` emits `Event`s to any `Sink`; `document.events()` reads a finished tree back as the same stream.
+The internal subset is read: entity declarations, general and parameter, nested
+and with recursion refused; attribute defaults and their types; the content
+models that decide whether a declaration is well-formed. Nothing is fetched — a
+document whose entities live in a file beside it is read without them, and
+`document.unresolved()` names what was skipped, as XML 1.0 asks a
+non-validating processor to. `standalone="yes"` turns that gap into a fault,
+because the document said it needed nothing from outside. Expansion is bounded
+by `entity_limit`, a million characters by default, so a document built to
+expand for ever is refused instead of read.
+
+**Fragments** — `@html.loads_fragment(text, context="div")` reads markup the
+way `innerHTML` does, inside the element named as the context; `svg desc` and
+`math mi` name a foreign context. `@xml.loads_fragment(text)` reads a snippet
+that has no single root.
+
+**Streaming** — `@xml.scan(text, sink)` emits `Event`s to any `Sink`;
+`document.events()` reads a finished tree back as the same stream.
 
 ## Examples
 
@@ -142,13 +172,13 @@ a position means one thing.
 | [`src/examples/scrape`](src/examples/scrape/main.mbt) | a page in, a table out: query, filter, reshape, serialize |
 | [`src/examples/rewrite`](src/examples/rewrite/main.mbt) | read a feed, edit every entry, write it back byte-faithfully |
 
-## What is not here yet
+## What is not here
 
-- **HTML foreign content.** `<svg>` and `<math>` subtrees are parsed as ordinary elements rather than switching into the SVG/MathML integration points. Querying them works (`page.css("svg rect")`); giving their namespaces meaning does not, and the html5lib files that test it are left out of the fixture.
-- **Framesets and template contents.** A `<frameset>` document gets a body; `<template>` has no separate content fragment.
-- **`:hover`, `:visited` as behaviour.** The state pseudo-classes are answered from attributes; the ones that need a live browser are a parse error rather than a silent miss.
-
-The HTML tests assert a floor against html5lib's corpus — **817 of 1105 documents** in the fixture reproduce exactly — and the fixture is generated, so the number can only be raised.
+`document.write`, scripting-enabled branches, and the CSS pseudo-classes that
+need a live browser (`:hover`, `:visited`) — none of those can be decided from
+a document alone, so each is a named answer rather than a silent miss. XSLT,
+DTD validation and XPath 2.0 are transformations and languages of their own,
+not features of a tree library.
 
 ## Licence
 

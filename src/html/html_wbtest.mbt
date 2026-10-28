@@ -2,8 +2,30 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
+/// A name as the corpus spells it: a foreign element carries the space it
+/// is in, written in front of its local name.
+fn displayed(name : String) -> String {
+  match @moonxml.namespace_of(name) {
+    Some(uri) =>
+      if uri == "http://www.w3.org/2000/svg" {
+        "svg " + @moonxml.local_of(name)
+      } else if uri == "http://www.w3.org/1998/Math/MathML" {
+        "math " + @moonxml.local_of(name)
+      } else if uri == "http://www.w3.org/1999/xlink" {
+        "xlink " + @moonxml.local_of(name)
+      } else if uri == "http://www.w3.org/XML/1998/namespace" {
+        "xml " + @moonxml.local_of(name)
+      } else {
+        @moonxml.local_of(name)
+      }
+    None => name
+  }
+}
+
+///|
 /// A tree in the shape html5lib's own test corpus spells it: one node a line,
-/// two spaces per level. It is the format the fixtures are written in, so a
+/// two spaces per level, attributes sorted by name, a template's contents
+/// spelled `content`. It is the format the fixture is written in, so a
 /// difference reads as a diff.
 fn render(doc : @moonxml.Document) -> String {
   let out = StringBuilder()
@@ -18,12 +40,38 @@ fn render(doc : @moonxml.Document) -> String {
   fn walk(node : @moonxml.Node, depth : Int32) -> Unit {
     match node {
       @moonxml.ElementNode(data) => {
-        line(depth, "<" + data.name + ">")
+        line(depth, "<" + displayed(data.name) + ">")
+        let attrs : Array[(String, String)] = []
         for pair in data.attrs {
+          attrs.push((displayed(pair.0), pair.1))
+        }
+        let sorted = attrs.copy()
+        // attribute names in the order the corpus writes them
+        let mut i = 1
+        while i < sorted.length() {
+          let here = sorted[i]
+          let mut j = i - 1
+          while j >= 0 && compare(sorted[j].0, here.0) > 0 {
+            sorted[j + 1] = sorted[j]
+            j = j - 1
+          }
+          sorted[j + 1] = here
+          i = i + 1
+        }
+        for pair in sorted {
           line(depth + 1, pair.0 + "=\"" + pair.1 + "\"")
         }
         for child in data.children {
           walk(child, depth + 1)
+        }
+        match data.content() {
+          Some(fragment) => {
+            line(depth + 1, "content")
+            for child in fragment.children {
+              walk(child, depth + 2)
+            }
+          }
+          None => ()
         }
       }
       @moonxml.TextNode(text) => line(depth, "\"" + text + "\"")
@@ -43,6 +91,11 @@ fn render(doc : @moonxml.Document) -> String {
 ///|
 fn shape(text : String) -> String {
   render(loads(text))
+}
+
+///|
+fn shape_in(text : String, context : String) -> String {
+  render(loads_fragment(text, context~))
 }
 
 ///|

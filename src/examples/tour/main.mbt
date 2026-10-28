@@ -80,8 +80,8 @@ fn xml_query() -> Unit raise @moonxml.Refused {
   rule("xml, strictly, and back out byte for byte")
   let source = "<feed xmlns:a=\"urn:a\"><a:entry id=\"1\"><title>One</title></a:entry></feed>"
   let feed = @xml.loads(source)
-  println("names are {uri}local   : \{feed.css("entry").items[0].name()}")
-  println("query by namespace     : \{feed.css("{urn:a}entry").length()} node")
+  println("names are {uri}local_name   : \{feed.css("entry").items[0].name()}")
+  println("query by space     : \{feed.css("{urn:a}entry").length()} node")
   println("round trip is exact    : \{feed.dumps() == source}")
 }
 

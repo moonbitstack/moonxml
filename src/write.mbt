@@ -58,6 +58,7 @@ pub fn Document::dumps(self : Document) -> String {
 }
 
 ///|
+/// A whole document as bytes, in the flavour it was read as.
 pub fn Document::dump(self : Document) -> Bytes {
   @utf8.encode(self.dumps())
 }
@@ -73,6 +74,7 @@ pub fn Document::dumps_html(self : Document) -> String {
 }
 
 ///|
+/// A whole document as bytes, by HTML's rules.
 pub fn Document::dump_html(self : Document) -> Bytes {
   @utf8.encode(self.dumps_html())
 }
@@ -85,7 +87,7 @@ fn write_xml(node : Node, out : StringBuilder) -> Unit {
 }
 
 ///|
-/// Write one node given the namespace declarations in force: `{uri}local`
+/// Write one node given the space declarations in force: `{uri}local`
 /// becomes a prefixed name again, using the prefix the document declared when
 /// there is one and inventing `ns1` when there is not.
 fn write_xml_in(
@@ -142,8 +144,8 @@ fn write_xml_in(
 }
 
 ///|
-/// A name as it is written: unchanged when it carries no namespace, prefixed
-/// when it does. A name whose namespace nothing declares gets a declaration on
+/// A name as it is written: unchanged when it carries no space, prefixed
+/// when it does. A name whose space nothing declares gets a declaration on
 /// the element being written, collected in `declared`.
 fn qualify(
   name : String,

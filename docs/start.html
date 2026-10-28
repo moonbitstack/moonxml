@@ -83,7 +83,7 @@ page.<span class="f">xpath</span>(<span class="s">"//li[2]"</span>).<span class=
         <p>Every query answers the same shape, so nothing stops you mixing them — or stepping down into a node and carrying on.</p>
         <p class="filename">step4.mbt</p>
 <pre>page.<span class="f">css</span>(<span class="s">"#list"</span>).<span class="f">xpath</span>(<span class="s">".//li[1]"</span>).<span class="f">text</span>()   <span class="cm">// "coffee"</span>
-page.<span class="f">xpath</span>(<span class="s">"//ul"</span>).<span class="f">childrens</span>().<span class="f">length</span>()       <span class="cm">// 2</span>
+page.<span class="f">xpath</span>(<span class="s">"//ul"</span>).<span class="f">children</span>().<span class="f">length</span>()       <span class="cm">// 2</span>
 page.<span class="f">by_tag</span>(<span class="s">"li"</span>).<span class="f">items</span>[<span class="s">0</span>].<span class="f">css</span>(<span class="s">"b"</span>)       <span class="cm">// a node, queried again</span></pre>
         <p>Results come back in document order, deduplicated by identity, and an empty selection stays empty — it does not become “the whole document”.</p>
       </li>
@@ -96,7 +96,7 @@ page.<span class="f">by_tag</span>(<span class="s">"li"</span>).<span class="f">
 page.<span class="f">css</span>(<span class="s">"li"</span>).<span class="f">last</span>().<span class="f">add_class</span>(<span class="s">"done"</span>)
 
 <span class="k">let</span> cocoa = <span class="f">@moonxml.Element</span>::<span class="f">new</span>(<span class="s">"li"</span>,
-  childrens = [<span class="f">@moonxml.TextNode</span>(<span class="s">"cocoa"</span>)])
+  children = [<span class="f">@moonxml.TextNode</span>(<span class="s">"cocoa"</span>)])
 page.<span class="f">css</span>(<span class="s">"ul"</span>).<span class="f">append</span>(<span class="f">@moonxml.ElementNode</span>(cocoa))
 
 page.<span class="f">css</span>(<span class="s">"li"</span>).<span class="f">first</span>().<span class="f">wrap</span>(<span class="s">"strong"</span>)   <span class="cm">// one node, one wrapper</span></pre>

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The surface a caller can reach but the feature tests never touch: the byte
-// writers, the namespace helpers, the error and flavour pretty-printing, and
+// writers, the space helpers, the error and flavour pretty-printing, and
 // the few verbs the editing tests did not need. Everything public is named
 // here at least once.
 

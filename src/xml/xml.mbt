@@ -36,20 +36,20 @@ priv struct Scan {
 }
 
 ///|
-// How deep elements may nest before a document is refused. Chrome and WebKit
-// stop at 512 nested elements; a document deeper than that is a stack to eat,
-// not a document.
+/// How deep elements may nest before a document is refused. Chrome and WebKit
+/// stop at 512 nested elements; a document deeper than that is a stack to eat,
+/// not a document.
 pub let limit : Int32 = 512
 
 ///|
-// How many characters of entity expansion one document may spend. A million
-// is well past what a document that means something needs, and well under
-// what one built to expand for ever would ask for.
+/// How many characters of entity expansion one document may spend. A million
+/// is well past what a document that means something needs, and well under
+/// what one built to expand for ever would ask for.
 pub let entity_limit : Int32 = 1048576
 
 ///|
-// Read a document and answer its tree. `limit` bounds the element nesting,
-// `entity_limit` the total expansion of entities.
+/// Read a document and answer its tree. `limit` bounds the element nesting,
+/// `entity_limit` the total expansion of entities.
 pub fn loads(
   text : String,
   limit~ : Int32 = limit,
@@ -59,8 +59,8 @@ pub fn loads(
 }
 
 ///|
-// Read a document from bytes; UTF-8, with a leading byte-order mark skipped.
-// `limit` and `entity_limit` are as for `loads`.
+/// Read a document from bytes; UTF-8, with a leading byte-order mark skipped.
+/// `limit` and `entity_limit` are as for `loads`.
 pub fn load(
   bytes : Bytes,
   limit~ : Int32 = limit,
@@ -74,9 +74,9 @@ pub fn load(
 }
 
 ///|
-// Read content that has no single root — several elements, or text beside
-// them — into a document whose root holds them. Not a well-formed document,
-// which is the point: it is for a snippet.
+/// Read content that has no single root — several elements, or text beside
+/// them — into a document whose root holds them. Not a well-formed document,
+/// which is the point: it is for a snippet.
 pub fn loads_fragment(
   text : String,
   limit~ : Int32 = limit,
@@ -86,8 +86,8 @@ pub fn loads_fragment(
 }
 
 ///|
-// Stream a document's events into a sink, building nothing. `limit` and
-// `entity_limit` are as for `loads`.
+/// Stream a document's events into a sink, building nothing. `limit` and
+/// `entity_limit` are as for `loads`.
 pub fn scan(
   text : String,
   sink : &@event.Sink,
@@ -153,8 +153,8 @@ fn scan_document(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// The prologue: the XML declaration, comments, processing instructions and
-// the doctype, in the order the spec allows.
+/// The prologue: the XML declaration, comments, processing instructions and
+/// the doctype, in the order the spec allows.
 fn prologue(scanner : Scan) -> Unit raise @moonxml.Refused {
   let mut seen_doctype = false
   while true {
@@ -312,8 +312,8 @@ fn trailing(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// A fragment: text, elements, comments and instructions, with no single root
-// required.
+/// A fragment: text, elements, comments and instructions, with no single root
+/// required.
 fn fragment_body(scanner : Scan) -> Unit raise @moonxml.Refused {
   while scanner.at < scanner.text.length() {
     if starts_with(scanner, "<!--") {
@@ -335,7 +335,7 @@ fn fragment_body(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// An element, its content, and its close: the recursive heart.
+/// An element, its content, and its close: the recursive heart.
 fn content(scanner : Scan, depth : Int32) -> Unit raise @moonxml.Refused {
   if depth > scanner.depth_limit {
     raise @moonxml.Exceeded(
@@ -383,9 +383,9 @@ fn content(scanner : Scan, depth : Int32) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// A reference in content. A character reference is one character of text; a
-// general entity's replacement text is spliced in where the reference stood,
-// so the markup it carries is read as markup.
+/// A reference in content. A character reference is one character of text; a
+/// general entity's replacement text is spliced in where the reference stood,
+/// so the markup it carries is read as markup.
 fn content_reference(scanner : Scan) -> Unit raise @moonxml.Refused {
   let at = scanner.at
   let text = scanner.text
@@ -415,8 +415,8 @@ fn content_reference(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// Replace `length` characters at the scanner's position with `text`, so that
-// what an entity stands for is read exactly as if it had been written there.
+/// Replace `length` characters at the scanner's position with `text`, so that
+/// what an entity stands for is read exactly as if it had been written there.
 fn splice(scanner : Scan, length : Int32, text : String) -> Unit {
   let source = scanner.text
   let n = source.length()
@@ -426,8 +426,8 @@ fn splice(scanner : Scan, length : Int32, text : String) -> Unit {
 }
 
 ///|
-// A start tag: its resolved name, its resolved attributes in document order,
-// and whether it closed itself.
+/// A start tag: its resolved name, its resolved attributes in document order,
+/// and whether it closed itself.
 fn start_tag(
   scanner : Scan,
 ) -> (String, Array[(String, String)], Bool) raise @moonxml.Refused {
@@ -523,8 +523,8 @@ fn start_tag(
 }
 
 ///|
-// Resolve a QName against the scopes in force, answering `{uri}local` or the
-// bare local name.
+/// Resolve a QName against the scopes in force, answering `{uri}local` or the
+/// bare local name.
 fn resolve(
   scanner : Scan,
   qname : String,
@@ -546,7 +546,7 @@ fn resolve(
             fail(
               scanner,
               scanner.at,
-              "the prefix `\{prefix}` is bound to no namespace",
+              "the prefix `\{prefix}` is bound to no space",
             )
           } else {
             "{" + uri + "}" + name
@@ -567,14 +567,14 @@ fn resolve(
           None => qname
         }
       } else {
-        // A default namespace does not apply to attributes.
+        // A default space does not apply to attributes.
         qname
       }
   }
 }
 
 ///|
-// The URI a prefix names in the innermost scope that declares it.
+/// The URI a prefix names in the innermost scope that declares it.
 fn lookup_prefix(scanner : Scan, prefix : String) -> String? {
   let mut k = scanner.scopes.length() - 1
   while k >= 0 {
@@ -592,7 +592,7 @@ fn lookup_prefix(scanner : Scan, prefix : String) -> String? {
 }
 
 ///|
-// The end tag's name, leaving the scanner past it.
+/// The end tag's name, leaving the scanner past it.
 fn end_tag(scanner : Scan) -> String raise @moonxml.Refused {
   scanner.at = scanner.at + 2
   let (qname, after) = read_name(scanner, scanner.at)
@@ -613,8 +613,8 @@ fn end_tag(scanner : Scan) -> String raise @moonxml.Refused {
 }
 
 ///|
-// An attribute value: quoted, its references expanded, and its whitespace
-// normalized by the attribute's declared type.
+/// An attribute value: quoted, its references expanded, and its whitespace
+/// normalized by the attribute's declared type.
 fn attribute_value(scanner : Scan) -> String raise @moonxml.Refused {
   let text = scanner.text
   if !(scanner.at < text.length() &&
@@ -673,8 +673,8 @@ fn attribute_value(scanner : Scan) -> String raise @moonxml.Refused {
 }
 
 ///|
-// A run of text, exactly as it stands; `]]>` in content is refused, as the
-// spec says.
+/// A run of text, exactly as it stands; `]]>` in content is refused, as the
+/// spec says.
 fn text_run(scanner : Scan) -> Unit raise @moonxml.Refused {
   let text = scanner.text
   let start = scanner.at
@@ -698,7 +698,7 @@ fn text_run(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// A character reference at the scanner's position, answering its character.
+/// A character reference at the scanner's position, answering its character.
 fn character_reference(scanner : Scan) -> Char raise @moonxml.Refused {
   let at = scanner.at
   let text = scanner.text
@@ -738,7 +738,7 @@ fn character_reference(scanner : Scan) -> Char raise @moonxml.Refused {
 }
 
 ///|
-// Whether a code point is a character XML allows.
+/// Whether a code point is a character XML allows.
 fn is_char(value : Int32) -> Bool {
   value == 0x9 ||
   value == 0xA ||
@@ -749,10 +749,10 @@ fn is_char(value : Int32) -> Bool {
 }
 
 ///|
-// The offset of the first character in the input that XML does not allow, if
-// there is one. Surrogate halves are checked as pairs, so a document that is
-// UTF-8 but carries half of one is refused rather than read as two characters
-// that are not characters.
+/// The offset of the first character in the input that XML does not allow, if
+/// there is one. Surrogate halves are checked as pairs, so a document that is
+/// UTF-8 but carries half of one is refused rather than read as two characters
+/// that are not characters.
 fn first_illegal(text : String) -> Int32? {
   let n = text.length()
   let mut i = 0
@@ -781,8 +781,8 @@ fn first_illegal(text : String) -> Int32? {
 }
 
 ///|
-// A comment: everything between `<!--` and `-->`, refused if it carries `--`
-// the way the spec forbids.
+/// A comment: everything between `<!--` and `-->`, refused if it carries `--`
+/// the way the spec forbids.
 fn comment(scanner : Scan) -> Unit raise @moonxml.Refused {
   let start = scanner.at + 4
   let close = match find_text(scanner.text, "-->", start) {
@@ -798,7 +798,7 @@ fn comment(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// A CDATA section: its text, exactly as it stands.
+/// A CDATA section: its text, exactly as it stands.
 fn cdata(scanner : Scan) -> Unit raise @moonxml.Refused {
   let start = scanner.at + 9
   let close = match find_text(scanner.text, "]]>", start) {
@@ -810,8 +810,8 @@ fn cdata(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// A processing instruction: the target, and the raw text between it and the
-// `?>`, so it writes back exactly.
+/// A processing instruction: the target, and the raw text between it and the
+/// `?>`, so it writes back exactly.
 fn instruction(scanner : Scan) -> Unit raise @moonxml.Refused {
   let text = scanner.text
   let began = scanner.at
@@ -844,9 +844,9 @@ fn instruction(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// The doctype, with its external identifier and its internal subset: what goes
-// into the tree is the raw declaration, so writing it back is exact, and what
-// stays with the reader is the declarations it made.
+/// The doctype, with its external identifier and its internal subset: what goes
+/// into the tree is the raw declaration, so writing it back is exact, and what
+/// stays with the reader is the declarations it made.
 fn doctype(scanner : Scan) -> Unit raise @moonxml.Refused {
   let text = scanner.text
   let body = scanner.at + 9
@@ -878,8 +878,8 @@ fn doctype(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// A name as XML defines it: a start character, then name characters. With
-// Namespaces in force a name carries at most one colon, and not at either end.
+/// A name as XML defines it: a start character, then name characters. With
+/// Namespaces in force a name carries at most one colon, and not at either end.
 fn read_name(scanner : Scan, from : Int32) -> (String, Int32) {
   let text = scanner.text
   let n = text.length()
@@ -915,7 +915,7 @@ fn read_name(scanner : Scan, from : Int32) -> (String, Int32) {
 }
 
 ///|
-// An `Nmtoken`: name characters, without the requirement of a start character.
+/// An `Nmtoken`: name characters, without the requirement of a start character.
 fn read_nmtoken(scanner : Scan, from : Int32) -> (String, Int32) {
   let text = scanner.text
   let n = text.length()
@@ -967,7 +967,7 @@ fn push_code(out : StringBuilder, code : Int32) -> Unit {
 }
 
 ///|
-// `NameStartChar`, as XML 1.0 (fifth edition) spells it.
+/// `NameStartChar`, as XML 1.0 (fifth edition) spells it.
 fn name_start(code : Int32) -> Bool {
   code == 0x3A ||
   (code >= 0x41 && code <= 0x5A) ||
@@ -988,8 +988,8 @@ fn name_start(code : Int32) -> Bool {
 }
 
 ///|
-// `NameChar` — every start character, plus digits, `-`, `.`, `#xB7` and two
-// combining ranges.
+/// `NameChar` — every start character, plus digits, `-`, `.`, `#xB7` and two
+/// combining ranges.
 fn name_char(code : Int32) -> Bool {
   name_start(code) ||
   (code >= 0x30 && code <= 0x39) ||
@@ -1031,7 +1031,7 @@ fn is_space_at(scanner : Scan, offset : Int32) -> Bool {
 }
 
 ///|
-// The code unit at the scanner's position, or 0 at the end of the input.
+/// The code unit at the scanner's position, or 0 at the end of the input.
 fn Scan::peek(self : Scan) -> UInt16 {
   if self.at >= self.text.length() {
     0
@@ -1041,8 +1041,8 @@ fn Scan::peek(self : Scan) -> UInt16 {
 }
 
 ///|
-// A quoted literal at the scanner's position: what a pseudo-attribute and a
-// namespace declaration are written with.
+/// A quoted literal at the scanner's position: what a pseudo-attribute and a
+/// space declaration are written with.
 fn quoted(scanner : Scan) -> String raise @moonxml.Refused {
   let text = scanner.text
   let quote = scanner.peek()
@@ -1152,8 +1152,8 @@ fn code_text(ch : Char) -> String {
 
 ///|
 /// The rules the two reserved prefixes and the two reserved namespaces carry:
-/// `xml` is bound to the XML namespace and nothing else, `xmlns` is never
-/// declared, and no other prefix may take either namespace.
+/// `xml` is bound to the XML space and nothing else, `xmlns` is never
+/// declared, and no other prefix may take either space.
 fn check_declaration(
   scanner : Scan,
   prefix : String,
@@ -1165,13 +1165,13 @@ fn check_declaration(
     fail(scanner, scanner.at, "the xmlns prefix is reserved")
   }
   if prefix == "xml" && uri != xml_namespace {
-    fail(scanner, scanner.at, "the xml prefix is bound to its one namespace")
+    fail(scanner, scanner.at, "the xml prefix is bound to its one space")
   }
   if prefix != "xml" && uri == xml_namespace {
-    fail(scanner, scanner.at, "only the xml prefix names that namespace")
+    fail(scanner, scanner.at, "only the xml prefix names that space")
   }
   if uri == xmlns_namespace {
-    fail(scanner, scanner.at, "that namespace belongs to xmlns alone")
+    fail(scanner, scanner.at, "that space belongs to xmlns alone")
   }
 }
 

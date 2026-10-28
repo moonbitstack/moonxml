@@ -90,6 +90,7 @@ pub fn Element::by_tag(Self, String) -> Selection
 pub fn Element::classes(Self) -> Array[String]
 pub fn Element::clear(Self) -> Unit
 pub fn Element::closest(Self, String) -> Selection raise Refused
+pub fn Element::content(Self) -> Self?
 pub fn Element::css(Self, String) -> Selection raise Refused
 pub fn Element::custom(Self, &Selector) -> Selection raise Refused
 pub fn Element::document(Self) -> Document?
@@ -107,6 +108,7 @@ pub fn Element::remove_class(Self, String) -> Unit
 pub fn Element::replace_with(Self, Node) -> Bool
 pub fn Element::selector(Self, String, String) -> Selection raise Refused
 pub fn Element::set_attr(Self, String, String) -> Unit
+pub fn Element::set_content(Self, Self) -> Unit
 pub fn Element::smooth(Self) -> Unit
 pub fn Element::text(Self) -> String
 pub fn Element::unwrap(Self) -> Bool

@@ -128,7 +128,7 @@ test "axes" {
   assert_eq(doc.xpath("//book/@*").length(), 4)
   assert_eq(texts(doc, "//book/@*"), "b1,1998,b2,2004")
   assert_eq(texts(doc, "//book/attribute::year"), "1998,2004")
-  assert_eq(doc.xpath("//note/namespace::*").length(), 0)
+  assert_eq(doc.xpath("//note/space::*").length(), 0)
 }
 
 ///|
@@ -227,7 +227,7 @@ test "the core function library" {
   assert_eq(doc.xpath_value("round(-2.5)").is_num(-2.0), true)
   assert_eq(doc.xpath_value("name(//book)").is_str("book"), true)
   assert_eq(doc.xpath_value("local-name(//book)").is_str("book"), true)
-  assert_eq(doc.xpath_value("namespace-uri(//book)").is_str(""), true)
+  assert_eq(doc.xpath_value("space-uri(//book)").is_str(""), true)
   assert_eq(doc.xpath("id('b2')/title/text()").text(), "Tigers")
   assert_eq(doc.xpath_value("lang('en')").is_flag(false), true)
 }

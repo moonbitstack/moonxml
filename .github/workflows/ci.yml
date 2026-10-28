@@ -52,3 +52,7 @@ jobs:
       - name: interfaces are up to date
         run: |
           moon info --target all && git diff --exit-code
+
+      - name: the API page matches the sources
+        run: |
+          python3 scripts/gen_api.py . && git diff --exit-code docs/api.html

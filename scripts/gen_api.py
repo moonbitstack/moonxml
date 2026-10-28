@@ -85,7 +85,9 @@ DECL = re.compile(
 )
 
 
-BOILERPLATE = re.compile(r"::(equal|not_equal|output|to_string|to_repr|hash|compare)\(")
+BOILERPLATE = re.compile(
+    r"::(equal|not_equal|output|to_string|to_repr|hash|compare|push|select)\("
+)
 IMPL = re.compile(r"pub impl (?:@\w+\.)?(\w+) for (\w+)")
 
 
@@ -103,6 +105,9 @@ def docs_of(folder):
                     pending = []
                 elif stripped.startswith("///"):
                     pending.append(stripped[3:].strip())
+                elif stripped.startswith("#") and pending:
+                    # an attribute between the doc and what it documents
+                    continue
                 else:
                     match = DECL.match(raw)
                     if match and pending:
@@ -131,7 +136,11 @@ def item_title(sig):
     return sig.split("(")[0]
 
 
+MISSING = []
+
+
 def render(pkg, path, intro, out):
+    missing = MISSING
     items = parse(path)
     docs = docs_of(os.path.dirname(path))
     out.append('<section id="%s">' % pkg.replace("/", "-"))
@@ -158,6 +167,8 @@ def render(pkg, path, intro, out):
             out.append('<pre><span class="sig">%s</span></pre>' % highlight(sig))
             impl = IMPL.match(sig)
             doc = docs.get(title) or (impl and "`%s` implements `%s`." % (impl.group(2), impl.group(1)))
+            if not doc:
+                missing.append("%s: %s" % (pkg, title))
             if doc:
                 out.append('<p class="doc">%s</p>' % prose(doc))
             out.append("</div>")
@@ -209,6 +220,11 @@ def main():
     with open(out_path, "w", encoding="utf-8") as handle:
         handle.write(page)
     print("%d items written to %s" % (total, out_path))
+    if MISSING:
+        print("every public item needs a /// line; these have none:", file=sys.stderr)
+        for name in MISSING:
+            print("  " + name, file=sys.stderr)
+        raise SystemExit(1)
 
 
 TEMPLATE = """<!DOCTYPE html>

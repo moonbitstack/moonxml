@@ -10,7 +10,7 @@ pub fn load(Bytes) -> @moonxml.Document
 
 pub fn loads(String) -> @moonxml.Document
 
-pub fn loads_fragment(String) -> @moonxml.Document
+pub fn loads_fragment(String, context? : String) -> @moonxml.Document
 
 pub fn named_reference(String) -> String?
 

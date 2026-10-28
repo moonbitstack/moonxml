@@ -278,7 +278,7 @@ fn parse_compound(
       i = next
       fresh = false
     } else if fresh && (is_name_start(unit) || unit == 0x7C) {
-      // a type selector, with an optional namespace prefix
+      // a type selector, with an optional space prefix
       let head = if unit == 0x7C {
         ""
       } else {

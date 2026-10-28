@@ -77,9 +77,9 @@ fn Ctx::new(limit : Int32) -> Ctx {
 }
 
 ///|
-// Count `amount` more characters of expansion against the document's budget.
-// A document that expands past it is refused rather than read: that is the
-// shape of an entity-expansion attack, not of a document.
+/// Count `amount` more characters of expansion against the document's budget.
+/// A document that expands past it is refused rather than read: that is the
+/// shape of an entity-expansion attack, not of a document.
 fn spend(ctx : Ctx, at : Int32, amount : Int32) -> Unit raise @moonxml.Refused {
   ctx.expanded = ctx.expanded + amount
   if ctx.expanded > ctx.limit {
@@ -88,7 +88,7 @@ fn spend(ctx : Ctx, at : Int32, amount : Int32) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// Record an entity this reader did not read, once.
+/// Record an entity this reader did not read, once.
 fn note_unresolved(ctx : Ctx, name : String) -> Unit {
   if !ctx.unresolved.contains(name) {
     ctx.unresolved.push(name)
@@ -96,7 +96,7 @@ fn note_unresolved(ctx : Ctx, name : String) -> Unit {
 }
 
 ///|
-// The declarations of the internal subset, up to the `]` that closes it.
+/// The declarations of the internal subset, up to the `]` that closes it.
 fn internal_subset(scanner : Scan) -> Unit raise @moonxml.Refused {
   while true {
     skip_space(scanner)
@@ -137,7 +137,7 @@ fn internal_subset(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// One markup declaration: the four the spec defines.
+/// One markup declaration: the four the spec defines.
 fn declaration(scanner : Scan) -> Unit raise @moonxml.Refused {
   if starts_with(scanner, "<![") {
     fail(
@@ -165,8 +165,8 @@ fn declaration(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// `<!ENTITY S Name S EntityDef S? >`, or the same with a `%` after `ENTITY`
-// for a parameter entity.
+/// `<!ENTITY S Name S EntityDef S? >`, or the same with a `%` after `ENTITY`
+/// for a parameter entity.
 fn entity_decl(scanner : Scan) -> Unit raise @moonxml.Refused {
   let at = scanner.at
   require_space(scanner, "an entity declaration")
@@ -213,8 +213,8 @@ fn entity_decl(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// An entity's definition: its quoted replacement text, or `None` when it names
-// a file instead (the external identifiers are read and dropped).
+/// An entity's definition: its quoted replacement text, or `None` when it names
+/// a file instead (the external identifiers are read and dropped).
 fn definition(
   scanner : Scan,
   unparsed_allowed : Bool,
@@ -252,9 +252,9 @@ fn definition(
 }
 
 ///|
-// A quoted entity value: character references are expanded now, parameter
-// entities are included now, and general entity references are left standing,
-// to be expanded where the entity is used.
+/// A quoted entity value: character references are expanded now, parameter
+/// entities are included now, and general entity references are left standing,
+/// to be expanded where the entity is used.
 fn entity_value(scanner : Scan) -> String raise @moonxml.Refused {
   let text = scanner.text
   let quote = scanner.peek()
@@ -302,9 +302,9 @@ fn entity_value(scanner : Scan) -> String raise @moonxml.Refused {
 }
 
 ///|
-// `%name;` in the subset: the parameter entity's replacement text is spliced
-// into the subset there and read as declarations. An external parameter entity
-// is recorded and stands for nothing.
+/// `%name;` in the subset: the parameter entity's replacement text is spliced
+/// into the subset there and read as declarations. An external parameter entity
+/// is recorded and stands for nothing.
 fn parameter_reference(scanner : Scan) -> String raise @moonxml.Refused {
   let at = scanner.at
   scanner.at = scanner.at + 1
@@ -327,9 +327,9 @@ fn parameter_reference(scanner : Scan) -> String raise @moonxml.Refused {
 }
 
 ///|
-// `<!ATTLIST S Name (S Name S AttType S DefaultDecl)* S? >`, keeping the
-// defaults and the types: a default fills in an attribute the document left
-// out, and a type decides whether the value is whitespace-collapsed.
+/// `<!ATTLIST S Name (S Name S AttType S DefaultDecl)* S? >`, keeping the
+/// defaults and the types: a default fills in an attribute the document left
+/// out, and a type decides whether the value is whitespace-collapsed.
 fn attlist_decl(scanner : Scan) -> Unit raise @moonxml.Refused {
   require_space(scanner, "an attribute-list declaration")
   skip_space(scanner)
@@ -382,8 +382,8 @@ fn attlist_decl(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// An attribute's type: `CDATA`, one of the tokenized types, or an enumeration.
-// Only the first decides how the value is normalized.
+/// An attribute's type: `CDATA`, one of the tokenized types, or an enumeration.
+/// Only the first decides how the value is normalized.
 fn attribute_type(scanner : Scan) -> Bool raise @moonxml.Refused {
   if starts_with(scanner, "CDATA") {
     scanner.at = scanner.at + 5
@@ -428,7 +428,7 @@ fn tokenized_type(scanner : Scan) -> Bool {
 }
 
 ///|
-// `( S? Name (S? '|' S? Name)* S? )`
+/// `( S? Name (S? '|' S? Name)* S? )`
 fn names_in_parens(
   scanner : Scan,
   what : String,
@@ -452,7 +452,7 @@ fn names_in_parens(
 }
 
 ///|
-// `( S? Nmtoken (S? '|' S? Nmtoken)* S? )`
+/// `( S? Nmtoken (S? '|' S? Nmtoken)* S? )`
 fn list_in_parens(scanner : Scan, what : String) -> Unit raise @moonxml.Refused {
   expect(scanner, 0x28, what)
   while true {
@@ -473,8 +473,8 @@ fn list_in_parens(scanner : Scan, what : String) -> Unit raise @moonxml.Refused 
 }
 
 ///|
-// `#REQUIRED`, `#IMPLIED`, or an attribute value with an optional `#FIXED`
-// in front of it.
+/// `#REQUIRED`, `#IMPLIED`, or an attribute value with an optional `#FIXED`
+/// in front of it.
 fn default_decl(scanner : Scan) -> String? raise @moonxml.Refused {
   if scanner.peek() == 0x23 {
     scanner.at = scanner.at + 1
@@ -498,8 +498,8 @@ fn default_decl(scanner : Scan) -> String? raise @moonxml.Refused {
 }
 
 ///|
-// The quoted value of a default: character references expanded, general entity
-// references left standing for the moment the default is used.
+/// The quoted value of a default: character references expanded, general entity
+/// references left standing for the moment the default is used.
 fn attribute_default(scanner : Scan) -> String raise @moonxml.Refused {
   // A default is an attribute value, not an entity value: a `%` in it is the
   // character, and a general entity is bypassed until the default is used.
@@ -554,8 +554,8 @@ fn literal_value(scanner : Scan) -> String raise @moonxml.Refused {
 }
 
 ///|
-// `<!ELEMENT S Name S contentspec S? >`. The content model is parsed so that a
-// malformed one is refused, and then dropped: this reader does not validate.
+/// `<!ELEMENT S Name S contentspec S? >`. The content model is parsed so that a
+/// malformed one is refused, and then dropped: this reader does not validate.
 fn element_decl(scanner : Scan) -> Unit raise @moonxml.Refused {
   require_space(scanner, "an element declaration")
   skip_space(scanner)
@@ -623,7 +623,7 @@ fn mixed(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// `( S? cp (S? ('|' | ',') S? cp)* S? )`
+/// `( S? cp (S? ('|' | ',') S? cp)* S? )`
 fn group(scanner : Scan) -> Unit raise @moonxml.Refused {
   expect(scanner, 0x28, "a content model")
   skip_space(scanner)
@@ -675,7 +675,7 @@ fn occurrence(scanner : Scan) -> Unit {
 }
 
 ///|
-// `<!NOTATION S Name S (ExternalID | PublicID) S? >`
+/// `<!NOTATION S Name S (ExternalID | PublicID) S? >`
 fn notation_decl(scanner : Scan) -> Unit raise @moonxml.Refused {
   require_space(scanner, "a notation declaration")
   skip_space(scanner)
@@ -695,7 +695,7 @@ fn notation_decl(scanner : Scan) -> Unit raise @moonxml.Refused {
 }
 
 ///|
-// `SYSTEM S SystemLiteral`, or `PUBLIC S PubidLiteral S SystemLiteral`.
+/// `SYSTEM S SystemLiteral`, or `PUBLIC S PubidLiteral S SystemLiteral`.
 fn external_id(scanner : Scan) -> Unit raise @moonxml.Refused {
   external_identifier(scanner, true)
 }
@@ -755,9 +755,9 @@ fn system_literal(scanner : Scan) -> String raise @moonxml.Refused {
 }
 
 ///|
-// The rest of a quoted literal, up to its quote. A system literal may not
-// carry the other quote as well as its own; a public identifier is held to the
-// characters the spec allows.
+/// The rest of a quoted literal, up to its quote. A system literal may not
+/// carry the other quote as well as its own; a public identifier is held to the
+/// characters the spec allows.
 fn loop_literal(scanner : Scan, public : Bool) -> String raise @moonxml.Refused {
   let quote = scanner.text.at(scanner.at - 1)
   let start = scanner.at
@@ -813,8 +813,8 @@ fn loop_literal(scanner : Scan, public : Bool) -> String raise @moonxml.Refused 
 }
 
 ///|
-// Fill in the attributes the declaration gave defaults to, for an element the
-// document is about to open. `present` is what the start tag itself carried.
+/// Fill in the attributes the declaration gave defaults to, for an element the
+/// document is about to open. `present` is what the start tag itself carried.
 fn apply_defaults(
   ctx : Ctx,
   qname : String,
@@ -848,8 +848,8 @@ fn apply_defaults(
 }
 
 ///|
-// Whether the declaration says this element's attribute is typed `CDATA`, and
-// therefore keeps the whitespace it was written with.
+/// Whether the declaration says this element's attribute is typed `CDATA`, and
+/// therefore keeps the whitespace it was written with.
 fn declared_cdata(ctx : Ctx, qname : String, attr : String) -> Bool {
   match ctx.defaults.get(qname) {
     Some(defs) =>
@@ -864,8 +864,8 @@ fn declared_cdata(ctx : Ctx, qname : String, attr : String) -> Bool {
 }
 
 ///|
-// The spec's attribute-value normalization: a literal tab or newline is a
-// space, and a typed attribute collapses runs of spaces and trims them.
+/// The spec's attribute-value normalization: a literal tab or newline is a
+/// space, and a typed attribute collapses runs of spaces and trims them.
 fn normalize(value : String, cdata : Bool) -> String {
   let out = StringBuilder()
   let mut space = false
@@ -900,10 +900,10 @@ fn normalize(value : String, cdata : Bool) -> String {
 }
 
 ///|
-// Expand the references inside an entity's replacement text or a default
-// value: character references become their character, general entities become
-// what they stand for. `stack` is the chain of entities being expanded, which
-// is how recursion is caught.
+/// Expand the references inside an entity's replacement text or a default
+/// value: character references become their character, general entities become
+/// what they stand for. `stack` is the chain of entities being expanded, which
+/// is how recursion is caught.
 fn expand_references(
   ctx : Ctx,
   body : String,
@@ -982,7 +982,7 @@ fn expand_references(
 }
 
 ///|
-// The character a numeric reference spells, as `&#65;` or `&#x41;`.
+/// The character a numeric reference spells, as `&#65;` or `&#x41;`.
 fn numeric(spelling : String, at : Int32) -> Char raise @moonxml.Refused {
   let hex = spelling.has_prefix("#x")
   let digits = if hex {
@@ -1012,9 +1012,9 @@ fn numeric(spelling : String, at : Int32) -> Char raise @moonxml.Refused {
 }
 
 ///|
-// What a general entity stands for, fully expanded. An entity this reader did
-// not read — one declared in a file — stands for nothing, and its name is
-// reported.
+/// What a general entity stands for, fully expanded. An entity this reader did
+/// not read — one declared in a file — stands for nothing, and its name is
+/// reported.
 fn expand_entity(
   ctx : Ctx,
   name : String,

@@ -1,852 +1,662 @@
 // Copyright 2026 Leo Cheng
 // SPDX-License-Identifier: Apache-2.0
 
-// The insertion modes, in the order the spec lists them. A function that
-// answers `true` is asking to see the same token again in whatever mode it is
-// now in — the spec's "reprocess the token", and the reason `<td>` in a table
-// ends up creating the row it needs.
+// The insertion modes, in the standard's order. A mode handles one token and
+// either answers or hands it on — `dispatch` again with the mode it has moved
+// to, which is the standard's "reprocess the token".
 
 ///|
-fn remove_from_stack(builder : Builder, element : @moonxml.Element) -> Bool {
-  match builder.stack.length() {
-    0 => false
-    _ => {
-      let mut k = builder.stack.length() - 1
-      while k >= 1 {
-        if physical_equal(builder.stack[k], element) {
-          ignore(builder.stack.remove(k))
-          return true
+fn process(lexer : Lexer, token : Token) -> Unit {
+  dispatch(lexer.builder, lexer, token, 0)
+}
+
+///|
+/// How many times one token may be handed on before the parser stops handing
+/// it on. Every hand-on changes the mode, so a document that means something
+/// needs a handful.
+fn reprocess_bound() -> Int32 {
+  64
+}
+
+///|
+fn dispatch(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  if depth > reprocess_bound() {
+    return
+  }
+  if in_foreign_content(b, token) {
+    foreign_content(b, lx, token, depth)
+    return
+  }
+  dispatch_html(b, lx, token, depth)
+}
+
+///|
+/// The modes, without the foreign content check in front of them: what a token
+/// that broke out of an SVG subtree is read by.
+fn dispatch_html(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  if depth > reprocess_bound() {
+    return
+  }
+  match b.mode {
+    Initial => initial(b, lx, token, depth)
+    BeforeHtml => before_html(b, lx, token, depth)
+    BeforeHead => before_head(b, lx, token, depth)
+    InHead => in_head(b, lx, token, depth)
+    InHeadNoscript => in_head_noscript(b, lx, token, depth)
+    AfterHead => after_head(b, lx, token, depth)
+    InBody => in_body(b, lx, token, depth)
+    Text => in_text(b, lx, token, depth)
+    InTable => in_table(b, lx, token, depth)
+    InTableText => in_table_text(b, lx, token, depth)
+    InCaption => in_caption(b, lx, token, depth)
+    InColumnGroup => in_column_group(b, lx, token, depth)
+    InTableBody => in_table_body(b, lx, token, depth)
+    InRow => in_row(b, lx, token, depth)
+    InCell => in_cell(b, lx, token, depth)
+    InSelect => in_select(b, lx, token, depth)
+    InSelectInTable => in_select_in_table(b, lx, token, depth)
+    InTemplate => in_template(b, lx, token, depth)
+    AfterBody => after_body(b, lx, token, depth)
+    InFrameset => in_frameset(b, lx, token, depth)
+    AfterFrameset => after_frameset(b, lx, token, depth)
+    AfterAfterBody => after_after_body(b, lx, token, depth)
+    AfterAfterFrameset => after_after_frameset(b, lx, token, depth)
+  }
+}
+
+///|
+/// Whether the token is read by the foreign content rules rather than by the
+/// mode's own: the standard's tree construction dispatcher.
+fn in_foreign_content(b : Builder, token : Token) -> Bool {
+  if b.stack.is_empty() {
+    return false
+  }
+  let node = match adjusted_current(b) {
+    Some(el) => el
+    None => return false
+  }
+  if namespace_of_element(node) == html_namespace {
+    return false
+  }
+  if is_mathml_text_integration_point(node) {
+    match token {
+      StartTag(name~, ..) =>
+        if name != "mglyph" && name != "malignmark" {
+          return false
         }
-        k = k - 1
-      }
-      false
-    }
-  }
-}
-
-///|
-/// An implied end tag closes the innermost elements of the implied set, but not
-/// the one the token names — `<li><li>` closes the first list item, and
-/// `<li>` inside it stays open.
-fn generate_implied_except(builder : Builder, name : String) -> Unit {
-  while builder.stack.length() > 1 &&
-        is_implied_end(current(builder).name) &&
-        current(builder).name != name {
-    ignore(pop_stack(builder))
-  }
-}
-
-///|
-/// Merge a repeated `<html>` or `<body>` start tag's attributes onto the
-/// element already there, as the spec says to.
-fn merge_attrs_into(
-  builder : Builder,
-  element : @moonxml.Element,
-  attrs : Array[(String, String)],
-) -> Unit {
-  ignore(builder)
-  for pair in attrs {
-    if !element.has_attr(pair.0) {
-      element.set_attr(pair.0, pair.1)
-    }
-  }
-}
-
-///|
-/// The body element, which is whatever `body` sits directly under `html`.
-fn body_element(builder : Builder) -> @moonxml.Element? {
-  for node in builder.doc.root.children {
-    match node {
-      ElementNode(html) =>
-        for child in html.children {
-          match child {
-            ElementNode(el) => if el.name == "body" { return Some(el) }
-            _ => ()
-          }
-        }
+      Characters(_) => return false
       _ => ()
     }
   }
-  None
-}
-
-///|
-/// The HTML element: the document's one element child.
-fn html_element(builder : Builder) -> @moonxml.Element? {
-  for node in builder.doc.root.children {
-    match node {
-      ElementNode(el) => return Some(el)
+  if namespace_of_element(node) == mathml_namespace &&
+    @moonxml.local_of(node.name) == "annotation-xml" {
+    match token {
+      StartTag(name~, ..) => if name == "svg" { return false }
       _ => ()
     }
   }
-  None
-}
-
-///|
-/// The stack stops holding a head once the head is done; `head` stays for the
-/// elements the spec sends back to it.
-fn close_head(builder : Builder) -> Unit {
-  while builder.stack.length() > 1 {
-    let top = pop_stack(builder)
-    if top.name == "head" {
-      return
+  if is_html_integration_point(node) {
+    match token {
+      StartTag(..) => return false
+      Characters(_) => return false
+      _ => ()
     }
   }
-}
-
-///|
-fn implied(builder : Builder) -> Unit {
-  builder.repairs.implied = builder.repairs.implied + 1
+  match token {
+    Eof => false
+    _ => true
+  }
 }
 
 // ------------------------------------------------------------- the prologue
 
 ///|
-fn doctype_in(builder : Builder, name : String, quirks~ : Bool) -> Bool {
-  ignore(name)
-  match builder.mode {
-    Initial => {
-      builder.quirks = quirks
-      builder.doc.root.append(@moonxml.DoctypeNode(name))
-      builder.mode = BeforeHtml
-      false
-    }
-    InBody
-    | InTable
-    | InTableText
-    | InCaption
-    | InColumnGroup
-    | InTableBody
-    | InRow
-    | InCell
-    | InSelect
-    | InSelectInTable
-    | AfterBody
-    | AfterAfterBody => false
-    _ => false
-  }
-}
-
-///|
-fn comment_in(builder : Builder, text : String) -> Bool {
-  if builder.mode is InTableText {
-    // The text a table was holding belongs before the comment, not after it.
-    flush_table_text(builder)
-    builder.mode = InTable
-  }
-  match builder.mode {
-    Initial | BeforeHtml => {
-      insert_comment_into(builder.doc.root, text)
-      false
-    }
-    AfterBody => {
-      match html_element(builder) {
-        Some(html) => insert_comment_into(html, text)
-        None => insert_comment_into(builder.doc.root, text)
+fn initial(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    Characters(text~) =>
+      if is_space_text(text) {
+        return
+      } else {
+        b.quirks = true
+        b.mode = BeforeHtml
+        dispatch(b, lx, token, depth + 1)
       }
-      false
-    }
-    AfterAfterBody => {
-      insert_comment_into(builder.doc.root, text)
-      false
+    CommentToken(text~) => insert_comment_into(b.root, text)
+    DoctypeToken(name~, public_id~, system_id~, force_quirks~) => {
+      b.quirks = match quirks_of(name, public_id, system_id, force_quirks) {
+        Quirks => true
+        NoQuirks | LimitedQuirks => false
+      }
+      let raw = doctype_text(name, public_id, system_id)
+      b.root.append(@moonxml.DoctypeNode(raw))
+      b.mode = BeforeHtml
     }
     _ => {
-      insert_comment(builder, text)
-      false
+      b.quirks = true
+      b.mode = BeforeHtml
+      dispatch(b, lx, token, depth + 1)
     }
   }
 }
 
 ///|
-/// The elements whose content the tokenizer reads as one run: their end tag is
-/// the only thing that closes them.
-fn is_raw_text_tag(name : String) -> Bool {
-  match name {
-    "script"
-    | "style"
-    | "title"
-    | "textarea"
-    | "xmp"
-    | "iframe"
-    | "noembed"
-    | "noframes"
-    | "plaintext" => true
-    _ => false
-  }
+/// How a document's doctype sets the parser's quirks flag. Limited quirks is
+/// the middle state: it changes the box model in a browser, but not how a
+/// table closes a paragraph.
+priv enum QuirkState {
+  NoQuirks
+  LimitedQuirks
+  Quirks
 }
 
 ///|
-fn whitespace_only(text : String) -> Bool {
-  for ch in text {
-    if !(ch == ' ' || ch == '\t' || ch == '\n' || ch == '\u{0C}' || ch == '\r') {
-      return false
+/// The standard's quirks rules, from the doctype's three parts.
+fn quirks_of(
+  name : String,
+  public_id : String,
+  system_id : String,
+  force_quirks : Bool,
+) -> QuirkState {
+  if force_quirks || name != "html" {
+    return Quirks
+  }
+  let public = public_id.to_lower()
+  let system = system_id.to_lower()
+  if public.has_prefix("-//w3c//dtd xhtml 1.0 frameset//") ||
+    public.has_prefix("-//w3c//dtd xhtml 1.0 transitional//") {
+    return LimitedQuirks
+  }
+  if !system_id.is_empty() &&
+    (
+      public.has_prefix("-//w3c//dtd html 4.01 frameset//") ||
+      public.has_prefix("-//w3c//dtd html 4.01 transitional//")
+    ) {
+    return LimitedQuirks
+  }
+  for
+    prefix in [
+      "+//silmaril//dtd html pro v0r11 19970101//", "-//advasoft ltd//dtd html 3.0 aswedit + extensions//",
+      "-//as//dtd html 3.0 aswedit + extensions//", "-//ietf//dtd html 2.0 level 1//",
+      "-//ietf//dtd html 2.0 level 2//", "-//ietf//dtd html 2.0 strict level 1//",
+      "-//ietf//dtd html 2.0 strict level 2//", "-//ietf//dtd html 2.0 strict//",
+      "-//ietf//dtd html 2.0//", "-//ietf//dtd html 2.1e//", "-//ietf//dtd html 3.0//",
+      "-//ietf//dtd html 3.2 final//", "-//ietf//dtd html 3.2//", "-//ietf//dtd html 3//",
+      "-//ietf//dtd html level 0//", "-//ietf//dtd html level 1//", "-//ietf//dtd html level 2//",
+      "-//ietf//dtd html level 3//", "-//ietf//dtd html strict level 0//", "-//ietf//dtd html strict level 1//",
+      "-//ietf//dtd html strict level 2//", "-//ietf//dtd html strict level 3//",
+      "-//ietf//dtd html strict//", "-//ietf//dtd html//", "-//metrius//dtd metrius presentational//",
+      "-//microsoft//dtd internet explorer 2.0 html strict//", "-//microsoft//dtd internet explorer 2.0 html//",
+      "-//microsoft//dtd internet explorer 2.0 tables//", "-//microsoft//dtd internet explorer 3.0 html strict//",
+      "-//microsoft//dtd internet explorer 3.0 html//", "-//microsoft//dtd internet explorer 3.0 tables//",
+      "-//netscape comm. corp.//dtd html//", "-//netscape comm. corp.//dtd strict html//",
+      "-//o'reilly and associates//dtd html 2.0//", "-//o'reilly and associates//dtd html extended 1.0//",
+      "-//o'reilly and associates//dtd html extended relaxed 1.0//", "-//sq//dtd html 2.0 hotmetal + extensions//",
+      "-//softquad software//dtd hotmetal pro 6.0::19990601::extensions to html 4.0//",
+      "-//softquad//dtd hotmetal pro 4.0::19971010::extensions to html 4.0//", "-//spyglass//dtd html 2.0 extended//",
+      "-//sun microsystems corp.//dtd hotjava html//", "-//sun microsystems corp.//dtd hotjava strict html//",
+      "-//w3c//dtd html 3 1995-03-24//", "-//w3c//dtd html 3.2 draft//", "-//w3c//dtd html 3.2 final//",
+      "-//w3c//dtd html 3.2//", "-//w3c//dtd html 3.2s draft//", "-//w3c//dtd html 4.0 frameset//",
+      "-//w3c//dtd html 4.0 transitional//", "-//w3c//dtd html experimental 19960712//",
+      "-//w3c//dtd html experimental 970421//", "-//w3c//dtd w3 html//", "-//w3o//dtd w3 html 3.0//",
+      "-//webtechs//dtd mozilla html 2.0//", "-//webtechs//dtd mozilla html//",
+    ] {
+    if public.has_prefix(prefix) {
+      return Quirks
     }
   }
-  true
+  if system == "http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd" {
+    return Quirks
+  }
+  if system_id.is_empty() &&
+    (
+      public.has_prefix("-//w3c//dtd html 4.01 frameset//") ||
+      public.has_prefix("-//w3c//dtd html 4.01 transitional//")
+    ) {
+    return Quirks
+  }
+  NoQuirks
 }
 
-// ------------------------------------------------------------------ characters
+///|
+/// A doctype as the writer spells it back: its name, and its identifiers when
+/// it has them.
+fn doctype_text(
+  name : String,
+  public_id : String,
+  system_id : String,
+) -> String {
+  if public_id.is_empty() && system_id.is_empty() {
+    return name
+  }
+  // Both identifiers are written when either is there, quoted, in the order
+  // the declaration gives them.
+  name + " \"" + public_id + "\" \"" + system_id + "\""
+}
 
 ///|
-fn chars_in(builder : Builder, text : String) -> Bool {
-  if builder.text_only {
-    insert_text(builder, text)
+fn is_space_text(text : String) -> Bool {
+  if text.is_empty() {
     return false
   }
-  match builder.mode {
-    Initial =>
-      if whitespace_only(text) {
-        false
-      } else {
-        builder.quirks = true
-        builder.mode = BeforeHtml
-        true
+  let unit = text.at(0)
+  unit == 0x20 || unit == 0x09 || unit == 0x0A || unit == 0x0C || unit == 0x0D
+}
+
+///|
+fn before_html(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    DoctypeToken(_) => ()
+    CommentToken(text~) => insert_comment_into(b.root, text)
+    Characters(text~) =>
+      if !is_space_text(text) {
+        note_implied(b)
+        let element = insert_element(b, "html", [])
+        push(b, element)
+        b.mode = BeforeHead
+        dispatch(b, lx, token, depth + 1)
       }
-    BeforeHtml =>
-      if whitespace_only(text) {
-        false
+    StartTag(name~, attrs~, ..) =>
+      if name == "html" {
+        let element = insert_element(b, "html", attrs)
+        push(b, element)
+        b.mode = BeforeHead
       } else {
-        imply_html(builder)
-        true
+        note_implied(b)
+        let element = insert_element(b, "html", [])
+        push(b, element)
+        b.mode = BeforeHead
+        dispatch(b, lx, token, depth + 1)
       }
-    BeforeHead =>
-      if whitespace_only(text) {
-        false
-      } else {
-        imply_head(builder)
-        true
+    EndTag(name~) =>
+      if name == "head" || name == "body" || name == "html" || name == "br" {
+        note_implied(b)
+        let element = insert_element(b, "html", [])
+        push(b, element)
+        b.mode = BeforeHead
+        dispatch(b, lx, token, depth + 1)
       }
-    InHead =>
-      if whitespace_only(text) {
-        insert_text(builder, text)
-        false
-      } else {
-        // Text in the head is the head's own end: the body is next.
-        close_head(builder)
-        builder.mode = AfterHead
-        true
-      }
-    AfterHead =>
-      if whitespace_only(text) {
-        insert_text(builder, text)
-        false
-      } else {
-        imply_body(builder)
-        true
-      }
-    InBody => {
-      reconstruct_afe(builder)
-      insert_text(builder, text)
-      false
+    _ => {
+      note_implied(b)
+      let element = insert_element(b, "html", [])
+      push(b, element)
+      b.mode = BeforeHead
+      dispatch(b, lx, token, depth + 1)
     }
-    InTable =>
-      if is_table_like(current(builder).name) {
-        builder.pending = ""
-        builder.mode = InTableText
-        true
-      } else {
-        builder.foster = true
-        reconstruct_afe(builder)
-        insert_text(builder, text)
-        builder.foster = false
-        false
-      }
-    InTableText => {
-      builder.pending = builder.pending + text
-      false
-    }
-    InColumnGroup =>
-      if whitespace_only(text) {
-        insert_text(builder, text)
-        false
-      } else if current_is(builder, "colgroup") {
-        ignore(pop_stack(builder))
-        builder.mode = InTable
-        true
-      } else {
-        builder.mode = InTable
-        true
-      }
-    InSelect | InSelectInTable => {
-      insert_text(builder, text)
-      false
-    }
-    InCaption | InTableBody | InRow | InCell => in_body_chars(builder, text)
-    AfterBody | AfterAfterBody =>
-      if whitespace_only(text) {
-        builder.mode = InBody
-        reconstruct_afe(builder)
-        insert_text(builder, text)
-        false
-      } else {
-        builder.mode = InBody
-        true
-      }
   }
 }
 
 ///|
-fn in_body_chars(builder : Builder, text : String) -> Bool {
-  let saved = builder.mode
-  builder.mode = InBody
-  reconstruct_afe(builder)
-  insert_text(builder, text)
-  builder.mode = saved
-  false
+fn before_head(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    Characters(text~) =>
+      if !is_space_text(text) {
+        note_implied(b)
+        let head = insert_element(b, "head", [])
+        push(b, head)
+        b.head = Some(head)
+        b.mode = InHead
+        dispatch(b, lx, token, depth + 1)
+      }
+    CommentToken(text~) => insert_comment(b, text)
+    DoctypeToken(_) => ()
+    StartTag(name~, attrs~, ..) =>
+      if name == "html" {
+        in_body(b, lx, token, depth + 1)
+      } else if name == "head" {
+        let head = insert_element(b, "head", attrs)
+        push(b, head)
+        b.head = Some(head)
+        b.mode = InHead
+      } else {
+        note_implied(b)
+        let head = insert_element(b, "head", [])
+        push(b, head)
+        b.head = Some(head)
+        b.mode = InHead
+        dispatch(b, lx, token, depth + 1)
+      }
+    EndTag(name~) =>
+      if name == "head" || name == "body" || name == "html" || name == "br" {
+        note_implied(b)
+        let head = insert_element(b, "head", [])
+        push(b, head)
+        b.head = Some(head)
+        b.mode = InHead
+        dispatch(b, lx, token, depth + 1)
+      }
+    _ => {
+      note_implied(b)
+      let head = insert_element(b, "head", [])
+      push(b, head)
+      b.head = Some(head)
+      b.mode = InHead
+      dispatch(b, lx, token, depth + 1)
+    }
+  }
 }
 
 ///|
-fn flush_table_text(builder : Builder) -> Unit {
-  let held = builder.pending
-  builder.pending = ""
-  if held.is_empty() {
+fn in_head(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    Characters(text~) =>
+      if is_space_text(text) {
+        insert_text(b, text)
+      } else {
+        ignore(pop(b))
+        b.mode = AfterHead
+        dispatch(b, lx, token, depth + 1)
+      }
+    CommentToken(text~) => insert_comment(b, text)
+    DoctypeToken(_) => ()
+    StartTag(name~, attrs~, self_closing~) =>
+      match name {
+        "html" => in_body(b, lx, token, depth + 1)
+        "base" | "basefont" | "bgsound" | "link" | "meta" => {
+          ignore(insert_element_open(b, name, attrs))
+          ignore(pop(b))
+          ignore(self_closing)
+        }
+        "title" => {
+          let element = insert_element(b, "title", attrs)
+          push(b, element)
+          lx.raw_name = "title"
+          lx.state = Rcdata
+          b.text_mode = b.mode
+          b.mode = Text
+        }
+        "noscript" => {
+          let element = insert_element(b, "noscript", attrs)
+          push(b, element)
+          b.mode = InHeadNoscript
+        }
+        "noframes" | "style" => {
+          let element = insert_element(b, name, attrs)
+          push(b, element)
+          lx.raw_name = name
+          lx.state = Rawtext
+          b.text_mode = b.mode
+          b.mode = Text
+        }
+        "script" => {
+          let element = insert_element(b, "script", attrs)
+          push(b, element)
+          lx.raw_name = "script"
+          lx.state = ScriptData
+          b.text_mode = b.mode
+          b.mode = Text
+        }
+        "template" => {
+          let element = insert_template(b, attrs)
+          push(b, element)
+          push_marker(b)
+          b.frameset_ok = false
+          b.mode = InTemplate
+          b.templates.push(InTemplate)
+        }
+        "head" => ()
+        _ => {
+          ignore(pop(b))
+          b.mode = AfterHead
+          dispatch(b, lx, token, depth + 1)
+        }
+      }
+    EndTag(name~) =>
+      match name {
+        "head" => {
+          ignore(pop(b))
+          b.mode = AfterHead
+        }
+        "body" | "html" | "br" => {
+          ignore(pop(b))
+          b.mode = AfterHead
+          dispatch(b, lx, token, depth + 1)
+        }
+        "template" => end_template(b, lx, depth)
+        _ => ()
+      }
+    _ => {
+      ignore(pop(b))
+      b.mode = AfterHead
+      dispatch(b, lx, token, depth + 1)
+    }
+  }
+}
+
+///|
+fn in_head_noscript(
+  b : Builder,
+  lx : Lexer,
+  token : Token,
+  depth : Int32,
+) -> Unit {
+  match token {
+    DoctypeToken(_) => ()
+    StartTag(name~, ..) =>
+      if name == "html" {
+        in_body(b, lx, token, depth + 1)
+      } else if name == "basefont" ||
+        name == "bgsound" ||
+        name == "link" ||
+        name == "meta" ||
+        name == "noframes" ||
+        name == "style" {
+        in_head(b, lx, token, depth + 1)
+      } else if name == "head" || name == "noscript" {
+        ()
+      } else {
+        ignore(pop(b))
+        b.mode = InHead
+        dispatch(b, lx, token, depth + 1)
+      }
+    EndTag(name~) =>
+      if name == "noscript" {
+        ignore(pop(b))
+        b.mode = InHead
+      } else if name == "br" {
+        ignore(pop(b))
+        b.mode = InHead
+        dispatch(b, lx, token, depth + 1)
+      }
+    Characters(text~) =>
+      if is_space_text(text) {
+        in_head(b, lx, token, depth + 1)
+      } else {
+        ignore(pop(b))
+        b.mode = InHead
+        dispatch(b, lx, token, depth + 1)
+      }
+    CommentToken(_) => in_head(b, lx, token, depth + 1)
+    _ => {
+      ignore(pop(b))
+      b.mode = InHead
+      dispatch(b, lx, token, depth + 1)
+    }
+  }
+}
+
+///|
+fn after_head(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    Characters(text~) =>
+      if is_space_text(text) {
+        insert_text(b, text)
+      } else {
+        note_implied(b)
+        let body = insert_element(b, "body", [])
+        push(b, body)
+        b.mode = InBody
+        dispatch(b, lx, token, depth + 1)
+      }
+    CommentToken(text~) => insert_comment(b, text)
+    DoctypeToken(_) => ()
+    StartTag(name~, attrs~, self_closing~) =>
+      match name {
+        "html" => in_body(b, lx, token, depth + 1)
+        "body" => {
+          let body = insert_element(b, "body", attrs)
+          push(b, body)
+          b.frameset_ok = false
+          b.mode = InBody
+        }
+        "frameset" => {
+          let frameset = insert_element(b, "frameset", attrs)
+          push(b, frameset)
+          b.mode = InFrameset
+        }
+        "base"
+        | "basefont"
+        | "bgsound"
+        | "link"
+        | "meta"
+        | "noframes"
+        | "script"
+        | "style"
+        | "template"
+        | "title" => {
+          match b.head {
+            Some(head) => push(b, head)
+            None => ()
+          }
+          in_head(b, lx, token, depth + 1)
+          // The head goes back off the stack once the element it took has
+          // been dealt with.
+          match b.head {
+            Some(head) => ignore(remove_from_stack(b, head))
+            None => ()
+          }
+          ignore(self_closing)
+        }
+        "head" => ()
+        _ => {
+          note_implied(b)
+          let body = insert_element(b, "body", [])
+          push(b, body)
+          b.mode = InBody
+          dispatch(b, lx, token, depth + 1)
+        }
+      }
+    EndTag(name~) =>
+      if name == "template" {
+        in_head(b, lx, token, depth + 1)
+      } else if name == "body" || name == "html" || name == "br" {
+        note_implied(b)
+        let body = insert_element(b, "body", [])
+        push(b, body)
+        b.mode = InBody
+        dispatch(b, lx, token, depth + 1)
+      }
+    _ => {
+      note_implied(b)
+      let body = insert_element(b, "body", [])
+      push(b, body)
+      b.mode = InBody
+      dispatch(b, lx, token, depth + 1)
+    }
+  }
+}
+
+///|
+fn remove_from_stack(b : Builder, element : @moonxml.Element) -> Bool {
+  match index_on_stack(b, element) {
+    Some(at) => {
+      ignore(b.stack.remove(at))
+      true
+    }
+    None => false
+  }
+}
+
+///|
+/// `</template>`: close the template, its formatting elements, and go back to
+/// whatever the stack says the parser was in.
+fn end_template(b : Builder, lx : Lexer, depth : Int32) -> Unit {
+  ignore(lx)
+  ignore(depth)
+  if !has_on_stack(b, "template") {
     return
   }
-  if whitespace_only(held) {
-    insert_text(builder, held)
-  } else {
-    // Non-space text inside a table belongs before it, not in it.
-    builder.foster = true
-    reconstruct_afe(builder)
-    insert_text(builder, held)
-    builder.foster = false
+  generate_implied_end(b, "")
+  pop_until_name(b, "template")
+  clear_afe_to_marker(b)
+  if !b.templates.is_empty() {
+    ignore(b.templates.pop())
   }
-}
-
-// -------------------------------------------------------------- start tags
-
-///|
-fn start_in(
-  builder : Builder,
-  name : String,
-  attrs : Array[(String, String)],
-  self_closing~ : Bool,
-) -> Bool {
-  match builder.mode {
-    Initial => {
-      if builder.mode is Initial {
-        builder.quirks = true
-      }
-      builder.mode = BeforeHtml
-      true
-    }
-    BeforeHtml =>
-      if name == "html" {
-        let element = insert_element(builder, "html", attrs)
-        push_stack(builder, element)
-        builder.mode = BeforeHead
-        false
-      } else {
-        imply_html(builder)
-        true
-      }
-    BeforeHead =>
-      match name {
-        "html" => in_body_start(builder, name, attrs)
-        "head" => {
-          let element = insert_open(builder, "head", attrs)
-          builder.head = Some(element)
-          builder.mode = InHead
-          false
-        }
-        _ => {
-          imply_head(builder)
-          true
-        }
-      }
-    InHead => start_in_head(builder, name, attrs, self_closing~)
-    AfterHead => start_in_after_head(builder, name, attrs, self_closing~)
-    InBody => in_body_start(builder, name, attrs)
-    InTable => start_in_table(builder, name, attrs, self_closing~)
-    InTableText => {
-      flush_table_text(builder)
-      builder.mode = InTable
-      true
-    }
-    InCaption => start_in_caption(builder, name, attrs)
-    InColumnGroup =>
-      match name {
-        "html" => in_body_start(builder, name, attrs)
-        "col" => {
-          let element = insert_element(builder, "col", attrs)
-          ignore(element)
-          false
-        }
-        _ =>
-          if current_is(builder, "colgroup") {
-            ignore(pop_stack(builder))
-            builder.mode = InTable
-            true
-          } else {
-            builder.repairs.dropped = builder.repairs.dropped + 1
-            false
-          }
-      }
-    InTableBody => start_in_table_body(builder, name, attrs, self_closing~)
-    InRow => start_in_row(builder, name, attrs, self_closing~)
-    InCell => start_in_cell(builder, name, attrs)
-    InSelect => start_in_select(builder, name, attrs)
-    InSelectInTable => start_in_select_in_table(builder, name, attrs)
-    AfterBody | AfterAfterBody => {
-      builder.mode = InBody
-      true
-    }
-  }
-}
-
-///|
-fn imply_html(builder : Builder) -> Unit {
-  implied(builder)
-  let element = insert_element(builder, "html", [])
-  push_stack(builder, element)
-  builder.mode = BeforeHead
-}
-
-///|
-/// A `<head>` the document never wrote: implied, empty, and already done with.
-fn imply_head(builder : Builder) -> Unit {
-  implied(builder)
-  let element = insert_open(builder, "head", [])
-  builder.head = Some(element)
-  builder.mode = InHead
-}
-
-///|
-fn imply_body(builder : Builder) -> Unit {
-  implied(builder)
-  let element = insert_open(builder, "body", [])
-  ignore(element)
-  builder.mode = InBody
-}
-
-///|
-fn start_in_head(
-  builder : Builder,
-  name : String,
-  attrs : Array[(String, String)],
-  self_closing~ : Bool,
-) -> Bool {
-  match name {
-    "html" => in_body_start(builder, name, attrs)
-    "base" | "basefont" | "bgsound" | "link" | "meta" => {
-      ignore(insert_element(builder, name, attrs))
-      false
-    }
-    "title" | "style" | "noframes" | "script" | "noscript" => {
-      ignore(insert_open(builder, name, attrs))
-      false
-    }
-    "template" => {
-      ignore(insert_open(builder, "template", attrs))
-      builder.afe.push(None)
-      builder.mode = InBody
-      false
-    }
-    "head" => {
-      builder.repairs.dropped = builder.repairs.dropped + 1
-      false
-    }
-    _ => {
-      ignore(self_closing)
-      close_head(builder)
-      builder.mode = AfterHead
-      true
-    }
-  }
-}
-
-///|
-fn start_in_after_head(
-  builder : Builder,
-  name : String,
-  attrs : Array[(String, String)],
-  self_closing~ : Bool,
-) -> Bool {
-  match name {
-    "html" => in_body_start(builder, name, attrs)
-    "body" => {
-      let element = insert_open(builder, "body", attrs)
-      ignore(element)
-      builder.mode = InBody
-      false
-    }
-    "base"
-    | "basefont"
-    | "bgsound"
-    | "link"
-    | "meta"
-    | "noframes"
-    | "script"
-    | "style"
-    | "template"
-    | "title" => {
-      // These go back into the head, where the spec sends them.
-      let head = match builder.head {
-        Some(el) => el
-        None => {
-          implied(builder)
-          let el = insert_open(builder, "head", [])
-          builder.head = Some(el)
-          el
-        }
-      }
-      let element = @moonxml.Element::new(name, attrs~)
-      head.append(@moonxml.ElementNode(element))
-      if !is_void(name) {
-        // A raw-text element needs to be open so that its content lands in it;
-        // its own end tag closes it.
-        push_stack(builder, element)
-      }
-      ignore(self_closing)
-      false
-    }
-    "head" => {
-      builder.repairs.dropped = builder.repairs.dropped + 1
-      false
-    }
-    _ => {
-      imply_body(builder)
-      true
-    }
-  }
-}
-
-///|
-fn start_in_table(
-  builder : Builder,
-  name : String,
-  attrs : Array[(String, String)],
-  self_closing~ : Bool,
-) -> Bool {
-  match name {
-    "caption" => {
-      clear_to_table(builder)
-      ignore(insert_open(builder, "caption", attrs))
-      builder.afe.push(None)
-      builder.mode = InCaption
-      false
-    }
-    "colgroup" => {
-      clear_to_table(builder)
-      ignore(insert_open(builder, "colgroup", attrs))
-      builder.mode = InColumnGroup
-      false
-    }
-    "col" => {
-      clear_to_table(builder)
-      ignore(insert_open(builder, "colgroup", []))
-      builder.mode = InColumnGroup
-      true
-    }
-    "tbody" | "tfoot" | "thead" => {
-      clear_to_table(builder)
-      ignore(insert_open(builder, name, attrs))
-      builder.mode = InTableBody
-      false
-    }
-    "td" | "th" | "tr" => {
-      clear_to_table(builder)
-      implied(builder)
-      ignore(insert_open(builder, "tbody", []))
-      builder.mode = InTableBody
-      true
-    }
-    "table" =>
-      if has_in_scope(builder, "table", Table) {
-        pop_through(builder, "table")
-        reset_mode(builder)
-        true
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
-        false
-      }
-    "style" | "script" | "template" =>
-      start_in_head(builder, name, attrs, self_closing~)
-    "input" => {
-      let mut hidden = false
-      for pair in attrs {
-        if pair.0 == "type" && lower(pair.1) == "hidden" {
-          hidden = true
-        }
-      }
-      if hidden {
-        let element = insert_element(builder, "input", attrs)
-        ignore(element)
-        false
-      } else {
-        builder.foster = true
-        let again = in_body_start(builder, name, attrs)
-        builder.foster = false
-        again
-      }
-    }
-    "form" => {
-      if builder.form is None {
-        let element = insert_open(builder, "form", attrs)
-        builder.form = Some(element)
-        ignore(pop_stack(builder))
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
-      }
-      false
-    }
-    _ => {
-      builder.foster = true
-      let again = in_body_start(builder, name, attrs)
-      builder.foster = false
-      again
-    }
-  }
-}
-
-///|
-fn start_in_table_body(
-  builder : Builder,
-  name : String,
-  attrs : Array[(String, String)],
-  self_closing~ : Bool,
-) -> Bool {
-  match name {
-    "tr" => {
-      clear_to_table_body(builder)
-      ignore(insert_open(builder, "tr", attrs))
-      builder.mode = InRow
-      false
-    }
-    "th" | "td" => {
-      clear_to_table_body(builder)
-      implied(builder)
-      ignore(insert_open(builder, "tr", []))
-      builder.mode = InRow
-      true
-    }
-    "caption" | "col" | "colgroup" | "tbody" | "tfoot" | "thead" =>
-      if has_any_in_scope(builder, ["tbody", "thead", "tfoot"], Table) {
-        clear_to_table_body(builder)
-        ignore(pop_stack(builder))
-        builder.mode = InTable
-        true
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
-        false
-      }
-    _ => {
-      ignore(self_closing)
-      start_in_table(builder, name, attrs, self_closing~)
-    }
-  }
-}
-
-///|
-fn start_in_row(
-  builder : Builder,
-  name : String,
-  attrs : Array[(String, String)],
-  self_closing~ : Bool,
-) -> Bool {
-  match name {
-    "th" | "td" => {
-      clear_to_row(builder)
-      ignore(insert_open(builder, name, attrs))
-      builder.mode = InCell
-      builder.afe.push(None)
-      false
-    }
-    "caption" | "col" | "colgroup" | "tbody" | "tfoot" | "thead" | "tr" =>
-      if has_in_scope(builder, "tr", Table) {
-        clear_to_row(builder)
-        ignore(pop_stack(builder))
-        builder.mode = InTableBody
-        true
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
-        false
-      }
-    _ => {
-      ignore(self_closing)
-      start_in_table(builder, name, attrs, self_closing~)
-    }
-  }
-}
-
-///|
-fn start_in_cell(
-  builder : Builder,
-  name : String,
-  attrs : Array[(String, String)],
-) -> Bool {
-  match name {
-    "caption"
-    | "col"
-    | "colgroup"
-    | "tbody"
-    | "td"
-    | "tfoot"
-    | "th"
-    | "thead"
-    | "tr" =>
-      if has_any_in_scope(builder, ["td", "th"], Table) {
-        close_cell(builder)
-        true
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
-        false
-      }
-    _ => in_body_start(builder, name, attrs)
-  }
-}
-
-///|
-fn close_cell(builder : Builder) -> Unit {
-  generate_implied_end(builder)
-  if has_in_scope(builder, "td", Table) {
-    pop_through(builder, "td")
-  } else if has_in_scope(builder, "th", Table) {
-    pop_through(builder, "th")
-  }
-  clear_afe_to_marker(builder)
-  builder.mode = InRow
-}
-
-///|
-fn start_in_caption(
-  builder : Builder,
-  name : String,
-  attrs : Array[(String, String)],
-) -> Bool {
-  match name {
-    "caption"
-    | "col"
-    | "colgroup"
-    | "tbody"
-    | "td"
-    | "tfoot"
-    | "th"
-    | "thead"
-    | "tr" =>
-      if has_in_scope(builder, "caption", Table) {
-        generate_implied_end(builder)
-        pop_through(builder, "caption")
-        clear_afe_to_marker(builder)
-        builder.mode = InTable
-        true
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
-        false
-      }
-    _ => in_body_start(builder, name, attrs)
-  }
-}
-
-///|
-fn start_in_select(
-  builder : Builder,
-  name : String,
-  attrs : Array[(String, String)],
-) -> Bool {
-  match name {
-    "html" => in_body_start(builder, name, attrs)
-    "option" => {
-      if current_is(builder, "option") {
-        ignore(pop_stack(builder))
-      }
-      ignore(insert_open(builder, "option", attrs))
-      false
-    }
-    "optgroup" => {
-      if current_is(builder, "option") {
-        ignore(pop_stack(builder))
-      }
-      if current_is(builder, "optgroup") {
-        ignore(pop_stack(builder))
-      }
-      ignore(insert_open(builder, "optgroup", attrs))
-      false
-    }
-    "hr" => {
-      if current_is(builder, "option") {
-        ignore(pop_stack(builder))
-      }
-      if current_is(builder, "optgroup") {
-        ignore(pop_stack(builder))
-      }
-      let element = insert_element(builder, "hr", attrs)
-      ignore(element)
-      false
-    }
-    "select" => {
-      if has_in_scope(builder, "select", Select) {
-        pop_through(builder, "select")
-        reset_mode(builder)
-      }
-      false
-    }
-    "input" | "keygen" | "textarea" =>
-      if has_in_scope(builder, "select", Select) {
-        pop_through(builder, "select")
-        reset_mode(builder)
-        true
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
-        false
-      }
-    "script" | "style" | "template" =>
-      start_in_head(builder, name, attrs, self_closing=false)
-    _ => {
-      builder.repairs.dropped = builder.repairs.dropped + 1
-      false
-    }
-  }
-}
-
-///|
-fn start_in_select_in_table(
-  builder : Builder,
-  name : String,
-  attrs : Array[(String, String)],
-) -> Bool {
-  match name {
-    "caption" | "table" | "tbody" | "tfoot" | "thead" | "tr" | "td" | "th" =>
-      if has_any_in_scope(
-          builder,
-          ["table", "tbody", "tfoot", "thead", "tr"],
-          Table,
-        ) {
-        pop_through(builder, "select")
-        reset_mode(builder)
-        true
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
-        false
-      }
-    _ => start_in_select(builder, name, attrs)
-  }
+  reset_mode(b)
 }
 
 // ------------------------------------------------------------------ in body
 
 ///|
-fn is_heading(name : String) -> Bool {
-  match name {
-    "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => true
-    _ => false
+fn in_body(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    Characters(text~) => {
+      let cleaned = text_for(b, text)
+      if cleaned.is_empty() {
+        return
+      }
+      reconstruct_afe(b)
+      insert_text(b, cleaned)
+      if !is_space_text(cleaned) {
+        b.frameset_ok = false
+      }
+    }
+    CommentToken(text~) => insert_comment(b, text)
+    DoctypeToken(_) => ()
+    StartTag(name~, attrs~, self_closing~) =>
+      start_in_body(b, lx, name, attrs, self_closing, depth)
+    EndTag(name~) => end_in_body(b, lx, name, depth)
+    Eof =>
+      if !b.templates.is_empty() {
+        in_template(b, lx, token, depth + 1)
+        return
+      }
   }
 }
 
 ///|
-fn in_body_start(
-  builder : Builder,
+fn text_for(b : Builder, text : String) -> String {
+  let mut cleaned = strip_nulls(text)
+  if b.skip_lf {
+    b.skip_lf = false
+    if cleaned.has_prefix("\n") {
+      cleaned = cleaned[1:cleaned.length()].to_owned()
+    }
+  }
+  cleaned
+}
+
+///|
+fn strip_nulls(text : String) -> String {
+  if !text.contains("\u{0}") {
+    return text
+  }
+  let out = StringBuilder()
+  for ch in text {
+    if ch != '\u{0}' {
+      out.write_char(ch)
+    }
+  }
+  out.to_string()
+}
+
+///|
+fn start_in_body(
+  b : Builder,
+  lx : Lexer,
   name : String,
   attrs : Array[(String, String)],
-) -> Bool {
+  self_closing : Bool,
+  depth : Int32,
+) -> Unit {
   match name {
     "html" => {
-      match html_element(builder) {
-        Some(html) => merge_attrs_into(builder, html, attrs)
+      if has_on_stack(b, "template") {
+        return
+      }
+      match html_element(b) {
+        Some(html) => merge_attrs(html, attrs)
         None => ()
       }
-      builder.repairs.dropped = builder.repairs.dropped + 1
-      false
     }
     "base"
     | "basefont"
@@ -857,17 +667,37 @@ fn in_body_start(
     | "script"
     | "style"
     | "template"
-    | "title" => start_in_head(builder, name, attrs, self_closing=false)
-    "body" => {
-      match body_element(builder) {
+    | "title" =>
+      in_head(b, lx, StartTag(name~, attrs~, self_closing~), depth + 1)
+    "body" =>
+      match body_element(b) {
         Some(body) =>
-          if builder.stack.length() > 1 {
-            merge_attrs_into(builder, body, attrs)
+          if b.stack.length() > 1 && !has_on_stack(b, "template") {
+            b.frameset_ok = false
+            merge_attrs(body, attrs)
           }
         None => ()
       }
-      builder.repairs.dropped = builder.repairs.dropped + 1
-      false
+    "frameset" => {
+      if b.stack.length() < 2 {
+        return
+      }
+      if b.stack[1].name != "body" && b.stack[1].name != "frameset" {
+        return
+      }
+      if !b.frameset_ok {
+        return
+      }
+      match body_element(b) {
+        Some(body) => ignore(body.remove())
+        None => ()
+      }
+      while b.stack.length() > 1 {
+        ignore(pop(b))
+      }
+      let frameset = insert_element(b, "frameset", attrs)
+      push(b, frameset)
+      b.mode = InFrameset
     }
     "address"
     | "article"
@@ -890,100 +720,122 @@ fn in_body_start(
     | "nav"
     | "ol"
     | "p"
+    | "search"
     | "section"
     | "summary"
     | "ul" => {
-      if has_in_scope(builder, "p", Button) {
-        close_p(builder)
+      if has_in_scope(b, "p", Button) {
+        close_p(b)
       }
-      ignore(insert_open(builder, name, attrs))
-      false
+      ignore(insert_element_open(b, name, attrs))
     }
     "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => {
-      if has_in_scope(builder, "p", Button) {
-        close_p(builder)
+      if has_in_scope(b, "p", Button) {
+        close_p(b)
       }
-      if is_heading(current(builder).name) {
-        ignore(pop_stack(builder))
+      if is_heading(current(b).name) {
+        ignore(pop(b))
       }
-      ignore(insert_open(builder, name, attrs))
-      false
+      ignore(insert_element_open(b, name, attrs))
     }
     "pre" | "listing" => {
-      if has_in_scope(builder, "p", Button) {
-        close_p(builder)
+      if has_in_scope(b, "p", Button) {
+        close_p(b)
       }
-      ignore(insert_open(builder, name, attrs))
-      false
+      ignore(insert_element_open(b, name, attrs))
+      b.frameset_ok = false
+      b.skip_lf = true
     }
     "form" => {
-      let open_form = builder.form
-      match open_form {
-        Some(_) => builder.repairs.dropped = builder.repairs.dropped + 1
-        None => {
-          if has_in_scope(builder, "p", Button) {
-            close_p(builder)
-          }
-          let element = insert_open(builder, "form", attrs)
-          builder.form = Some(element)
-        }
+      let in_template = has_on_stack(b, "template")
+      if b.form is Some(_) && !in_template {
+        return
       }
-      false
+      if has_in_scope(b, "p", Button) {
+        close_p(b)
+      }
+      let element = insert_element_open(b, "form", attrs)
+      if !in_template {
+        b.form = Some(element)
+      }
     }
     "li" => {
-      if has_in_scope(builder, "li", ListItem) {
-        generate_implied_except(builder, "li")
-        pop_through(builder, "li")
+      b.frameset_ok = false
+      let mut k = b.stack.length() - 1
+      while k >= 0 {
+        let node = b.stack[k]
+        if node.name == "li" {
+          generate_implied_end(b, "li")
+          pop_until_name(b, "li")
+          break
+        }
+        if is_special(node.name) &&
+          node.name != "address" &&
+          node.name != "div" &&
+          node.name != "p" {
+          break
+        }
+        k = k - 1
       }
-      if has_in_scope(builder, "p", Button) {
-        close_p(builder)
+      if has_in_scope(b, "p", Button) {
+        close_p(b)
       }
-      ignore(insert_open(builder, "li", attrs))
-      false
+      ignore(insert_element_open(b, "li", attrs))
     }
     "dd" | "dt" => {
-      if has_any_in_scope(builder, ["dd", "dt"], Default) {
-        generate_implied_except(builder, name)
-        pop_until(builder, ["dd", "dt"])
+      b.frameset_ok = false
+      let mut k = b.stack.length() - 1
+      while k >= 0 {
+        let node = b.stack[k]
+        if node.name == "dd" || node.name == "dt" {
+          generate_implied_end(b, node.name)
+          pop_until_name(b, node.name)
+          break
+        }
+        if is_special(node.name) &&
+          node.name != "address" &&
+          node.name != "div" &&
+          node.name != "p" {
+          break
+        }
+        k = k - 1
       }
-      if has_in_scope(builder, "p", Button) {
-        close_p(builder)
+      if has_in_scope(b, "p", Button) {
+        close_p(b)
       }
-      ignore(insert_open(builder, name, attrs))
-      false
+      ignore(insert_element_open(b, name, attrs))
     }
     "plaintext" => {
-      if has_in_scope(builder, "p", Button) {
-        close_p(builder)
+      if has_in_scope(b, "p", Button) {
+        close_p(b)
       }
-      ignore(insert_open(builder, name, attrs))
-      false
+      ignore(insert_element_open(b, "plaintext", attrs))
+      lx.state = Plaintext
     }
     "button" => {
-      if has_in_scope(builder, "button", Default) {
-        generate_implied_end(builder)
-        pop_through(builder, "button")
+      if has_in_scope(b, "button", Default) {
+        generate_implied_end(b, "")
+        pop_until_name(b, "button")
       }
-      reconstruct_afe(builder)
-      ignore(insert_open(builder, "button", attrs))
-      false
+      reconstruct_afe(b)
+      ignore(insert_element_open(b, "button", attrs))
+      b.frameset_ok = false
     }
     "a" => {
-      match find_afe(builder, "a") {
+      match find_afe(b, "a") {
         Some(existing) => {
-          adoption_agency(builder, "a")
-          match afe_index(builder, existing) {
-            Some(at) => ignore(builder.afe.remove(at))
+          adoption_agency(b, "a")
+          match afe_index(b, existing) {
+            Some(at) => ignore(b.afe.remove(at))
             None => ()
           }
-          ignore(remove_from_stack(builder, existing))
+          ignore(remove_from_stack(b, existing))
         }
         None => ()
       }
-      reconstruct_afe(builder)
-      let element = insert_open(builder, "a", attrs)
-      push_afe(builder, element)
-      false
+      reconstruct_afe(b)
+      let element = insert_element_open(b, "a", attrs)
+      push_afe(b, element)
     }
     "b"
     | "big"
@@ -997,113 +849,149 @@ fn in_body_start(
     | "strong"
     | "tt"
     | "u" => {
-      reconstruct_afe(builder)
-      let element = insert_open(builder, name, attrs)
-      push_afe(builder, element)
-      false
+      reconstruct_afe(b)
+      let element = insert_element_open(b, name, attrs)
+      push_afe(b, element)
     }
     "nobr" => {
-      reconstruct_afe(builder)
-      if has_in_scope(builder, "nobr", Default) {
-        adoption_agency(builder, "nobr")
-        reconstruct_afe(builder)
+      reconstruct_afe(b)
+      if has_in_scope(b, "nobr", Default) {
+        adoption_agency(b, "nobr")
+        reconstruct_afe(b)
       }
-      let element = insert_open(builder, "nobr", attrs)
-      push_afe(builder, element)
-      false
+      let element = insert_element_open(b, "nobr", attrs)
+      push_afe(b, element)
     }
     "applet" | "marquee" | "object" => {
-      reconstruct_afe(builder)
-      ignore(insert_open(builder, name, attrs))
-      builder.afe.push(None)
-      false
+      reconstruct_afe(b)
+      ignore(insert_element_open(b, name, attrs))
+      push_marker(b)
+      b.frameset_ok = false
     }
     "table" => {
-      if !builder.quirks && has_in_scope(builder, "p", Button) {
-        close_p(builder)
+      if !b.quirks && has_in_scope(b, "p", Button) {
+        close_p(b)
       }
-      ignore(insert_open(builder, "table", attrs))
-      builder.mode = InTable
-      false
+      ignore(insert_element_open(b, "table", attrs))
+      b.frameset_ok = false
+      b.mode = InTable
     }
     "area" | "br" | "embed" | "img" | "keygen" | "wbr" => {
-      reconstruct_afe(builder)
-      ignore(insert_element(builder, name, attrs))
-      false
+      reconstruct_afe(b)
+      ignore(insert_element_open(b, name, attrs))
+      ignore(pop(b))
+      b.frameset_ok = false
+      ignore(self_closing)
     }
     "input" => {
-      reconstruct_afe(builder)
-      ignore(insert_element(builder, "input", attrs))
-      false
+      reconstruct_afe(b)
+      ignore(insert_element_open(b, "input", attrs))
+      ignore(pop(b))
+      let mut hidden = false
+      for pair in attrs {
+        if pair.0 == "type" && pair.1.to_lower() == "hidden" {
+          hidden = true
+        }
+      }
+      if !hidden {
+        b.frameset_ok = false
+      }
+      ignore(self_closing)
     }
     "param" | "source" | "track" => {
-      ignore(insert_element(builder, name, attrs))
-      false
+      ignore(insert_element_open(b, name, attrs))
+      ignore(pop(b))
+      ignore(self_closing)
     }
     "hr" => {
-      if has_in_scope(builder, "p", Button) {
-        close_p(builder)
+      if has_in_scope(b, "p", Button) {
+        close_p(b)
       }
-      ignore(insert_element(builder, "hr", attrs))
-      false
+      ignore(insert_element_open(b, "hr", attrs))
+      ignore(pop(b))
+      b.frameset_ok = false
+      ignore(self_closing)
     }
-    "image" => in_body_start(builder, "img", attrs)
+    "image" => start_in_body(b, lx, "img", attrs, self_closing, depth)
     "textarea" => {
-      ignore(insert_open(builder, "textarea", attrs))
-      false
+      ignore(insert_element_open(b, "textarea", attrs))
+      b.skip_lf = true
+      lx.raw_name = "textarea"
+      lx.state = Rcdata
+      b.text_mode = b.mode
+      b.frameset_ok = false
+      b.mode = Text
     }
     "xmp" => {
-      if has_in_scope(builder, "p", Button) {
-        close_p(builder)
+      if has_in_scope(b, "p", Button) {
+        close_p(b)
       }
-      reconstruct_afe(builder)
-      ignore(insert_open(builder, "xmp", attrs))
-      false
+      reconstruct_afe(b)
+      b.frameset_ok = false
+      ignore(insert_element_open(b, "xmp", attrs))
+      lx.raw_name = "xmp"
+      lx.state = Rawtext
+      b.text_mode = b.mode
+      b.mode = Text
     }
-    "iframe" | "noembed" => {
-      ignore(insert_open(builder, name, attrs))
-      false
+    "iframe" => {
+      b.frameset_ok = false
+      ignore(insert_element_open(b, "iframe", attrs))
+      lx.raw_name = "iframe"
+      lx.state = Rawtext
+      b.text_mode = b.mode
+      b.mode = Text
+    }
+    "noembed" => {
+      ignore(insert_element_open(b, "noembed", attrs))
+      lx.raw_name = "noembed"
+      lx.state = Rawtext
+      b.text_mode = b.mode
+      b.mode = Text
     }
     "select" => {
-      reconstruct_afe(builder)
-      ignore(insert_open(builder, "select", attrs))
-      builder.mode = if builder.mode is InTable ||
-        builder.mode is InCaption ||
-        builder.mode is InTableBody ||
-        builder.mode is InRow ||
-        builder.mode is InCell {
-        InSelectInTable
-      } else {
-        InSelect
+      reconstruct_afe(b)
+      ignore(insert_element_open(b, "select", attrs))
+      b.frameset_ok = false
+      b.mode = match b.mode {
+        InTable | InCaption | InTableBody | InRow | InCell => InSelectInTable
+        _ => InSelect
       }
-      false
     }
     "optgroup" | "option" => {
-      if current_is(builder, "option") {
-        ignore(pop_stack(builder))
+      if current_is(b, "option") {
+        ignore(pop(b))
       }
-      reconstruct_afe(builder)
-      ignore(insert_open(builder, name, attrs))
-      false
+      reconstruct_afe(b)
+      ignore(insert_element_open(b, name, attrs))
     }
     "rb" | "rtc" => {
-      if has_in_scope(builder, "ruby", Default) {
-        generate_implied_end(builder)
+      if has_in_scope(b, "ruby", Default) {
+        generate_implied_end(b, "")
       }
-      ignore(insert_open(builder, name, attrs))
-      false
+      ignore(insert_element_open(b, name, attrs))
     }
     "rp" | "rt" => {
-      if has_in_scope(builder, "ruby", Default) {
-        generate_implied_except(builder, "rtc")
+      if has_in_scope(b, "ruby", Default) {
+        generate_implied_end(b, "rtc")
       }
-      ignore(insert_open(builder, name, attrs))
-      false
+      ignore(insert_element_open(b, name, attrs))
     }
-    "math" | "svg" => {
-      reconstruct_afe(builder)
-      ignore(insert_open(builder, name, attrs))
-      false
+    "math" => {
+      reconstruct_afe(b)
+      let element = insert_foreign(b, "math", attrs, mathml_namespace)
+      push(b, element)
+      if self_closing {
+        ignore(pop(b))
+      }
+    }
+    "svg" => {
+      reconstruct_afe(b)
+      let element = insert_foreign(b, "svg", attrs, svg_namespace)
+      push(b, element)
+      if self_closing {
+        ignore(pop(b))
+      }
     }
     "caption"
     | "col"
@@ -1115,396 +1003,37 @@ fn in_body_start(
     | "tfoot"
     | "th"
     | "thead"
-    | "tr" => {
-      builder.repairs.dropped = builder.repairs.dropped + 1
-      false
-    }
+    | "tr" => note_dropped(b)
     _ => {
-      reconstruct_afe(builder)
-      ignore(insert_open(builder, name, attrs))
-      false
-    }
-  }
-}
-
-// ------------------------------------------------------------------ end tags
-
-///|
-fn end_in(builder : Builder, name : String) -> Bool {
-  match builder.mode {
-    Initial | BeforeHtml =>
-      match name {
-        "head" | "body" | "html" | "br" => {
-          if builder.mode is Initial {
-            builder.quirks = true
-          }
-          imply_html(builder)
-          true
-        }
-        _ => {
-          builder.repairs.dropped = builder.repairs.dropped + 1
-          false
-        }
-      }
-    BeforeHead =>
-      match name {
-        "head" | "body" | "html" | "br" => {
-          imply_head(builder)
-          true
-        }
-        _ => {
-          builder.repairs.dropped = builder.repairs.dropped + 1
-          false
-        }
-      }
-    InHead =>
-      match name {
-        "head" => {
-          close_head(builder)
-          builder.mode = AfterHead
-          false
-        }
-        "body" | "html" | "br" => {
-          close_head(builder)
-          builder.mode = AfterHead
-          true
-        }
-        "template" => {
-          pop_through(builder, "template")
-          clear_afe_to_marker(builder)
-          reset_mode(builder)
-          false
-        }
-        _ =>
-          if current_is(builder, name) {
-            ignore(pop_stack(builder))
-            false
-          } else {
-            close_head(builder)
-            builder.mode = AfterHead
-            true
-          }
-      }
-    AfterHead =>
-      match name {
-        "body" | "html" | "br" => {
-          imply_body(builder)
-          true
-        }
-        _ =>
-          // A raw-text element the head took back stays open until its own end
-          // tag arrives, which comes here rather than to "in head".
-          if is_raw_text_tag(name) && current_is(builder, name) {
-            ignore(pop_stack(builder))
-            false
-          } else {
-            builder.repairs.dropped = builder.repairs.dropped + 1
-            false
-          }
-      }
-    InBody => in_body_end(builder, name)
-    InTable => in_table_end(builder, name)
-    InTableText => {
-      flush_table_text(builder)
-      builder.mode = InTable
-      true
-    }
-    InCaption =>
-      match name {
-        "caption" => {
-          if has_in_scope(builder, "caption", Table) {
-            generate_implied_end(builder)
-            pop_through(builder, "caption")
-            clear_afe_to_marker(builder)
-          } else {
-            builder.repairs.dropped = builder.repairs.dropped + 1
-          }
-          builder.mode = InTable
-          false
-        }
-        "table" =>
-          if has_in_scope(builder, "caption", Table) {
-            generate_implied_end(builder)
-            pop_through(builder, "caption")
-            clear_afe_to_marker(builder)
-            builder.mode = InTable
-            true
-          } else {
-            builder.repairs.dropped = builder.repairs.dropped + 1
-            false
-          }
-        "body"
-        | "col"
-        | "colgroup"
-        | "html"
-        | "tbody"
-        | "td"
-        | "tfoot"
-        | "th"
-        | "thead"
-        | "tr" => {
-          builder.repairs.dropped = builder.repairs.dropped + 1
-          false
-        }
-        _ => in_body_end(builder, name)
-      }
-    InColumnGroup =>
-      match name {
-        "colgroup" => {
-          if current_is(builder, "colgroup") {
-            ignore(pop_stack(builder))
-            builder.mode = InTable
-          } else {
-            builder.repairs.dropped = builder.repairs.dropped + 1
-          }
-          false
-        }
-        "col" => {
-          builder.repairs.dropped = builder.repairs.dropped + 1
-          false
-        }
-        "template" => {
-          ignore(in_body_end(builder, name))
-          false
-        }
-        _ =>
-          if current_is(builder, "colgroup") {
-            ignore(pop_stack(builder))
-            builder.mode = InTable
-            true
-          } else {
-            builder.repairs.dropped = builder.repairs.dropped + 1
-            false
-          }
-      }
-    InTableBody =>
-      match name {
-        "tbody" | "tfoot" | "thead" => {
-          if has_in_scope(builder, name, Table) {
-            clear_to_table_body(builder)
-            ignore(pop_stack(builder))
-            builder.mode = InTable
-          } else {
-            builder.repairs.dropped = builder.repairs.dropped + 1
-          }
-          false
-        }
-        "table" =>
-          if has_any_in_scope(builder, ["tbody", "thead", "tfoot"], Table) {
-            clear_to_table_body(builder)
-            ignore(pop_stack(builder))
-            builder.mode = InTable
-            true
-          } else {
-            builder.repairs.dropped = builder.repairs.dropped + 1
-            false
-          }
-        "body" | "caption" | "col" | "colgroup" | "html" | "td" | "th" | "tr" => {
-          builder.repairs.dropped = builder.repairs.dropped + 1
-          false
-        }
-        _ => in_table_end(builder, name)
-      }
-    InRow =>
-      match name {
-        "tr" => {
-          if has_in_scope(builder, "tr", Table) {
-            clear_to_row(builder)
-            ignore(pop_stack(builder))
-            builder.mode = InTableBody
-          } else {
-            builder.repairs.dropped = builder.repairs.dropped + 1
-          }
-          false
-        }
-        "table" =>
-          if has_in_scope(builder, "tr", Table) {
-            clear_to_row(builder)
-            ignore(pop_stack(builder))
-            builder.mode = InTableBody
-            true
-          } else {
-            builder.repairs.dropped = builder.repairs.dropped + 1
-            false
-          }
-        "tbody" | "tfoot" | "thead" =>
-          if has_in_scope(builder, name, Table) &&
-            has_in_scope(builder, "tr", Table) {
-            clear_to_row(builder)
-            ignore(pop_stack(builder))
-            builder.mode = InTableBody
-            true
-          } else {
-            builder.repairs.dropped = builder.repairs.dropped + 1
-            false
-          }
-        "body" | "caption" | "col" | "colgroup" | "html" | "td" | "th" => {
-          builder.repairs.dropped = builder.repairs.dropped + 1
-          false
-        }
-        _ => in_table_end(builder, name)
-      }
-    InCell =>
-      match name {
-        "td" | "th" => {
-          if has_in_scope(builder, name, Table) {
-            generate_implied_end(builder)
-            pop_through(builder, name)
-            clear_afe_to_marker(builder)
-            builder.mode = InRow
-          } else {
-            builder.repairs.dropped = builder.repairs.dropped + 1
-          }
-          false
-        }
-        "body" | "caption" | "col" | "colgroup" | "html" => {
-          builder.repairs.dropped = builder.repairs.dropped + 1
-          false
-        }
-        "table" | "tbody" | "tfoot" | "thead" | "tr" =>
-          if has_in_scope(builder, name, Table) {
-            close_cell(builder)
-            true
-          } else {
-            builder.repairs.dropped = builder.repairs.dropped + 1
-            false
-          }
-        _ => in_body_end(builder, name)
-      }
-    InSelect | InSelectInTable => {
-      let table_context = builder.mode is InSelectInTable
-      match name {
-        "optgroup" => {
-          if current_is(builder, "option") &&
-            builder.stack.length() >= 2 &&
-            builder.stack[builder.stack.length() - 2].name == "optgroup" {
-            ignore(pop_stack(builder))
-          }
-          if current_is(builder, "optgroup") {
-            ignore(pop_stack(builder))
-          }
-          false
-        }
-        "option" => {
-          if current_is(builder, "option") {
-            ignore(pop_stack(builder))
-          }
-          false
-        }
-        "select" => {
-          if has_in_scope(builder, "select", Select) {
-            pop_through(builder, "select")
-            reset_mode(builder)
-          }
-          false
-        }
-        _ =>
-          if table_context &&
-            (
-              name == "caption" ||
-              name == "table" ||
-              name == "tbody" ||
-              name == "tfoot" ||
-              name == "thead" ||
-              name == "tr" ||
-              name == "td" ||
-              name == "th"
-            ) {
-            if has_any_in_scope(
-                builder,
-                ["table", "tbody", "tfoot", "thead", "tr"],
-                Table,
-              ) {
-              pop_through(builder, "select")
-              reset_mode(builder)
-              true
-            } else {
-              builder.repairs.dropped = builder.repairs.dropped + 1
-              false
-            }
-          } else {
-            builder.repairs.dropped = builder.repairs.dropped + 1
-            false
-          }
-      }
-    }
-    AfterBody =>
-      if name == "html" {
-        builder.mode = AfterAfterBody
-        false
-      } else {
-        builder.mode = InBody
-        true
-      }
-    AfterAfterBody => {
-      builder.mode = InBody
-      true
+      reconstruct_afe(b)
+      ignore(insert_element_open(b, name, attrs))
     }
   }
 }
 
 ///|
-fn in_table_end(builder : Builder, name : String) -> Bool {
+fn merge_attrs(
+  element : @moonxml.Element,
+  attrs : Array[(String, String)],
+) -> Unit {
+  for pair in attrs {
+    if !element.has_attr(pair.0) {
+      element.set_attr(pair.0, pair.1)
+    }
+  }
+}
+
+///|
+fn end_in_body(b : Builder, lx : Lexer, name : String, depth : Int32) -> Unit {
+  ignore(lx)
+  ignore(depth)
   match name {
-    "table" => {
-      if has_in_scope(builder, "table", Table) {
-        pop_through(builder, "table")
-        reset_mode(builder)
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
-      }
-      false
-    }
-    "body"
-    | "caption"
-    | "col"
-    | "colgroup"
-    | "html"
-    | "tbody"
-    | "td"
-    | "tfoot"
-    | "th"
-    | "thead"
-    | "tr" => {
-      builder.repairs.dropped = builder.repairs.dropped + 1
-      false
-    }
-    _ => {
-      builder.foster = true
-      let again = in_body_end(builder, name)
-      builder.foster = false
-      again
-    }
-  }
-}
-
-///|
-fn in_body_end(builder : Builder, name : String) -> Bool {
-  match name {
-    "template" => {
-      if has_on_stack(builder, "template") {
-        generate_implied_end(builder)
-        pop_through(builder, "template")
-        clear_afe_to_marker(builder)
-        reset_mode(builder)
-      }
-      false
-    }
-    "body" => {
-      if has_in_scope(builder, "body", Default) {
-        builder.mode = AfterBody
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
-      }
-      false
-    }
+    "template" => end_template(b, lx, depth)
+    "body" => if has_in_scope(b, "body", Default) { b.mode = AfterBody }
     "html" =>
-      if has_in_scope(builder, "body", Default) {
-        builder.mode = AfterBody
-        true
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
-        false
+      if has_in_scope(b, "body", Default) {
+        b.mode = AfterBody
+        dispatch(b, lx, EndTag(name~), depth + 1)
       }
     "address"
     | "article"
@@ -1529,69 +1058,55 @@ fn in_body_end(builder : Builder, name : String) -> Bool {
     | "nav"
     | "ol"
     | "pre"
+    | "search"
     | "section"
     | "summary"
-    | "ul" => {
-      if has_in_scope(builder, name, Default) {
-        generate_implied_end(builder)
-        pop_through(builder, name)
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
+    | "ul" =>
+      if has_in_scope(b, name, Default) {
+        generate_implied_end(b, "")
+        pop_until_name(b, name)
       }
-      false
-    }
     "form" => {
-      let target = builder.form
-      builder.form = None
+      if has_on_stack(b, "template") {
+        if has_in_scope(b, "form", Default) {
+          generate_implied_end(b, "")
+          pop_until_name(b, "form")
+        }
+        return
+      }
+      let target = b.form
+      b.form = None
       match target {
         Some(node) =>
-          if on_stack(builder, node) && has_in_scope(builder, "form", Default) {
-            generate_implied_end(builder)
-            ignore(remove_from_stack(builder, node))
+          if element_in_scope(b, node, Default) {
+            generate_implied_end(b, "")
+            ignore(remove_from_stack(b, node))
           }
         None => ()
       }
-      false
     }
     "p" => {
-      if !has_in_scope(builder, "p", Button) {
-        implied(builder)
-        ignore(insert_open(builder, "p", []))
+      if !has_in_scope(b, "p", Button) {
+        note_implied(b)
+        ignore(insert_element_open(b, "p", []))
       }
-      close_p(builder)
-      false
+      close_p(b)
     }
-    "li" => {
-      if has_in_scope(builder, "li", ListItem) {
-        generate_implied_except(builder, "li")
-        pop_through(builder, "li")
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
+    "li" =>
+      if has_in_scope(b, "li", ListItem) {
+        generate_implied_end(b, "li")
+        pop_until_name(b, "li")
       }
-      false
-    }
-    "dd" | "dt" => {
-      if has_in_scope(builder, name, Default) {
-        generate_implied_except(builder, name)
-        pop_through(builder, name)
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
+    "dd" | "dt" =>
+      if has_in_scope(b, name, Default) {
+        generate_implied_end(b, name)
+        pop_until_name(b, name)
       }
-      false
-    }
-    "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => {
-      if has_any_in_scope(
-          builder,
-          ["h1", "h2", "h3", "h4", "h5", "h6"],
-          Default,
-        ) {
-        generate_implied_end(builder)
-        pop_until(builder, ["h1", "h2", "h3", "h4", "h5", "h6"])
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
+    "h1" | "h2" | "h3" | "h4" | "h5" | "h6" =>
+      if has_any_in_scope(b, ["h1", "h2", "h3", "h4", "h5", "h6"], Default) {
+        generate_implied_end(b, "")
+        pop_until_any(b, ["h1", "h2", "h3", "h4", "h5", "h6"])
       }
-      false
-    }
     "a"
     | "b"
     | "big"
@@ -1605,260 +1120,831 @@ fn in_body_end(builder : Builder, name : String) -> Bool {
     | "strike"
     | "strong"
     | "tt"
-    | "u" => {
-      adoption_agency(builder, name)
-      false
-    }
-    "applet" | "marquee" | "object" => {
-      if has_in_scope(builder, name, Default) {
-        generate_implied_end(builder)
-        pop_through(builder, name)
-        clear_afe_to_marker(builder)
-      } else {
-        builder.repairs.dropped = builder.repairs.dropped + 1
+    | "u" => adoption_agency(b, name)
+    "applet" | "marquee" | "object" =>
+      if has_in_scope(b, name, Default) {
+        generate_implied_end(b, "")
+        pop_until_name(b, name)
+        clear_afe_to_marker(b)
       }
-      false
-    }
     "br" => {
-      // A closing br is a br: the tokenizer's start-tag path, as the spec says.
-      reconstruct_afe(builder)
-      ignore(insert_element(builder, "br", []))
-      false
+      // A closing br is a br.
+      reconstruct_afe(b)
+      ignore(insert_element_open(b, "br", []))
+      ignore(pop(b))
+      b.frameset_ok = false
     }
-    _ => {
-      any_other_end_tag(builder, name)
-      false
-    }
+    _ => any_other_end_tag(b, name)
   }
 }
 
-// ------------------------------------------------------- the awkward corners
-
 ///|
-/// The spec's "any other end tag": walk outward for a matching element, and
-/// stop at the first special one — which is why `</span>` can do nothing at
-/// all.
-fn any_other_end_tag(builder : Builder, name : String) -> Unit {
-  let mut k = builder.stack.length() - 1
-  while k >= 1 {
-    let node = builder.stack[k]
+/// The standard's "any other end tag": walk outward for a matching element and
+/// stop at the first special one.
+fn any_other_end_tag(b : Builder, name : String) -> Unit {
+  let mut k = b.stack.length() - 1
+  while k >= 0 {
+    let node = b.stack[k]
     if node.name == name {
-      generate_implied_except(builder, name)
-      while builder.stack.length() > k {
-        ignore(pop_stack(builder))
+      generate_implied_end(b, name)
+      while b.stack.length() > k {
+        ignore(pop(b))
       }
       return
     }
     if is_special(node.name) {
-      builder.repairs.dropped = builder.repairs.dropped + 1
+      note_dropped(b)
       return
     }
     k = k - 1
   }
-  builder.repairs.dropped = builder.repairs.dropped + 1
+  note_dropped(b)
 }
 
+// ------------------------------------------------------------------- text
+
 ///|
-fn index_on_stack(builder : Builder, element : @moonxml.Element) -> Int32? {
-  let mut k = 0
-  while k < builder.stack.length() {
-    if physical_equal(builder.stack[k], element) {
-      return Some(k)
+fn in_text(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    Characters(text~) => insert_text(b, text_for(b, replace_nulls(text)))
+    Eof => {
+      ignore(pop(b))
+      b.mode = b.text_mode
+      dispatch(b, lx, token, depth + 1)
     }
-    k = k + 1
+    EndTag(_) => {
+      ignore(pop(b))
+      b.mode = b.text_mode
+    }
+    _ => ()
   }
-  None
 }
 
+// ------------------------------------------------------------------ tables
+
 ///|
-/// Whether a particular element is in the given scope.
-fn in_scope_element(
-  builder : Builder,
-  element : @moonxml.Element,
-  scope : Scope,
-) -> Bool {
-  let mut k = builder.stack.length() - 1
-  while k >= 0 {
-    let here = builder.stack[k]
-    if physical_equal(here, element) {
-      return true
-    }
-    if is_scoped_by(here.name, scope) {
-      return false
-    }
-    k = k - 1
+fn in_table(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    Characters(_) =>
+      if is_table_part(current(b).name) {
+        b.pending = StringBuilder()
+        b.pending_space = true
+        b.mode = InTableText
+        dispatch(b, lx, token, depth + 1)
+      } else {
+        fostered(b, lx, token, depth)
+      }
+    CommentToken(text~) => insert_comment(b, text)
+    DoctypeToken(_) => ()
+    StartTag(name~, attrs~, self_closing~) =>
+      match name {
+        "caption" => {
+          clear_to_table(b)
+          push_marker(b)
+          ignore(insert_element_open(b, "caption", attrs))
+          b.mode = InCaption
+        }
+        "colgroup" => {
+          clear_to_table(b)
+          ignore(insert_element_open(b, "colgroup", attrs))
+          b.mode = InColumnGroup
+        }
+        "col" => {
+          clear_to_table(b)
+          ignore(insert_element_open(b, "colgroup", []))
+          b.mode = InColumnGroup
+          dispatch(b, lx, token, depth + 1)
+        }
+        "tbody" | "tfoot" | "thead" => {
+          clear_to_table(b)
+          ignore(insert_element_open(b, name, attrs))
+          b.mode = InTableBody
+        }
+        "td" | "th" | "tr" => {
+          clear_to_table(b)
+          note_implied(b)
+          ignore(insert_element_open(b, "tbody", []))
+          b.mode = InTableBody
+          dispatch(b, lx, token, depth + 1)
+        }
+        "table" =>
+          if has_in_scope(b, "table", Table) {
+            pop_until_name(b, "table")
+            reset_mode(b)
+            dispatch(b, lx, token, depth + 1)
+          }
+        "style" | "script" | "template" =>
+          in_head(b, lx, StartTag(name~, attrs~, self_closing~), depth + 1)
+        "input" => {
+          let mut hidden = false
+          for pair in attrs {
+            if pair.0 == "type" && pair.1.to_lower() == "hidden" {
+              hidden = true
+            }
+          }
+          if hidden {
+            ignore(insert_element_open(b, "input", attrs))
+            ignore(pop(b))
+          } else {
+            fostered(b, lx, token, depth)
+          }
+        }
+        "form" =>
+          if b.form is None && !has_on_stack(b, "template") {
+            let element = insert_element_open(b, "form", attrs)
+            b.form = Some(element)
+            ignore(pop(b))
+          }
+        _ => fostered(b, lx, token, depth)
+      }
+    EndTag(name~) =>
+      match name {
+        "table" =>
+          if has_in_scope(b, "table", Table) {
+            pop_until_name(b, "table")
+            reset_mode(b)
+          }
+        "body"
+        | "caption"
+        | "col"
+        | "colgroup"
+        | "html"
+        | "tbody"
+        | "td"
+        | "tfoot"
+        | "th"
+        | "thead"
+        | "tr" => ()
+        "template" => end_template(b, lx, depth)
+        _ => fostered(b, lx, token, depth)
+      }
+    Eof => in_body(b, lx, token, depth + 1)
   }
-  false
 }
 
 ///|
-fn insert_afe_at(
-  builder : Builder,
-  at : Int32,
-  element : @moonxml.Element,
+/// Read the token with foster parenting on: what a table cannot hold goes in
+/// front of it.
+fn fostered(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  ignore(depth)
+  note_reparented(b)
+  b.foster = true
+  in_body(b, lx, token, depth + 1)
+  b.foster = false
+}
+
+///|
+fn in_table_text(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    Characters(text~) => {
+      b.pending.write_string(text)
+      if !is_space_text(text) {
+        b.pending_space = false
+      }
+    }
+    _ => {
+      let held = strip_nulls(b.pending.to_string())
+      b.pending = StringBuilder()
+      let was_space = b.pending_space
+      b.pending_space = true
+      b.mode = InTable
+      if !held.is_empty() {
+        if was_space {
+          insert_text(b, held)
+        } else {
+          b.foster = true
+          reconstruct_afe(b)
+          insert_text(b, held)
+          b.foster = false
+        }
+      }
+      dispatch(b, lx, token, depth + 1)
+    }
+  }
+}
+
+///|
+fn in_caption(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    EndTag(name~) =>
+      if name == "caption" {
+        if has_in_scope(b, "caption", Table) {
+          generate_implied_end(b, "")
+          pop_until_name(b, "caption")
+          clear_afe_to_marker(b)
+          b.mode = InTable
+        }
+      } else if name == "table" {
+        if has_in_scope(b, "caption", Table) {
+          generate_implied_end(b, "")
+          pop_until_name(b, "caption")
+          clear_afe_to_marker(b)
+          b.mode = InTable
+          dispatch(b, lx, token, depth + 1)
+        }
+      } else if name == "body" ||
+        name == "col" ||
+        name == "colgroup" ||
+        name == "html" ||
+        name == "tbody" ||
+        name == "td" ||
+        name == "tfoot" ||
+        name == "th" ||
+        name == "thead" ||
+        name == "tr" {
+        ()
+      } else {
+        in_body(b, lx, token, depth + 1)
+      }
+    StartTag(name~, ..) =>
+      if name == "caption" ||
+        name == "col" ||
+        name == "colgroup" ||
+        name == "tbody" ||
+        name == "td" ||
+        name == "tfoot" ||
+        name == "th" ||
+        name == "thead" ||
+        name == "tr" {
+        if has_in_scope(b, "caption", Table) {
+          generate_implied_end(b, "")
+          pop_until_name(b, "caption")
+          clear_afe_to_marker(b)
+          b.mode = InTable
+          dispatch(b, lx, token, depth + 1)
+        }
+      } else {
+        in_body(b, lx, token, depth + 1)
+      }
+    _ => in_body(b, lx, token, depth + 1)
+  }
+}
+
+///|
+fn in_column_group(
+  b : Builder,
+  lx : Lexer,
+  token : Token,
+  depth : Int32,
 ) -> Unit {
-  let pos = if at > builder.afe.length() {
-    builder.afe.length()
-  } else if at < 0 {
-    0
-  } else {
-    at
-  }
-  builder.afe.insert(pos, Some(element))
-}
-
-///|
-/// The adoption agency algorithm: the spec's answer to misnested formatting,
-/// `<b><p></b>` included. Eight passes, because the spec says eight.
-fn adoption_agency(builder : Builder, subject : String) -> Unit {
-  if current(builder).name == subject && find_afe(builder, subject) is None {
-    ignore(pop_stack(builder))
-    return
-  }
-  let mut outer = 0
-  while outer < 8 {
-    outer = outer + 1
-    let formatting = match find_afe(builder, subject) {
-      Some(el) => el
-      None => {
-        any_other_end_tag(builder, subject)
-        return
+  match token {
+    Characters(text~) =>
+      if is_space_text(text) {
+        insert_text(b, text)
+      } else if current_is(b, "colgroup") {
+        ignore(pop(b))
+        b.mode = InTable
+        dispatch(b, lx, token, depth + 1)
       }
-    }
-    if !on_stack(builder, formatting) {
-      match afe_index(builder, formatting) {
-        Some(at) => ignore(builder.afe.remove(at))
-        None => ()
+    CommentToken(text~) => insert_comment(b, text)
+    DoctypeToken(_) => ()
+    StartTag(name~, attrs~, self_closing~) =>
+      if name == "html" {
+        in_body(b, lx, token, depth + 1)
+      } else if name == "col" {
+        ignore(insert_element_open(b, "col", attrs))
+        ignore(pop(b))
+        ignore(self_closing)
+      } else if name == "template" {
+        in_head(b, lx, token, depth + 1)
+      } else if current_is(b, "colgroup") {
+        ignore(pop(b))
+        b.mode = InTable
+        dispatch(b, lx, token, depth + 1)
       }
-      return
-    }
-    if !in_scope_element(builder, formatting, Default) {
-      builder.repairs.dropped = builder.repairs.dropped + 1
-      return
-    }
-    let fmt_at = match index_on_stack(builder, formatting) {
-      Some(at) => at
-      None => return
-    }
-    let mut furthest : @moonxml.Element? = None
-    let mut k = fmt_at + 1
-    while k < builder.stack.length() {
-      if is_special(builder.stack[k].name) {
-        furthest = Some(builder.stack[k])
-        break
-      }
-      k = k + 1
-    }
-    let block = match furthest {
-      Some(el) => el
-      None => {
-        generate_implied_end(builder)
-        pop_through(builder, subject)
-        match afe_index(builder, formatting) {
-          Some(at) => ignore(builder.afe.remove(at))
-          None => ()
+    EndTag(name~) =>
+      if name == "colgroup" {
+        if current_is(b, "colgroup") {
+          ignore(pop(b))
+          b.mode = InTable
         }
-        return
+      } else if name == "col" {
+        ()
+      } else if name == "template" {
+        in_head(b, lx, token, depth + 1)
+      } else if current_is(b, "colgroup") {
+        ignore(pop(b))
+        b.mode = InTable
+        dispatch(b, lx, token, depth + 1)
       }
-    }
-    let common = if fmt_at >= 1 {
-      builder.stack[fmt_at - 1]
-    } else {
-      builder.doc.root
-    }
-    let mut bookmark = match afe_index(builder, formatting) {
-      Some(at) => at
-      None => return
-    }
-    let mut node = block
-    let mut last = block
-    let mut inner = 0
-    while true {
-      inner = inner + 1
-      let node_at = match index_on_stack(builder, node) {
-        Some(at) => at
-        None => break
-      }
-      if node_at == 0 {
-        break
-      }
-      node = builder.stack[node_at - 1]
-      if physical_equal(node, formatting) {
-        break
-      }
-      let mut node_afe = afe_index(builder, node)
-      if inner > 3 {
-        match node_afe {
-          Some(at) => {
-            ignore(builder.afe.remove(at))
-            node_afe = None
-          }
-          None => ()
-        }
-      }
-      match node_afe {
-        None => ignore(remove_from_stack(builder, node))
-        Some(at) => {
-          let fresh = @moonxml.Element::new(node.name, attrs=node.attrs.copy())
-          builder.afe[at] = Some(fresh)
-          match index_on_stack(builder, node) {
-            Some(where_) => builder.stack[where_] = fresh
-            None => ()
-          }
-          node = fresh
-          if physical_equal(last, block) {
-            bookmark = at + 1
-          }
-          node.append(@moonxml.ElementNode(last))
-          last = node
-        }
-      }
-    }
-    common.append(@moonxml.ElementNode(last))
-    let fresh = @moonxml.Element::new(
-      formatting.name,
-      attrs=formatting.attrs.copy(),
-    )
-    // A node's parent lives on the element, not on a text node, so the move
-    // empties the block first rather than appending what is already there.
-    let kids = block.children.copy()
-    block.clear()
-    for kid in kids {
-      fresh.append(kid)
-    }
-    block.append(@moonxml.ElementNode(fresh))
-    match afe_index(builder, formatting) {
-      Some(at) => {
-        ignore(builder.afe.remove(at))
-        if at < bookmark {
-          bookmark = bookmark - 1
-        }
-      }
-      None => ()
-    }
-    insert_afe_at(builder, bookmark, fresh)
-    ignore(remove_from_stack(builder, formatting))
-    match index_on_stack(builder, block) {
-      Some(at) => builder.stack.insert(at + 1, fresh)
-      None => ()
-    }
+    Eof => in_body(b, lx, token, depth + 1)
   }
 }
 
 ///|
-/// The spec's "reset the insertion mode appropriately": what the parser is in
-/// the middle of, worked out from the stack rather than remembered.
-fn reset_mode(builder : Builder) -> Unit {
-  let mut k = builder.stack.length() - 1
+fn in_table_body(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    StartTag(name~, attrs~, self_closing~) =>
+      match name {
+        "tr" => {
+          clear_to_table_body(b)
+          ignore(insert_element_open(b, "tr", attrs))
+          b.mode = InRow
+        }
+        "th" | "td" => {
+          clear_to_table_body(b)
+          ignore(insert_element_open(b, "tr", []))
+          b.mode = InRow
+          dispatch(b, lx, token, depth + 1)
+        }
+        "caption" | "col" | "colgroup" | "tbody" | "tfoot" | "thead" =>
+          if has_any_in_scope(b, ["tbody", "thead", "tfoot"], Table) {
+            clear_to_table_body(b)
+            ignore(pop(b))
+            b.mode = InTable
+            dispatch(b, lx, token, depth + 1)
+          }
+        _ => in_table(b, lx, StartTag(name~, attrs~, self_closing~), depth + 1)
+      }
+    EndTag(name~) =>
+      match name {
+        "tbody" | "tfoot" | "thead" =>
+          if has_in_scope(b, name, Table) {
+            clear_to_table_body(b)
+            ignore(pop(b))
+            b.mode = InTable
+          }
+        "table" =>
+          if has_any_in_scope(b, ["tbody", "thead", "tfoot"], Table) {
+            clear_to_table_body(b)
+            ignore(pop(b))
+            b.mode = InTable
+            dispatch(b, lx, token, depth + 1)
+          }
+        "body" | "caption" | "col" | "colgroup" | "html" | "td" | "th" | "tr" =>
+          ()
+        _ => in_table(b, lx, token, depth + 1)
+      }
+    _ => in_table(b, lx, token, depth + 1)
+  }
+}
+
+///|
+fn in_row(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    StartTag(name~, attrs~, self_closing~) =>
+      match name {
+        "th" | "td" => {
+          clear_to_row(b)
+          ignore(insert_element_open(b, name, attrs))
+          b.mode = InCell
+          push_marker(b)
+        }
+        "caption" | "col" | "colgroup" | "tbody" | "tfoot" | "thead" | "tr" =>
+          if has_in_scope(b, "tr", Table) {
+            clear_to_row(b)
+            ignore(pop(b))
+            b.mode = InTableBody
+            dispatch(b, lx, token, depth + 1)
+          }
+        _ => in_table(b, lx, StartTag(name~, attrs~, self_closing~), depth + 1)
+      }
+    EndTag(name~) =>
+      match name {
+        "tr" =>
+          if has_in_scope(b, "tr", Table) {
+            clear_to_row(b)
+            ignore(pop(b))
+            b.mode = InTableBody
+          }
+        "table" =>
+          if has_in_scope(b, "tr", Table) {
+            clear_to_row(b)
+            ignore(pop(b))
+            b.mode = InTableBody
+            dispatch(b, lx, token, depth + 1)
+          }
+        "tbody" | "tfoot" | "thead" =>
+          if has_in_scope(b, name, Table) && has_in_scope(b, "tr", Table) {
+            clear_to_row(b)
+            ignore(pop(b))
+            b.mode = InTableBody
+            dispatch(b, lx, token, depth + 1)
+          }
+        "body" | "caption" | "col" | "colgroup" | "html" | "td" | "th" => ()
+        _ => in_table(b, lx, token, depth + 1)
+      }
+    _ => in_table(b, lx, token, depth + 1)
+  }
+}
+
+///|
+fn close_cell(b : Builder) -> Unit {
+  generate_implied_end(b, "")
+  pop_until_any(b, ["td", "th"])
+  clear_afe_to_marker(b)
+  b.mode = InRow
+}
+
+///|
+fn in_cell(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    EndTag(name~) =>
+      if name == "td" || name == "th" {
+        if has_in_scope(b, name, Table) {
+          generate_implied_end(b, "")
+          pop_until_name(b, name)
+          clear_afe_to_marker(b)
+          b.mode = InRow
+        }
+      } else if name == "body" ||
+        name == "caption" ||
+        name == "col" ||
+        name == "colgroup" ||
+        name == "html" {
+        ()
+      } else if name == "table" ||
+        name == "tbody" ||
+        name == "tfoot" ||
+        name == "thead" ||
+        name == "tr" {
+        if has_in_scope(b, name, Table) {
+          close_cell(b)
+          dispatch(b, lx, token, depth + 1)
+        }
+      } else {
+        in_body(b, lx, token, depth + 1)
+      }
+    StartTag(name~, ..) =>
+      if name == "caption" ||
+        name == "col" ||
+        name == "colgroup" ||
+        name == "tbody" ||
+        name == "td" ||
+        name == "tfoot" ||
+        name == "th" ||
+        name == "thead" ||
+        name == "tr" {
+        if has_any_in_scope(b, ["td", "th"], Table) {
+          close_cell(b)
+          dispatch(b, lx, token, depth + 1)
+        }
+      } else {
+        in_body(b, lx, token, depth + 1)
+      }
+    _ => in_body(b, lx, token, depth + 1)
+  }
+}
+
+///|
+fn in_select(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    Characters(text~) => {
+      let cleaned = strip_nulls(text)
+      if !cleaned.is_empty() {
+        insert_text(b, cleaned)
+      }
+    }
+    CommentToken(text~) => insert_comment(b, text)
+    DoctypeToken(_) => ()
+    StartTag(name~, attrs~, self_closing~) =>
+      match name {
+        "html" => in_body(b, lx, token, depth + 1)
+        "option" => {
+          if current_is(b, "option") {
+            ignore(pop(b))
+          }
+          reconstruct_afe(b)
+          ignore(insert_element_open(b, "option", attrs))
+        }
+        "optgroup" => {
+          if current_is(b, "option") {
+            ignore(pop(b))
+          }
+          if current_is(b, "optgroup") {
+            ignore(pop(b))
+          }
+          ignore(insert_element_open(b, "optgroup", attrs))
+        }
+        "hr" => {
+          if current_is(b, "option") {
+            ignore(pop(b))
+          }
+          if current_is(b, "optgroup") {
+            ignore(pop(b))
+          }
+          ignore(insert_element_open(b, "hr", attrs))
+          ignore(pop(b))
+          ignore(self_closing)
+        }
+        "select" =>
+          if has_in_scope(b, "select", Select) {
+            pop_until_name(b, "select")
+            reset_mode(b)
+          }
+        "input" | "keygen" | "textarea" =>
+          if has_in_scope(b, "select", Select) {
+            pop_until_name(b, "select")
+            reset_mode(b)
+            dispatch(b, lx, token, depth + 1)
+          }
+        "script" | "template" =>
+          in_head(b, lx, StartTag(name~, attrs~, self_closing~), depth + 1)
+        _ => in_body(b, lx, StartTag(name~, attrs~, self_closing~), depth + 1)
+      }
+    EndTag(name~) =>
+      match name {
+        "optgroup" => {
+          if current_is(b, "option") &&
+            b.stack.length() >= 2 &&
+            b.stack[b.stack.length() - 2].name == "optgroup" {
+            ignore(pop(b))
+          }
+          if current_is(b, "optgroup") {
+            ignore(pop(b))
+          }
+        }
+        "option" => if current_is(b, "option") { ignore(pop(b)) }
+        "select" =>
+          if has_in_scope(b, "select", Select) {
+            pop_until_name(b, "select")
+            reset_mode(b)
+          }
+        "template" => in_head(b, lx, token, depth + 1)
+        _ => in_body(b, lx, token, depth + 1)
+      }
+    Eof => in_body(b, lx, token, depth + 1)
+  }
+}
+
+///|
+fn in_select_in_table(
+  b : Builder,
+  lx : Lexer,
+  token : Token,
+  depth : Int32,
+) -> Unit {
+  match token {
+    StartTag(name~, ..) =>
+      if name == "caption" ||
+        name == "table" ||
+        name == "tbody" ||
+        name == "tfoot" ||
+        name == "thead" ||
+        name == "tr" ||
+        name == "td" ||
+        name == "th" {
+        pop_until_name(b, "select")
+        reset_mode(b)
+        dispatch(b, lx, token, depth + 1)
+      } else {
+        in_select(b, lx, token, depth + 1)
+      }
+    EndTag(name~) =>
+      if name == "caption" ||
+        name == "table" ||
+        name == "tbody" ||
+        name == "tfoot" ||
+        name == "thead" ||
+        name == "tr" ||
+        name == "td" ||
+        name == "th" {
+        if has_in_scope(b, name, Table) {
+          pop_until_name(b, "select")
+          reset_mode(b)
+          dispatch(b, lx, token, depth + 1)
+        }
+      } else {
+        in_select(b, lx, token, depth + 1)
+      }
+    _ => in_select(b, lx, token, depth + 1)
+  }
+}
+
+///|
+fn in_template(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    Characters(_) | CommentToken(_) | DoctypeToken(_) =>
+      in_body(b, lx, token, depth + 1)
+    StartTag(name~, ..) =>
+      match name {
+        "base"
+        | "basefont"
+        | "bgsound"
+        | "link"
+        | "meta"
+        | "noframes"
+        | "script"
+        | "style"
+        | "template"
+        | "title" => in_head(b, lx, token, depth + 1)
+        "caption" | "colgroup" | "tbody" | "tfoot" | "thead" => {
+          pop_template_mode(b)
+          b.templates.push(InTable)
+          b.mode = InTable
+          dispatch(b, lx, token, depth + 1)
+        }
+        "col" => {
+          pop_template_mode(b)
+          b.templates.push(InColumnGroup)
+          b.mode = InColumnGroup
+          dispatch(b, lx, token, depth + 1)
+        }
+        "tr" => {
+          pop_template_mode(b)
+          b.templates.push(InTableBody)
+          b.mode = InTableBody
+          dispatch(b, lx, token, depth + 1)
+        }
+        "td" | "th" => {
+          pop_template_mode(b)
+          b.templates.push(InRow)
+          b.mode = InRow
+          dispatch(b, lx, token, depth + 1)
+        }
+        _ => {
+          pop_template_mode(b)
+          b.templates.push(InBody)
+          b.mode = InBody
+          dispatch(b, lx, token, depth + 1)
+        }
+      }
+    EndTag(name~) => if name == "template" { in_head(b, lx, token, depth + 1) }
+    Eof => {
+      if !has_on_stack(b, "template") {
+        return
+      }
+      pop_until_name(b, "template")
+      clear_afe_to_marker(b)
+      pop_template_mode(b)
+      reset_mode(b)
+      dispatch(b, lx, token, depth + 1)
+    }
+  }
+}
+
+///|
+fn pop_template_mode(b : Builder) -> Unit {
+  if !b.templates.is_empty() {
+    ignore(b.templates.pop())
+  }
+}
+
+// -------------------------------------------------------------- after body
+
+///|
+fn after_body(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    Characters(text~) =>
+      if is_space_text(text) {
+        in_body(b, lx, token, depth + 1)
+      } else {
+        b.mode = InBody
+        dispatch(b, lx, token, depth + 1)
+      }
+    CommentToken(text~) =>
+      match html_element(b) {
+        Some(html) => insert_comment_into(html, text)
+        None => insert_comment_into(b.root, text)
+      }
+    DoctypeToken(_) => ()
+    StartTag(name~, ..) =>
+      if name == "html" {
+        in_body(b, lx, token, depth + 1)
+      } else {
+        b.mode = InBody
+        dispatch(b, lx, token, depth + 1)
+      }
+    EndTag(name~) =>
+      if name == "html" {
+        if b.context is None {
+          b.mode = AfterAfterBody
+        }
+      }
+    Eof => ()
+  }
+}
+
+///|
+fn in_frameset(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
+  match token {
+    Characters(text~) => if is_space_text(text) { insert_text(b, text) }
+    CommentToken(text~) => insert_comment(b, text)
+    DoctypeToken(_) => ()
+    StartTag(name~, attrs~, self_closing~) =>
+      match name {
+        "html" => in_body(b, lx, token, depth + 1)
+        "frameset" => ignore(insert_element_open(b, "frameset", attrs))
+        "frame" => {
+          ignore(insert_element_open(b, "frame", attrs))
+          ignore(pop(b))
+          ignore(self_closing)
+        }
+        "noframes" =>
+          in_head(b, lx, StartTag(name~, attrs~, self_closing~), depth + 1)
+        _ => ()
+      }
+    EndTag(name~) =>
+      if name == "frameset" {
+        if current_is(b, "html") {
+          return
+        }
+        ignore(pop(b))
+        if b.context is None && !current_is(b, "frameset") {
+          b.mode = AfterFrameset
+        }
+      }
+    Eof => ()
+  }
+}
+
+///|
+fn after_frameset(
+  b : Builder,
+  lx : Lexer,
+  token : Token,
+  depth : Int32,
+) -> Unit {
+  match token {
+    Characters(text~) => if is_space_text(text) { insert_text(b, text) }
+    CommentToken(text~) => insert_comment(b, text)
+    DoctypeToken(_) => ()
+    StartTag(name~, attrs~, self_closing~) =>
+      match name {
+        "html" => in_body(b, lx, token, depth + 1)
+        "noframes" =>
+          in_head(b, lx, StartTag(name~, attrs~, self_closing~), depth + 1)
+        _ => ()
+      }
+    EndTag(name~) => if name == "html" { b.mode = AfterAfterFrameset }
+    Eof => ()
+  }
+}
+
+///|
+fn after_after_body(
+  b : Builder,
+  lx : Lexer,
+  token : Token,
+  depth : Int32,
+) -> Unit {
+  match token {
+    CommentToken(text~) => insert_comment_into(b.root, text)
+    DoctypeToken(_) => in_body(b, lx, token, depth + 1)
+    Characters(text~) =>
+      if is_space_text(text) {
+        in_body(b, lx, token, depth + 1)
+      } else {
+        b.mode = InBody
+        dispatch(b, lx, token, depth + 1)
+      }
+    StartTag(name~, ..) =>
+      if name == "html" {
+        in_body(b, lx, token, depth + 1)
+      } else {
+        b.mode = InBody
+        dispatch(b, lx, token, depth + 1)
+      }
+    Eof => ()
+    _ => {
+      b.mode = InBody
+      dispatch(b, lx, token, depth + 1)
+    }
+  }
+}
+
+///|
+fn after_after_frameset(
+  b : Builder,
+  lx : Lexer,
+  token : Token,
+  depth : Int32,
+) -> Unit {
+  match token {
+    CommentToken(text~) => insert_comment_into(b.root, text)
+    DoctypeToken(_) => in_body(b, lx, token, depth + 1)
+    Characters(text~) =>
+      if is_space_text(text) {
+        in_body(b, lx, token, depth + 1)
+      }
+    StartTag(name~, attrs~, self_closing~) =>
+      match name {
+        "html" => in_body(b, lx, token, depth + 1)
+        "noframes" =>
+          in_head(b, lx, StartTag(name~, attrs~, self_closing~), depth + 1)
+        _ => ()
+      }
+    EndTag(_) => ()
+    Eof => ()
+  }
+}
+
+// -------------------------------------------------------- resetting a mode
+
+///|
+/// Work out the mode from the stack, the standard's "reset the insertion mode
+/// appropriately".
+fn reset_mode(b : Builder) -> Unit {
+  let mut k = b.stack.length() - 1
   while k >= 0 {
-    let here = builder.stack[k].name
+    let node = b.stack[k]
     let last = k == 0
-    match here {
+    match node.name {
       "select" => {
         let mut in_table = false
         let mut j = k - 1
         while j >= 0 {
-          let above = builder.stack[j].name
+          let above = b.stack[j].name
           if above == "template" {
             break
           }
@@ -1868,61 +1954,314 @@ fn reset_mode(builder : Builder) -> Unit {
           }
           j = j - 1
         }
-        builder.mode = if in_table { InSelectInTable } else { InSelect }
+        b.mode = if in_table { InSelectInTable } else { InSelect }
         return
       }
       "td" | "th" =>
         if !last {
-          builder.mode = InCell
+          b.mode = InCell
           return
         }
       "tr" => {
-        builder.mode = InRow
+        b.mode = InRow
         return
       }
       "tbody" | "thead" | "tfoot" => {
-        builder.mode = InTableBody
+        b.mode = InTableBody
         return
       }
       "caption" => {
-        builder.mode = InCaption
+        b.mode = InCaption
         return
       }
       "colgroup" => {
-        builder.mode = InColumnGroup
+        b.mode = InColumnGroup
         return
       }
       "table" => {
-        builder.mode = InTable
+        b.mode = InTable
         return
       }
       "template" => {
-        builder.mode = InBody
+        b.mode = match b.templates.last() {
+          Some(mode) => mode
+          None => InBody
+        }
         return
       }
       "head" =>
         if !last {
-          builder.mode = InHead
+          b.mode = InHead
           return
         }
       "body" => {
-        builder.mode = InBody
+        b.mode = InBody
+        return
+      }
+      "frameset" => {
+        b.mode = InFrameset
         return
       }
       "html" => {
-        builder.mode = match builder.head {
+        b.mode = match b.head {
           Some(_) => AfterHead
           None => BeforeHead
         }
-        return
-      }
-      "#document" => {
-        builder.mode = InBody
         return
       }
       _ => ()
     }
     k = k - 1
   }
-  builder.mode = InBody
+  b.mode = InBody
+}
+
+// --------------------------------------------------------- foreign content
+
+///|
+/// The rules for parsing tokens in foreign content: SVG and MathML keep their
+/// own namespaces and their own spelling, and a handful of HTML tags break out.
+fn foreign_content(
+  b : Builder,
+  lx : Lexer,
+  token : Token,
+  depth : Int32,
+) -> Unit {
+  match token {
+    Characters(text~) => insert_text(b, replace_nulls(text))
+    CommentToken(text~) => insert_comment(b, text)
+    DoctypeToken(_) => ()
+    StartTag(name~, attrs~, self_closing~) => {
+      let mut breakout = is_breakout(name)
+      if name == "font" {
+        for pair in attrs {
+          if pair.0 == "color" || pair.0 == "face" || pair.0 == "size" {
+            breakout = true
+          }
+        }
+      }
+      if breakout {
+        // Out of the foreign subtree, and the token is read again as HTML.
+        while b.stack.length() > 0 {
+          let node = current(b)
+          if namespace_of_element(node) == html_namespace ||
+            is_mathml_text_integration_point(node) ||
+            is_html_integration_point(node) {
+            break
+          }
+          ignore(pop(b))
+        }
+        dispatch_html(b, lx, token, depth + 1)
+        return
+      }
+      let node = match adjusted_current(b) {
+        Some(el) => el
+        None => return
+      }
+      let space = if namespace_of_element(node) == svg_namespace {
+        svg_namespace
+      } else {
+        mathml_namespace
+      }
+      let element = insert_foreign(b, name, attrs, space)
+      push(b, element)
+      if self_closing {
+        ignore(pop(b))
+      }
+    }
+    EndTag(name~) => {
+      if name == "br" || name == "p" {
+        while b.stack.length() > 0 {
+          let node = current(b)
+          if namespace_of_element(node) == html_namespace ||
+            is_mathml_text_integration_point(node) ||
+            is_html_integration_point(node) {
+            break
+          }
+          ignore(pop(b))
+        }
+        dispatch_html(b, lx, token, depth + 1)
+        return
+      }
+      let mut k = b.stack.length() - 1
+      let mut node = b.stack[k]
+      if @moonxml.local_of(node.name).to_lower() != name {
+        // Walk outward for the element this closes, and stop at the top.
+        while k > 0 {
+          if @moonxml.local_of(node.name).to_lower() == name {
+            break
+          }
+          k = k - 1
+          node = b.stack[k]
+        }
+        if @moonxml.local_of(node.name).to_lower() != name {
+          return
+        }
+      }
+      while b.stack.length() > k {
+        ignore(pop(b))
+      }
+    }
+    Eof => in_body(b, lx, token, depth + 1)
+  }
+}
+
+///|
+fn replace_nulls(text : String) -> String {
+  if !text.contains("\u{0}") {
+    return text
+  }
+  let out = StringBuilder()
+  for ch in text {
+    if ch == '\u{0}' {
+      out.write_char('\u{FFFD}')
+    } else {
+      out.write_char(ch)
+    }
+  }
+  out.to_string()
+}
+
+// ----------------------------------------------------------- the adoption
+
+///|
+/// The adoption agency algorithm: the standard's answer to misnested formatting,
+/// `<b><p></b>` included. At most eight passes, because the standard says eight.
+fn adoption_agency(b : Builder, subject : String) -> Unit {
+  let top = current(b)
+  if top.name == subject && find_afe(b, subject) is None {
+    ignore(pop(b))
+    return
+  }
+  let mut outer = 0
+  while outer < 8 {
+    outer = outer + 1
+    let formatting = match find_afe(b, subject) {
+      Some(el) => el
+      None => {
+        any_other_end_tag(b, subject)
+        return
+      }
+    }
+    if !on_stack(b, formatting) {
+      match afe_index(b, formatting) {
+        Some(at) => ignore(b.afe.remove(at))
+        None => ()
+      }
+      return
+    }
+    if !element_in_scope(b, formatting, Default) {
+      return
+    }
+    let fmt_at = match index_on_stack(b, formatting) {
+      Some(at) => at
+      None => return
+    }
+    let mut furthest : @moonxml.Element? = None
+    let mut k = fmt_at + 1
+    while k < b.stack.length() {
+      if is_special(b.stack[k].name) {
+        furthest = Some(b.stack[k])
+        break
+      }
+      k = k + 1
+    }
+    let block = match furthest {
+      Some(el) => el
+      None => {
+        generate_implied_end(b, subject)
+        pop_until_name(b, subject)
+        match afe_index(b, formatting) {
+          Some(at) => ignore(b.afe.remove(at))
+          None => ()
+        }
+        return
+      }
+    }
+    let common = if fmt_at >= 1 { b.stack[fmt_at - 1] } else { b.root }
+    let mut bookmark = match afe_index(b, formatting) {
+      Some(at) => at
+      None => return
+    }
+    // The inner loop walks up the stack from the furthest block to the
+    // formatting element, re-creating every formatting element it passes and
+    // gathering what it holds into the node above it.
+    let mut last = block
+    let mut inner = 0
+    let mut at = match index_on_stack(b, block) {
+      Some(found) => found - 1
+      None => -1
+    }
+    while at >= 0 {
+      let node = b.stack[at]
+      if physical_equal(node, formatting) {
+        break
+      }
+      inner = inner + 1
+      let mut node_afe = afe_index(b, node)
+      if inner > 3 {
+        match node_afe {
+          Some(found) => {
+            ignore(b.afe.remove(found))
+            node_afe = None
+          }
+          None => ()
+        }
+      }
+      match node_afe {
+        None => ignore(b.stack.remove(at))
+        Some(found) => {
+          let fresh = @moonxml.Element::new(node.name, attrs=node.attrs.copy())
+          b.afe[found] = Some(fresh)
+          b.stack[at] = fresh
+          if physical_equal(last, block) {
+            bookmark = found + 1
+          }
+          fresh.append(@moonxml.ElementNode(last))
+          last = fresh
+        }
+      }
+      at = at - 1
+    }
+    // The last node takes the place of the block in the common ancestor.
+    match index_of(common, block) {
+      Some(at) => {
+        ignore(block.remove())
+        common.insert(at, @moonxml.ElementNode(last))
+      }
+      None => append_into(common, @moonxml.ElementNode(last))
+    }
+    let fresh = @moonxml.Element::new(
+      formatting.name,
+      attrs=formatting.attrs.copy(),
+    )
+    let kids = block.children.copy()
+    block.clear()
+    for kid in kids {
+      fresh.append(kid)
+    }
+    block.append(@moonxml.ElementNode(fresh))
+    match afe_index(b, formatting) {
+      Some(at) => {
+        ignore(b.afe.remove(at))
+        if at < bookmark {
+          bookmark = bookmark - 1
+        }
+      }
+      None => ()
+    }
+    let slot = if bookmark > b.afe.length() {
+      b.afe.length()
+    } else if bookmark < 0 {
+      0
+    } else {
+      bookmark
+    }
+    b.afe.insert(slot, Some(fresh))
+    ignore(remove_from_stack(b, formatting))
+    match index_on_stack(b, block) {
+      Some(at) => b.stack.insert(at + 1, fresh)
+      None => ()
+    }
+  }
 }

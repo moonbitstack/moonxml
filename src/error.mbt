@@ -55,16 +55,19 @@ pub(all) struct Repairs {
 }
 
 ///|
+/// A tally with nothing in it.
 pub fn Repairs::new() -> Repairs {
   { implied: 0, dropped: 0, reparented: 0, closed_at_eof: 0, }
 }
 
 ///|
+/// Every repair the parser made, added up.
 pub fn Repairs::total(self : Repairs) -> Int32 {
   self.implied + self.dropped + self.reparented + self.closed_at_eof
 }
 
 ///|
+/// Whether the parser repaired anything at all.
 pub fn Repairs::any(self : Repairs) -> Bool {
   self.total() > 0
 }

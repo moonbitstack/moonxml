@@ -61,6 +61,7 @@ pub struct Element {
   mut parent : Element?
   mut closed : Bool
   priv mut home : Document?
+  priv mut content : Element?
 }
 
 ///|
@@ -93,6 +94,26 @@ pub fn Document::new(flavour~ : Flavour = Xml) -> Document {
   root.home = Some(doc)
   doc.seed_selectors()
   doc
+}
+
+///|
+/// The contents of a `<template>`: a fragment of its own, the way the DOM keeps
+/// them, and `None` for every other element.
+///
+/// What sits in a template is inert — it is not a child of the element, so a
+/// query does not reach it and `text()` does not read it, which is what a
+/// browser does too. `set_content` is how a caller that builds a template by
+/// hand gives it contents.
+pub fn Element::content(self : Element) -> Element? {
+  self.content
+}
+
+///|
+/// Give a `<template>` a content fragment. A caller who builds one by hand
+/// uses this; the parser does it on its own.
+pub fn Element::set_content(self : Element, content : Element) -> Unit {
+  content.parent = Some(self)
+  self.content = Some(content)
 }
 
 ///|
@@ -136,6 +157,7 @@ pub fn Document::repairs(self : Document) -> Repairs {
 }
 
 ///|
+/// Record what a parser repaired; the parsers call this when they are done.
 pub fn Document::set_repairs(self : Document, repairs : Repairs) -> Unit {
   self.repairs = repairs
 }
@@ -153,6 +175,7 @@ pub fn Document::unresolved(self : Document) -> Array[String] {
 }
 
 ///|
+/// Record the external entities a reader skipped; the XML parser calls this.
 pub fn Document::set_unresolved(self : Document, names : Array[String]) -> Unit {
   self.unresolved = names
 }
@@ -173,6 +196,7 @@ pub fn Element::new(
     parent: None,
     closed,
     home: None,
+    content: None,
   }
   for child in element.children {
     if child is ElementNode(data) {
@@ -193,6 +217,7 @@ pub fn Node::name(self : Node) -> String {
 }
 
 ///|
+/// Whether the node is an element.
 pub fn Node::is_element(self : Node) -> Bool {
   self is ElementNode(_)
 }
@@ -244,6 +269,7 @@ pub fn Node::text(self : Node) -> String {
 }
 
 ///|
+/// The text of this element and everything under it.
 pub fn Element::text(self : Element) -> String {
   Node::text(ElementNode(self))
 }
@@ -433,6 +459,7 @@ pub fn Element::attr(self : Element, name : String) -> String? {
 }
 
 ///|
+/// Whether the element carries an attribute of this name.
 pub fn Element::has_attr(self : Element, name : String) -> Bool {
   self.attr(name) is Some(_)
 }
@@ -479,6 +506,7 @@ pub fn Element::classes(self : Element) -> Array[String] {
 }
 
 ///|
+/// Whether the element's class list names this class.
 pub fn Element::has_class(self : Element, name : String) -> Bool {
   self.classes().contains(name)
 }

@@ -82,7 +82,7 @@ page.<span class="f">dumps</span>()</pre>
 <pre><span class="k">pub struct</span> Element {
   name      : String            <span class="cm">// {uri}local</span>
   attrs     : Array[(String, String)]
-  childrens : Array[Node]
+  children : Array[Node]
   ...
 }</pre>
           </div>
@@ -104,7 +104,7 @@ page.<span class="f">dumps</span>()</pre>
 <span class="n">3</span>    .<span class="f">selector</span>(<span class="s">"mine"</span>, <span class="s">""</span>)      <span class="cm">  3 · a selector you registered</span>
 <span class="n">4</span>    .<span class="f">custom</span>(<span class="f">@moonxml.SelectorFn</span>::new(by_price))
 <span class="n">5</span>    .<span class="f">items</span>[<span class="s">0</span>]                <span class="cm">  5 · a node, not a selection</span>
-<span class="n">6</span>    .<span class="f">childrens</span>()[<span class="s">1</span>]           <span class="cm">  6 · walk down, one node</span>
+<span class="n">6</span>    .<span class="f">children</span>()[<span class="s">1</span>]           <span class="cm">  6 · walk down, one node</span>
 <span class="n">7</span>    .<span class="f">css</span>(<span class="s">"span"</span>)             <span class="cm">  7 · and query again</span>
 <span class="n">8</span>    .<span class="f">add_class</span>(<span class="s">"picked"</span>)      <span class="cm">  8 · edit in place</span></pre>
         <div class="cols three">
@@ -137,7 +137,7 @@ page.<span class="f">dumps</span>()</pre>
             <tr><td>Structure</td><td><code>append</code> <code>prepend</code> <code>insert</code> <code>insert_before</code> <code>insert_after</code> <code>replace_with</code> <code>remove</code> <code>unwrap</code> <code>wrap</code> <code>clear</code> <code>smooth</code></td></tr>
             <tr><td>Attributes</td><td><code>set_attr</code> <code>remove_attr</code> <code>add_class</code> <code>remove_class</code> <code>attr</code> <code>has_attr</code> <code>has_class</code></td></tr>
             <tr><td>Content</td><td><code>set_text</code> <code>text</code> <code>html</code> <code>dumps</code> <code>dumps_html</code></td></tr>
-            <tr><td>Navigation</td><td><code>childrens</code> <code>parent</code> <code>descendants</code> <code>closest</code> <code>first</code> <code>last</code> <code>eq</code> <code>filter</code></td></tr>
+            <tr><td>Navigation</td><td><code>children</code> <code>parent</code> <code>descendants</code> <code>closest</code> <code>first</code> <code>last</code> <code>eq</code> <code>filter</code></td></tr>
           </tbody>
         </table>
       </div>

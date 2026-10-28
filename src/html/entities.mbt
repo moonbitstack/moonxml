@@ -2,260 +2,69 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
-/// The named character references documents actually use. WHATWG's table runs
-/// to 2231 entries; this is the common two hundred — the ones a page written
-/// by hand or by a templating engine carries — and anything else stays
-/// verbatim, which is what the spec says to do with an unknown name.
+/// The named character references HTML defines — all 2231 spellings of them,
+/// in the table the standard keeps, generated into `entities_table.mbt`.
 ///
-/// The values are the UTF-8 text of the reference, so `&nbsp;` keeps its
-/// no-break space and `&mdash;` its dash.
+/// A name that may be written without its semicolon is in the table twice, so
+/// `named_reference("amp")` and `named_reference("amp;")` answer the same `&`.
+/// An unknown name answers `None`, which is the tokenizer's cue to leave the
+/// text as it stands.
 pub fn named_reference(name : String) -> String? {
-  match name {
-    "amp" => Some("&")
-    "lt" => Some("<")
-    "gt" => Some(">")
-    "quot" => Some("\"")
-    "apos" => Some("'")
-    "nbsp" => Some("\u{A0}")
-    "ensp" => Some("\u{2002}")
-    "emsp" => Some("\u{2003}")
-    "thinsp" => Some("\u{2009}")
-    "zwnj" => Some("\u{200C}")
-    "zwj" => Some("\u{200D}")
-    "lrm" => Some("\u{200E}")
-    "rlm" => Some("\u{200F}")
-    "ndash" => Some("\u{2013}")
-    "mdash" => Some("\u{2014}")
-    "lsquo" => Some("\u{2018}")
-    "rsquo" => Some("\u{2019}")
-    "sbquo" => Some("\u{201A}")
-    "ldquo" => Some("\u{201C}")
-    "rdquo" => Some("\u{201D}")
-    "bdquo" => Some("\u{201E}")
-    "dagger" => Some("\u{2020}")
-    "Dagger" => Some("\u{2021}")
-    "bull" => Some("\u{2022}")
-    "hellip" => Some("\u{2026}")
-    "permil" => Some("\u{2030}")
-    "prime" => Some("\u{2032}")
-    "Prime" => Some("\u{2033}")
-    "lsaquo" => Some("\u{2039}")
-    "rsaquo" => Some("\u{203A}")
-    "oline" => Some("\u{203E}")
-    "frasl" => Some("\u{2044}")
-    "euro" => Some("\u{20AC}")
-    "trade" => Some("\u{2122}")
-    "alefsym" => Some("\u{2135}")
-    "larr" => Some("\u{2190}")
-    "uarr" => Some("\u{2191}")
-    "rarr" => Some("\u{2192}")
-    "darr" => Some("\u{2193}")
-    "harr" => Some("\u{2194}")
-    "crarr" => Some("\u{21B5}")
-    "forall" => Some("\u{2200}")
-    "part" => Some("\u{2202}")
-    "exist" => Some("\u{2203}")
-    "empty" => Some("\u{2205}")
-    "nabla" => Some("\u{2207}")
-    "isin" => Some("\u{2208}")
-    "notin" => Some("\u{2209}")
-    "ni" => Some("\u{220B}")
-    "prod" => Some("\u{220F}")
-    "sum" => Some("\u{2211}")
-    "minus" => Some("\u{2212}")
-    "lowast" => Some("\u{2217}")
-    "radic" => Some("\u{221A}")
-    "prop" => Some("\u{221D}")
-    "infin" => Some("\u{221E}")
-    "ang" => Some("\u{2220}")
-    "and" => Some("\u{2227}")
-    "or" => Some("\u{2228}")
-    "cap" => Some("\u{2229}")
-    "cup" => Some("\u{222A}")
-    "int" => Some("\u{222B}")
-    "there4" => Some("\u{2234}")
-    "sim" => Some("\u{223C}")
-    "cong" => Some("\u{2245}")
-    "asymp" => Some("\u{2248}")
-    "ne" => Some("\u{2260}")
-    "equiv" => Some("\u{2261}")
-    "le" => Some("\u{2264}")
-    "ge" => Some("\u{2265}")
-    "sub" => Some("\u{2282}")
-    "sup" => Some("\u{2283}")
-    "nsub" => Some("\u{2284}")
-    "sube" => Some("\u{2286}")
-    "supe" => Some("\u{2287}")
-    "oplus" => Some("\u{2295}")
-    "otimes" => Some("\u{2297}")
-    "perp" => Some("\u{22A5}")
-    "sdot" => Some("\u{22C5}")
-    "lceil" => Some("\u{2308}")
-    "rceil" => Some("\u{2309}")
-    "lfloor" => Some("\u{230A}")
-    "rfloor" => Some("\u{230B}")
-    "lang" => Some("\u{2329}")
-    "rang" => Some("\u{232A}")
-    "loz" => Some("\u{25CA}")
-    "spades" => Some("\u{2660}")
-    "clubs" => Some("\u{2663}")
-    "hearts" => Some("\u{2665}")
-    "diams" => Some("\u{2666}")
-    "OElig" => Some("\u{0152}")
-    "oelig" => Some("\u{0153}")
-    "Scaron" => Some("\u{0160}")
-    "scaron" => Some("\u{0161}")
-    "Yuml" => Some("\u{0178}")
-    "fnof" => Some("\u{0192}")
-    "circ" => Some("\u{02C6}")
-    "tilde" => Some("\u{02DC}")
-    "Alpha" => Some("\u{0391}")
-    "Beta" => Some("\u{0392}")
-    "Gamma" => Some("\u{0393}")
-    "Delta" => Some("\u{0394}")
-    "Epsilon" => Some("\u{0395}")
-    "Zeta" => Some("\u{0396}")
-    "Eta" => Some("\u{0397}")
-    "Theta" => Some("\u{0398}")
-    "Iota" => Some("\u{0399}")
-    "Kappa" => Some("\u{039A}")
-    "Lambda" => Some("\u{039B}")
-    "Mu" => Some("\u{039C}")
-    "Nu" => Some("\u{039D}")
-    "Xi" => Some("\u{039E}")
-    "Omicron" => Some("\u{039F}")
-    "Pi" => Some("\u{03A0}")
-    "Rho" => Some("\u{03A1}")
-    "Sigma" => Some("\u{03A3}")
-    "Tau" => Some("\u{03A4}")
-    "Upsilon" => Some("\u{03A5}")
-    "Phi" => Some("\u{03A6}")
-    "Chi" => Some("\u{03A7}")
-    "Psi" => Some("\u{03A8}")
-    "Omega" => Some("\u{03A9}")
-    "alpha" => Some("\u{03B1}")
-    "beta" => Some("\u{03B2}")
-    "gamma" => Some("\u{03B3}")
-    "delta" => Some("\u{03B4}")
-    "epsilon" => Some("\u{03B5}")
-    "zeta" => Some("\u{03B6}")
-    "eta" => Some("\u{03B7}")
-    "theta" => Some("\u{03B8}")
-    "iota" => Some("\u{03B9}")
-    "kappa" => Some("\u{03BA}")
-    "lambda" => Some("\u{03BB}")
-    "mu" => Some("\u{03BC}")
-    "nu" => Some("\u{03BD}")
-    "xi" => Some("\u{03BE}")
-    "omicron" => Some("\u{03BF}")
-    "pi" => Some("\u{03C0}")
-    "rho" => Some("\u{03C1}")
-    "sigmaf" => Some("\u{03C2}")
-    "sigma" => Some("\u{03C3}")
-    "tau" => Some("\u{03C4}")
-    "upsilon" => Some("\u{03C5}")
-    "phi" => Some("\u{03C6}")
-    "chi" => Some("\u{03C7}")
-    "psi" => Some("\u{03C8}")
-    "omega" => Some("\u{03C9}")
-    "thetasym" => Some("\u{03D1}")
-    "upsih" => Some("\u{03D2}")
-    "piv" => Some("\u{03D6}")
-    "iexcl" => Some("\u{00A1}")
-    "cent" => Some("\u{00A2}")
-    "pound" => Some("\u{00A3}")
-    "curren" => Some("\u{00A4}")
-    "yen" => Some("\u{00A5}")
-    "brvbar" => Some("\u{00A6}")
-    "sect" => Some("\u{00A7}")
-    "uml" => Some("\u{00A8}")
-    "copy" => Some("\u{00A9}")
-    "ordf" => Some("\u{00AA}")
-    "laquo" => Some("\u{00AB}")
-    "not" => Some("\u{00AC}")
-    "shy" => Some("\u{00AD}")
-    "reg" => Some("\u{00AE}")
-    "macr" => Some("\u{00AF}")
-    "deg" => Some("\u{00B0}")
-    "plusmn" => Some("\u{00B1}")
-    "sup2" => Some("\u{00B2}")
-    "sup3" => Some("\u{00B3}")
-    "acute" => Some("\u{00B4}")
-    "micro" => Some("\u{00B5}")
-    "para" => Some("\u{00B6}")
-    "middot" => Some("\u{00B7}")
-    "cedil" => Some("\u{00B8}")
-    "sup1" => Some("\u{00B9}")
-    "ordm" => Some("\u{00BA}")
-    "raquo" => Some("\u{00BB}")
-    "frac14" => Some("\u{00BC}")
-    "frac12" => Some("\u{00BD}")
-    "frac34" => Some("\u{00BE}")
-    "iquest" => Some("\u{00BF}")
-    "Agrave" => Some("\u{00C0}")
-    "Aacute" => Some("\u{00C1}")
-    "Acirc" => Some("\u{00C2}")
-    "Atilde" => Some("\u{00C3}")
-    "Auml" => Some("\u{00C4}")
-    "Aring" => Some("\u{00C5}")
-    "AElig" => Some("\u{00C6}")
-    "Ccedil" => Some("\u{00C7}")
-    "Egrave" => Some("\u{00C8}")
-    "Eacute" => Some("\u{00C9}")
-    "Ecirc" => Some("\u{00CA}")
-    "Euml" => Some("\u{00CB}")
-    "Igrave" => Some("\u{00CC}")
-    "Iacute" => Some("\u{00CD}")
-    "Icirc" => Some("\u{00CE}")
-    "Iuml" => Some("\u{00CF}")
-    "ETH" => Some("\u{00D0}")
-    "Ntilde" => Some("\u{00D1}")
-    "Ograve" => Some("\u{00D2}")
-    "Oacute" => Some("\u{00D3}")
-    "Ocirc" => Some("\u{00D4}")
-    "Otilde" => Some("\u{00D5}")
-    "Ouml" => Some("\u{00D6}")
-    "times" => Some("\u{00D7}")
-    "Oslash" => Some("\u{00D8}")
-    "Ugrave" => Some("\u{00D9}")
-    "Uacute" => Some("\u{00DA}")
-    "Ucirc" => Some("\u{00DB}")
-    "Uuml" => Some("\u{00DC}")
-    "Yacute" => Some("\u{00DD}")
-    "THORN" => Some("\u{00DE}")
-    "szlig" => Some("\u{00DF}")
-    "agrave" => Some("\u{00E0}")
-    "aacute" => Some("\u{00E1}")
-    "acirc" => Some("\u{00E2}")
-    "atilde" => Some("\u{00E3}")
-    "auml" => Some("\u{00E4}")
-    "aring" => Some("\u{00E5}")
-    "aelig" => Some("\u{00E6}")
-    "ccedil" => Some("\u{00E7}")
-    "egrave" => Some("\u{00E8}")
-    "eacute" => Some("\u{00E9}")
-    "ecirc" => Some("\u{00EA}")
-    "euml" => Some("\u{00EB}")
-    "igrave" => Some("\u{00EC}")
-    "iacute" => Some("\u{00ED}")
-    "icirc" => Some("\u{00EE}")
-    "iuml" => Some("\u{00EF}")
-    "eth" => Some("\u{00F0}")
-    "ntilde" => Some("\u{00F1}")
-    "ograve" => Some("\u{00F2}")
-    "oacute" => Some("\u{00F3}")
-    "ocirc" => Some("\u{00F4}")
-    "otilde" => Some("\u{00F5}")
-    "ouml" => Some("\u{00F6}")
-    "divide" => Some("\u{00F7}")
-    "oslash" => Some("\u{00F8}")
-    "ugrave" => Some("\u{00F9}")
-    "uacute" => Some("\u{00FA}")
-    "ucirc" => Some("\u{00FB}")
-    "uuml" => Some("\u{00FC}")
-    "yacute" => Some("\u{00FD}")
-    "thorn" => Some("\u{00FE}")
-    "yuml" => Some("\u{00FF}")
-    _ => None
+  let mut low = 0
+  let mut high = named_table.length() - 1
+  while low <= high {
+    let mid = (low + high) / 2
+    let (here, value) = named_table[mid]
+    match compare(name, here) {
+      -1 => high = mid - 1
+      1 => low = mid + 1
+      _ => return Some(value)
+    }
   }
+  None
+}
+
+///|
+/// `-1`, `0` or `1`: the order the standard's table is kept in, by UTF-16 code
+/// unit.
+fn compare(a : String, b : String) -> Int32 {
+  let n = if a.length() < b.length() { a.length() } else { b.length() }
+  let mut i = 0
+  while i < n {
+    let left = a.at(i)
+    let right = b.at(i)
+    if left < right {
+      return -1
+    }
+    if left > right {
+      return 1
+    }
+    i = i + 1
+  }
+  if a.length() < b.length() {
+    -1
+  } else if a.length() > b.length() {
+    1
+  } else {
+    0
+  }
+}
+
+///|
+/// The longest name at `from` that the table carries, with the position just
+/// past it. The standard's rule: the longest match wins, semicolon or not.
+fn longest_reference(text : String, from : Int32) -> (String, Int32)? {
+  let n = text.length()
+  let mut length = 32
+  if n - from < length {
+    length = n - from
+  }
+  while length >= 1 {
+    let probe = text[from:from + length].to_owned()
+    match named_reference(probe) {
+      Some(value) => return Some((value, from + length))
+      None => length = length - 1
+    }
+  }
+  None
 }

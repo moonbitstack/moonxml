@@ -2,3455 +2,5920 @@
 // From https://github.com/html5lib/html5lib-tests (MIT).
 
 ///|
-/// (case name, source, expected tree in html5lib's own spelling).
-let corpus : Array[(String, String, String)] = [
-  ("tests1.dat:0", "Test", "| <html>\n|   <head>\n|   <body>\n|     \"Test\"\n"),
+/// (case name, what kind of read it is, the context element for a
+/// fragment, the source, the expected tree in html5lib's own spelling).
+let corpus : Array[(String, String, String, String, String)] = [
   (
-    "tests1.dat:1", "<p>One<p>Two", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"One\"\n|     <p>\n|       \"Two\"\n",
+    "adoption01.dat:0", "document", "", "<a><p></a></p>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|     <p>\n|       <a>\n",
   ),
   (
-    "tests1.dat:2", "Line1<br>Line2<br>Line3<br>Line4", "| <html>\n|   <head>\n|   <body>\n|     \"Line1\"\n|     <br>\n|     \"Line2\"\n|     <br>\n|     \"Line3\"\n|     <br>\n|     \"Line4\"\n",
+    "adoption01.dat:1", "document", "", "<a>1<p>2</a>3</p>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"1\"\n|     <p>\n|       <a>\n|         \"2\"\n|       \"3\"\n",
   ),
-  ("tests1.dat:3", "<html>", "| <html>\n|   <head>\n|   <body>\n"),
-  ("tests1.dat:4", "<head>", "| <html>\n|   <head>\n|   <body>\n"),
-  ("tests1.dat:5", "<body>", "| <html>\n|   <head>\n|   <body>\n"),
-  ("tests1.dat:6", "<html><head>", "| <html>\n|   <head>\n|   <body>\n"),
-  ("tests1.dat:7", "<html><head></head>", "| <html>\n|   <head>\n|   <body>\n"),
   (
-    "tests1.dat:8", "<html><head></head><body>", "| <html>\n|   <head>\n|   <body>\n",
+    "adoption01.dat:2", "document", "", "<a>1<button>2</a>3</button>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"1\"\n|     <button>\n|       <a>\n|         \"2\"\n|       \"3\"\n",
   ),
   (
-    "tests1.dat:9", "<html><head></head><body></body>", "| <html>\n|   <head>\n|   <body>\n",
+    "adoption01.dat:3", "document", "", "<a>1<b>2</a>3</b>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"1\"\n|       <b>\n|         \"2\"\n|     <b>\n|       \"3\"\n",
   ),
   (
-    "tests1.dat:10", "<html><head><body></body></html>", "| <html>\n|   <head>\n|   <body>\n",
+    "adoption01.dat:4", "document", "", "<a>1<div>2<div>3</a>4</div>5</div>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"1\"\n|     <div>\n|       <a>\n|         \"2\"\n|       <div>\n|         <a>\n|           \"3\"\n|         \"4\"\n|       \"5\"\n",
   ),
   (
-    "tests1.dat:11", "<html><head></body></html>", "| <html>\n|   <head>\n|   <body>\n",
+    "adoption01.dat:5", "document", "", "<table><a>1<p>2</a>3</p>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"1\"\n|     <p>\n|       <a>\n|         \"2\"\n|       \"3\"\n|     <table>\n",
   ),
   (
-    "tests1.dat:12", "<html><head><body></html>", "| <html>\n|   <head>\n|   <body>\n",
+    "adoption01.dat:6", "document", "", "<b><b><a><p></a>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <b>\n|         <a>\n|         <p>\n|           <a>\n",
   ),
-  ("tests1.dat:13", "<html><body></html>", "| <html>\n|   <head>\n|   <body>\n"),
-  ("tests1.dat:14", "<body></html>", "| <html>\n|   <head>\n|   <body>\n"),
-  ("tests1.dat:15", "<head></html>", "| <html>\n|   <head>\n|   <body>\n"),
-  ("tests1.dat:16", "</head>", "| <html>\n|   <head>\n|   <body>\n"),
-  ("tests1.dat:17", "</body>", "| <html>\n|   <head>\n|   <body>\n"),
-  ("tests1.dat:18", "</html>", "| <html>\n|   <head>\n|   <body>\n"),
   (
-    "tests1.dat:19", "<b><table><td><i></table>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|               <i>\n",
+    "adoption01.dat:7", "document", "", "<b><a><b><p></a>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <a>\n|         <b>\n|       <b>\n|         <p>\n|           <a>\n",
   ),
   (
-    "tests1.dat:20", "<b><table><td></b><i></table>X", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|               <i>\n|       \"X\"\n",
+    "adoption01.dat:8", "document", "", "<a><b><b><p></a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <b>\n|         <b>\n|     <b>\n|       <b>\n|         <p>\n|           <a>\n",
   ),
   (
-    "tests1.dat:21", "<h1>Hello<h2>World", "| <html>\n|   <head>\n|   <body>\n|     <h1>\n|       \"Hello\"\n|     <h2>\n|       \"World\"\n",
+    "adoption01.dat:9", "document", "", "<p>1<s id=\"A\">2<b id=\"B\">3</p>4</s>5</b>",
+    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"1\"\n|       <s>\n|         id=\"A\"\n|         \"2\"\n|         <b>\n|           id=\"B\"\n|           \"3\"\n|     <s>\n|       id=\"A\"\n|       <b>\n|         id=\"B\"\n|         \"4\"\n|     <b>\n|       id=\"B\"\n|       \"5\"\n",
   ),
   (
-    "tests1.dat:22", "<a><p>X<a>Y</a>Z</p></a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|     <p>\n|       <a>\n|         \"X\"\n|       <a>\n|         \"Y\"\n|       \"Z\"\n",
+    "adoption01.dat:10", "document", "", "<table><a>1<td>2</td>3</table>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"1\"\n|     <a>\n|       \"3\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"2\"\n",
   ),
   (
-    "tests1.dat:23", "<b><button>foo</b>bar", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|     <button>\n|       <b>\n|         \"foo\"\n|       \"bar\"\n",
+    "adoption01.dat:11", "document", "", "<table>A<td>B</td>C</table>", "| <html>\n|   <head>\n|   <body>\n|     \"AC\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"B\"\n",
   ),
   (
-    "tests1.dat:24", "<!DOCTYPE html><span><button>foo</span>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <span>\n|       <button>\n|         \"foobar\"\n",
+    "adoption01.dat:12", "document", "", "<a><svg><tr><input></a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <svg svg>\n|         <svg tr>\n|           <svg input>\n",
   ),
   (
-    "tests1.dat:25", "<p><b><div><marquee></p></b></div>X", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <b>\n|     <div>\n|       <b>\n|         <marquee>\n|           <p>\n|           \"X\"\n",
-  ),
-  (
-    "tests1.dat:26", "<script><div></script></div><title><p></title><p><p>", "| <html>\n|   <head>\n|     <script>\n|       \"<div>\"\n|     <title>\n|       \"<p>\"\n|   <body>\n|     <p>\n|     <p>\n",
-  ),
-  (
-    "tests1.dat:27", "<!--><div>--<!-->", "| <!--  -->\n| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"--\"\n|       <!--  -->\n",
-  ),
-  (
-    "tests1.dat:28", "<p><hr></p>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <hr>\n|     <p>\n",
-  ),
-  (
-    "tests1.dat:29", "<select><b><option><select><option></b></select>X", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <b>\n|         <option>\n|     <b>\n|       <option>\n|     \"X\"\n",
-  ),
-  (
-    "tests1.dat:30", "<a><table><td><a><table></table><a></tr><a></table><b>X</b>C<a>Y",
-    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <a>\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|               <a>\n|                 <table>\n|               <a>\n|     <a>\n|       <b>\n|         \"X\"\n|       \"C\"\n|     <a>\n|       \"Y\"\n",
-  ),
-  (
-    "tests1.dat:31", "<a X>0<b>1<a Y>2", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       x=\"\"\n|       \"0\"\n|       <b>\n|         \"1\"\n|     <b>\n|       <a>\n|         y=\"\"\n|         \"2\"\n",
-  ),
-  (
-    "tests1.dat:32", "<!-----><font><div>hello<table>excite!<b>me!<th><i>please!</tr><!--X-->",
-    "| <!-- - -->\n| <html>\n|   <head>\n|   <body>\n|     <font>\n|       <div>\n|         \"helloexcite!\"\n|         <b>\n|           \"me!\"\n|         <table>\n|           <tbody>\n|             <tr>\n|               <th>\n|                 <i>\n|                   \"please!\"\n|             <!-- X -->\n",
-  ),
-  (
-    "tests1.dat:33", "<!DOCTYPE html><li>hello<li>world<ul>how<li>do</ul>you</body><!--do-->",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <li>\n|       \"hello\"\n|     <li>\n|       \"world\"\n|       <ul>\n|         \"how\"\n|         <li>\n|           \"do\"\n|       \"you\"\n|   <!-- do -->\n",
-  ),
-  (
-    "tests1.dat:34", "<!DOCTYPE html>A<option>B<optgroup>C<select>D</option>E", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"A\"\n|     <option>\n|       \"B\"\n|     <optgroup>\n|       \"C\"\n|       <select>\n|         \"DE\"\n",
-  ),
-  ("tests1.dat:35", "<", "| <html>\n|   <head>\n|   <body>\n|     \"<\"\n"),
-  ("tests1.dat:36", "<#", "| <html>\n|   <head>\n|   <body>\n|     \"<#\"\n"),
-  ("tests1.dat:37", "</", "| <html>\n|   <head>\n|   <body>\n|     \"</\"\n"),
-  ("tests1.dat:38", "</#", "| <!-- # -->\n| <html>\n|   <head>\n|   <body>\n"),
-  ("tests1.dat:39", "<?", "| <!-- ? -->\n| <html>\n|   <head>\n|   <body>\n"),
-  ("tests1.dat:40", "<?#", "| <!-- ?# -->\n| <html>\n|   <head>\n|   <body>\n"),
-  ("tests1.dat:41", "<!", "| <!--  -->\n| <html>\n|   <head>\n|   <body>\n"),
-  ("tests1.dat:42", "<!#", "| <!-- # -->\n| <html>\n|   <head>\n|   <body>\n"),
-  (
-    "tests1.dat:43", "<?COMMENT?>", "| <!-- ?COMMENT? -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests1.dat:44", "<!COMMENT>", "| <!-- COMMENT -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests1.dat:45", "</ COMMENT >", "| <!--  COMMENT  -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests1.dat:46", "<?COM--MENT?>", "| <!-- ?COM--MENT? -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests1.dat:47", "<!COM--MENT>", "| <!-- COM--MENT -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests1.dat:48", "</ COM--MENT >", "| <!--  COM--MENT  -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests1.dat:49", "<!DOCTYPE html><style> EOF", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \" EOF\"\n|   <body>\n",
-  ),
-  (
-    "tests1.dat:50", "<!DOCTYPE html><script> <!-- </script> --> </script> EOF",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \" <!-- \"\n|     \" \"\n|   <body>\n|     \"-->  EOF\"\n",
-  ),
-  (
-    "tests1.dat:51", "<b><p></b>TEST", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|     <p>\n|       <b>\n|       \"TEST\"\n",
-  ),
-  (
-    "tests1.dat:52", "<p id=a><b><p id=b></b>TEST", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       id=\"a\"\n|       <b>\n|     <p>\n|       id=\"b\"\n|       \"TEST\"\n",
-  ),
-  (
-    "tests1.dat:53", "<b id=a><p><b id=b></p></b>TEST", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       id=\"a\"\n|       <p>\n|         <b>\n|           id=\"b\"\n|       \"TEST\"\n",
-  ),
-  (
-    "tests1.dat:54", "<!DOCTYPE html><title>U-test</title><body><div><p>Test<u></p></div></body>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"U-test\"\n|   <body>\n|     <div>\n|       <p>\n|         \"Test\"\n|         <u>\n",
-  ),
-  (
-    "tests1.dat:55", "<!DOCTYPE html><font><table></font></table></font>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <font>\n|       <table>\n",
-  ),
-  (
-    "tests1.dat:56", "<font><p>hello<b>cruel</font>world", "| <html>\n|   <head>\n|   <body>\n|     <font>\n|     <p>\n|       <font>\n|         \"hello\"\n|         <b>\n|           \"cruel\"\n|       <b>\n|         \"world\"\n",
-  ),
-  (
-    "tests1.dat:57", "<b>Test</i>Test", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"TestTest\"\n",
-  ),
-  (
-    "tests1.dat:58", "<b>A<cite>B<div>C", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"A\"\n|       <cite>\n|         \"B\"\n|         <div>\n|           \"C\"\n",
-  ),
-  (
-    "tests1.dat:59", "<b>A<cite>B<div>C</cite>D", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"A\"\n|       <cite>\n|         \"B\"\n|         <div>\n|           \"CD\"\n",
-  ),
-  (
-    "tests1.dat:60", "<b>A<cite>B<div>C</b>D", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"A\"\n|       <cite>\n|         \"B\"\n|     <div>\n|       <b>\n|         \"C\"\n|       \"D\"\n",
-  ),
-  ("tests1.dat:61", "", "| <html>\n|   <head>\n|   <body>\n"),
-  ("tests1.dat:62", "<DIV>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n"),
-  (
-    "tests1.dat:63", "<DIV> abc", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc\"\n",
-  ),
-  (
-    "tests1.dat:64", "<DIV> abc <B>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n",
-  ),
-  (
-    "tests1.dat:65", "<DIV> abc <B> def", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def\"\n",
-  ),
-  (
-    "tests1.dat:66", "<DIV> abc <B> def <I>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n",
-  ),
-  (
-    "tests1.dat:67", "<DIV> abc <B> def <I> ghi", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi\"\n",
-  ),
-  (
-    "tests1.dat:68", "<DIV> abc <B> def <I> ghi <P>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|           <p>\n",
-  ),
-  (
-    "tests1.dat:69", "<DIV> abc <B> def <I> ghi <P> jkl", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|           <p>\n|             \" jkl\"\n",
-  ),
-  (
-    "tests1.dat:70", "<DIV> abc <B> def <I> ghi <P> jkl </B>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|       <i>\n|         <p>\n|           <b>\n|             \" jkl \"\n",
-  ),
-  (
-    "tests1.dat:71", "<DIV> abc <B> def <I> ghi <P> jkl </B> mno", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|       <i>\n|         <p>\n|           <b>\n|             \" jkl \"\n|           \" mno\"\n",
-  ),
-  (
-    "tests1.dat:72", "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|       <i>\n|       <p>\n|         <i>\n|           <b>\n|             \" jkl \"\n|           \" mno \"\n",
-  ),
-  (
-    "tests1.dat:73", "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I> pqr", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|       <i>\n|       <p>\n|         <i>\n|           <b>\n|             \" jkl \"\n|           \" mno \"\n|         \" pqr\"\n",
-  ),
-  (
-    "tests1.dat:74", "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I> pqr </P>",
-    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|       <i>\n|       <p>\n|         <i>\n|           <b>\n|             \" jkl \"\n|           \" mno \"\n|         \" pqr \"\n",
-  ),
-  (
-    "tests1.dat:75", "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I> pqr </P> stu",
-    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|       <i>\n|       <p>\n|         <i>\n|           <b>\n|             \" jkl \"\n|           \" mno \"\n|         \" pqr \"\n|       \" stu\"\n",
-  ),
-  (
-    "tests1.dat:76", "<test attribute---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->",
-    "| <html>\n|   <head>\n|   <body>\n|     <test>\n|       attribute----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------=\"\"\n",
-  ),
-  (
-    "tests1.dat:77", "<a href=\"blah\">aba<table><a href=\"foo\">br<tr><td></td></tr>x</table>aoe",
-    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       href=\"blah\"\n|       \"aba\"\n|       <a>\n|         href=\"foo\"\n|         \"br\"\n|       <a>\n|         href=\"foo\"\n|         \"x\"\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|     <a>\n|       href=\"foo\"\n|       \"aoe\"\n",
-  ),
-  (
-    "tests1.dat:78", "<a href=\"blah\">aba<table><tr><td><a href=\"foo\">br</td></tr>x</table>aoe",
-    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       href=\"blah\"\n|       \"abax\"\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|               <a>\n|                 href=\"foo\"\n|                 \"br\"\n|       \"aoe\"\n",
-  ),
-  (
-    "tests1.dat:79", "<table><a href=\"blah\">aba<tr><td><a href=\"foo\">br</td></tr>x</table>aoe",
-    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       href=\"blah\"\n|       \"aba\"\n|     <a>\n|       href=\"blah\"\n|       \"x\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <a>\n|               href=\"foo\"\n|               \"br\"\n|     <a>\n|       href=\"blah\"\n|       \"aoe\"\n",
-  ),
-  (
-    "tests1.dat:80", "<a href=a>aa<marquee>aa<a href=b>bb</marquee>aa", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       href=\"a\"\n|       \"aa\"\n|       <marquee>\n|         \"aa\"\n|         <a>\n|           href=\"b\"\n|           \"bb\"\n|       \"aa\"\n",
-  ),
-  (
-    "tests1.dat:81", "<wbr><strike><code></strike><code><strike></code>", "| <html>\n|   <head>\n|   <body>\n|     <wbr>\n|     <strike>\n|       <code>\n|     <code>\n|       <code>\n|         <strike>\n",
-  ),
-  (
-    "tests1.dat:82", "<!DOCTYPE html><spacer>foo", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <spacer>\n|       \"foo\"\n",
-  ),
-  (
-    "tests1.dat:83", "<title><meta></title><link><title><meta></title>", "| <html>\n|   <head>\n|     <title>\n|       \"<meta>\"\n|     <link>\n|     <title>\n|       \"<meta>\"\n|   <body>\n",
-  ),
-  (
-    "tests1.dat:84", "<style><!--</style><meta><script>--><link></script>", "| <html>\n|   <head>\n|     <style>\n|       \"<!--\"\n|     <meta>\n|     <script>\n|       \"--><link>\"\n|   <body>\n",
-  ),
-  (
-    "tests1.dat:85", "<head><meta></head><link>", "| <html>\n|   <head>\n|     <meta>\n|     <link>\n|   <body>\n",
-  ),
-  (
-    "tests1.dat:86", "<table><tr><tr><td><td><span><th><span>X</table>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|         <tr>\n|           <td>\n|           <td>\n|             <span>\n|           <th>\n|             <span>\n|               \"X\"\n",
-  ),
-  (
-    "tests1.dat:87", "<body><body><base><link><meta><title><p></title><body><p></body>",
-    "| <html>\n|   <head>\n|   <body>\n|     <base>\n|     <link>\n|     <meta>\n|     <title>\n|       \"<p>\"\n|     <p>\n",
-  ),
-  (
-    "tests1.dat:88", "<textarea><p></textarea>", "| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"<p>\"\n",
-  ),
-  (
-    "tests1.dat:89", "<p><image></p>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <img>\n",
-  ),
-  (
-    "tests1.dat:90", "<a><table><a></table><p><a><div><a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <a>\n|       <table>\n|     <p>\n|       <a>\n|     <div>\n|       <a>\n",
-  ),
-  (
-    "tests1.dat:91", "<head></p><meta><p>", "| <html>\n|   <head>\n|     <meta>\n|   <body>\n|     <p>\n",
-  ),
-  (
-    "tests1.dat:92", "<head></html><meta><p>", "| <html>\n|   <head>\n|   <body>\n|     <meta>\n|     <p>\n",
-  ),
-  (
-    "tests1.dat:93", "<b><table><td></b><i></table>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|               <i>\n",
-  ),
-  (
-    "tests1.dat:94", "<h1><h2>", "| <html>\n|   <head>\n|   <body>\n|     <h1>\n|     <h2>\n",
-  ),
-  (
-    "tests1.dat:95", "<a><p><a></a></p></a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|     <p>\n|       <a>\n|       <a>\n",
-  ),
-  (
-    "tests1.dat:96", "<b><button></b></button></b>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|     <button>\n|       <b>\n",
-  ),
-  (
-    "tests1.dat:97", "<p><b><div><marquee></p></b></div>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <b>\n|     <div>\n|       <b>\n|         <marquee>\n|           <p>\n",
-  ),
-  (
-    "tests1.dat:98", "<script></script></div><title></title><p><p>", "| <html>\n|   <head>\n|     <script>\n|     <title>\n|   <body>\n|     <p>\n|     <p>\n",
-  ),
-  (
-    "tests1.dat:99", "<select><b><option><select><option></b></select>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <b>\n|         <option>\n|     <b>\n|       <option>\n",
-  ),
-  (
-    "tests1.dat:100", "<html><head><title></title><body></body></html>", "| <html>\n|   <head>\n|     <title>\n|   <body>\n",
-  ),
-  (
-    "tests1.dat:101", "<a><table><td><a><table></table><a></tr><a></table><a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <a>\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|               <a>\n|                 <table>\n|               <a>\n|     <a>\n",
-  ),
-  (
-    "tests1.dat:102", "<ul><li></li><div><li></div><li><li><div><li><address><li><b><em></b><li></ul>",
-    "| <html>\n|   <head>\n|   <body>\n|     <ul>\n|       <li>\n|       <div>\n|         <li>\n|       <li>\n|       <li>\n|         <div>\n|       <li>\n|         <address>\n|       <li>\n|         <b>\n|           <em>\n|       <li>\n",
-  ),
-  (
-    "tests1.dat:103", "<ul><li><ul></li><li>a</li></ul></li></ul>", "| <html>\n|   <head>\n|   <body>\n|     <ul>\n|       <li>\n|         <ul>\n|           <li>\n|             \"a\"\n",
-  ),
-  (
-    "tests1.dat:104", "<frameset><frame><frameset><frame></frameset><noframes></noframes></frameset>",
-    "| <html>\n|   <head>\n|   <frameset>\n|     <frame>\n|     <frameset>\n|       <frame>\n|     <noframes>\n",
-  ),
-  (
-    "tests1.dat:105", "<h1><table><td><h3></table><h3></h1>", "| <html>\n|   <head>\n|   <body>\n|     <h1>\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|               <h3>\n|     <h3>\n",
-  ),
-  (
-    "tests1.dat:106", "<table><colgroup><col><colgroup><col><col><col><colgroup><col><col><thead><tr><td></table>",
-    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n|         <col>\n|       <colgroup>\n|         <col>\n|         <col>\n|         <col>\n|       <colgroup>\n|         <col>\n|         <col>\n|       <thead>\n|         <tr>\n|           <td>\n",
-  ),
-  (
-    "tests1.dat:107", "<table><col><tbody><col><tr><col><td><col></table><col>",
-    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n|         <col>\n|       <tbody>\n|       <colgroup>\n|         <col>\n|       <tbody>\n|         <tr>\n|       <colgroup>\n|         <col>\n|       <tbody>\n|         <tr>\n|           <td>\n|       <colgroup>\n|         <col>\n",
-  ),
-  (
-    "tests1.dat:108", "<table><colgroup><tbody><colgroup><tr><colgroup><td><colgroup></table><colgroup>",
-    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n|       <tbody>\n|       <colgroup>\n|       <tbody>\n|         <tr>\n|       <colgroup>\n|       <tbody>\n|         <tr>\n|           <td>\n|       <colgroup>\n",
-  ),
-  (
-    "tests1.dat:109", "</strong></b></em></i></u></strike></s></blink></tt></pre></big></small></font></select></h1></h2></h3></h4></h5></h6></body></br></a></img></title></span></style></script></table></th></td></tr></frame></area></link></param></hr></input></col></base></meta></basefont></bgsound></embed></spacer></p></dd></dt></caption></colgroup></tbody></tfoot></thead></address></blockquote></center></dir></div></dl></fieldset></listing></menu></ol></ul></li></nobr></wbr></form></button></marquee></object></html></frameset></head></iframe></image></isindex></noembed></noframes></noscript></optgroup></option></plaintext></textarea>",
-    "| <html>\n|   <head>\n|   <body>\n|     <br>\n|     <p>\n",
-  ),
-  (
-    "tests1.dat:110", "<table><tr></strong></b></em></i></u></strike></s></blink></tt></pre></big></small></font></select></h1></h2></h3></h4></h5></h6></body></br></a></img></title></span></style></script></table></th></td></tr></frame></area></link></param></hr></input></col></base></meta></basefont></bgsound></embed></spacer></p></dd></dt></caption></colgroup></tbody></tfoot></thead></address></blockquote></center></dir></div></dl></fieldset></listing></menu></ol></ul></li></nobr></wbr></form></button></marquee></object></html></frameset></head></iframe></image></isindex></noembed></noframes></noscript></optgroup></option></plaintext></textarea>",
-    "| <html>\n|   <head>\n|   <body>\n|     <br>\n|     <table>\n|       <tbody>\n|         <tr>\n|     <p>\n",
-  ),
-  ("tests1.dat:111", "<frameset>", "| <html>\n|   <head>\n|   <frameset>\n"),
-  (
-    "tests2.dat:0", "<!DOCTYPE html>Test", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"Test\"\n",
-  ),
-  (
-    "tests2.dat:1", "<textarea>test</div>test", "| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"test</div>test\"\n",
-  ),
-  (
-    "tests2.dat:2", "<table><td>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
-  ),
-  (
-    "tests2.dat:3", "<table><td>test</tbody></table>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"test\"\n",
-  ),
-  (
-    "tests2.dat:4", "<frame>test", "| <html>\n|   <head>\n|   <body>\n|     \"test\"\n",
-  ),
-  (
-    "tests2.dat:5", "<!DOCTYPE html><frameset>test", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "tests2.dat:6", "<!DOCTYPE html><frameset> te st", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|     \"  \"\n",
-  ),
-  (
-    "tests2.dat:7", "<!DOCTYPE html><frameset></frameset> te st", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|   \"  \"\n",
-  ),
-  (
-    "tests2.dat:8", "<!DOCTYPE html><frameset><!DOCTYPE html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "tests2.dat:9", "<!DOCTYPE html><font><p><b>test</font>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <font>\n|     <p>\n|       <font>\n|         <b>\n|           \"test\"\n",
-  ),
-  (
-    "tests2.dat:10", "<!DOCTYPE html><dt><div><dd>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <dt>\n|       <div>\n|     <dd>\n",
-  ),
-  (
-    "tests2.dat:11", "<script></x", "| <html>\n|   <head>\n|     <script>\n|       \"</x\"\n|   <body>\n",
-  ),
-  (
-    "tests2.dat:12", "<table><plaintext><td>", "| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"<td>\"\n|     <table>\n",
-  ),
-  (
-    "tests2.dat:13", "<plaintext></plaintext>", "| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
-  ),
-  (
-    "tests2.dat:14", "<!DOCTYPE html><table><tr>TEST", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"TEST\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
-  ),
-  (
-    "tests2.dat:15", "<!DOCTYPE html><body t1=1><body t2=2><body t3=3 t4=4>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     t1=\"1\"\n|     t2=\"2\"\n|     t3=\"3\"\n|     t4=\"4\"\n",
-  ),
-  ("tests2.dat:16", "</b test", "| <html>\n|   <head>\n|   <body>\n"),
-  (
-    "tests2.dat:17", "<!DOCTYPE html></b test<b &=&amp>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"X\"\n",
-  ),
-  (
-    "tests2.dat:18", "<!doctypehtml><scrIPt type=text/x-foobar;baz>X</SCRipt", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       type=\"text/x-foobar;baz\"\n|       \"X</SCRipt\"\n|   <body>\n",
-  ),
-  ("tests2.dat:19", "&", "| <html>\n|   <head>\n|   <body>\n|     \"&\"\n"),
-  ("tests2.dat:20", "&#", "| <html>\n|   <head>\n|   <body>\n|     \"&#\"\n"),
-  ("tests2.dat:21", "&#X", "| <html>\n|   <head>\n|   <body>\n|     \"&#X\"\n"),
-  ("tests2.dat:22", "&#x", "| <html>\n|   <head>\n|   <body>\n|     \"&#x\"\n"),
-  ("tests2.dat:23", "&#45", "| <html>\n|   <head>\n|   <body>\n|     \"-\"\n"),
-  (
-    "tests2.dat:24", "&x-test", "| <html>\n|   <head>\n|   <body>\n|     \"&x-test\"\n",
-  ),
-  (
-    "tests2.dat:25", "<!doctypehtml><p><li>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <li>\n",
-  ),
-  (
-    "tests2.dat:26", "<!doctypehtml><p><dt>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <dt>\n",
-  ),
-  (
-    "tests2.dat:27", "<!doctypehtml><p><dd>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <dd>\n",
-  ),
-  (
-    "tests2.dat:28", "<!doctypehtml><p><form>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <form>\n",
-  ),
-  (
-    "tests2.dat:29", "<!DOCTYPE html><p></P>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     \"X\"\n",
-  ),
-  ("tests2.dat:30", "&AMP", "| <html>\n|   <head>\n|   <body>\n|     \"&\"\n"),
-  (
-    "tests2.dat:31", "&AMp;", "| <html>\n|   <head>\n|   <body>\n|     \"&AMp;\"\n",
-  ),
-  (
-    "tests2.dat:32", "<!DOCTYPE html><html><head></head><body><thisISasillyTESTelementNameToMakeSureCrazyTagNamesArePARSEDcorrectLY>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <thisisasillytestelementnametomakesurecrazytagnamesareparsedcorrectly>\n",
-  ),
-  (
-    "tests2.dat:33", "<!DOCTYPE html>X</body>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"XX\"\n",
-  ),
-  (
-    "tests2.dat:34", "<!DOCTYPE html><!-- X", "| <!DOCTYPE html>\n| <!--  X -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests2.dat:35", "<!DOCTYPE html><table><caption>test TEST</caption><td>test",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         \"test TEST\"\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"test\"\n",
-  ),
-  (
-    "tests2.dat:36", "<!DOCTYPE html><select><option><optgroup>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|       <optgroup>\n",
-  ),
-  (
-    "tests2.dat:37", "<!DOCTYPE html><select><optgroup><option></optgroup><option><select><option>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <optgroup>\n|         <option>\n|       <option>\n|     <option>\n",
-  ),
-  (
-    "tests2.dat:38", "<!DOCTYPE html><select><optgroup><option><optgroup>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <optgroup>\n|         <option>\n|       <optgroup>\n",
-  ),
-  (
-    "tests2.dat:39", "<!DOCTYPE html><datalist><option>foo</datalist>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <datalist>\n|       <option>\n|         \"foo\"\n|     \"bar\"\n",
-  ),
-  (
-    "tests2.dat:40", "<!DOCTYPE html><font><input><input></font>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <font>\n|       <input>\n|       <input>\n",
-  ),
-  (
-    "tests2.dat:41", "<!DOCTYPE html><!-- XXX - XXX -->", "| <!DOCTYPE html>\n| <!--  XXX - XXX  -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests2.dat:42", "<!DOCTYPE html><!-- XXX - XXX", "| <!DOCTYPE html>\n| <!--  XXX - XXX -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests2.dat:43", "<!DOCTYPE html><!-- XXX - XXX - XXX -->", "| <!DOCTYPE html>\n| <!--  XXX - XXX - XXX  -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests2.dat:44", "<!DOCTYPE html> <!DOCTYPE html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests2.dat:45", "test\ntest", "| <html>\n|   <head>\n|   <body>\n|     \"test\ntest\"\n",
-  ),
-  (
-    "tests2.dat:46", "<!DOCTYPE html><body><title>test</body></title>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <title>\n|       \"test</body>\"\n",
-  ),
-  (
-    "tests2.dat:47", "<!DOCTYPE html><body><title>X</title><meta name=z><link rel=foo><style>\nx { content:\"</style\" } </style>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <title>\n|       \"X\"\n|     <meta>\n|       name=\"z\"\n|     <link>\n|       rel=\"foo\"\n|     <style>\n|       \"\nx { content:\"</style\" } \"\n",
-  ),
-  (
-    "tests2.dat:48", "<!DOCTYPE html><select><optgroup></optgroup></select>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <optgroup>\n",
-  ),
-  ("tests2.dat:49", " \n ", "| <html>\n|   <head>\n|   <body>\n"),
-  (
-    "tests2.dat:50", "<!DOCTYPE html>  <html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests2.dat:51", "<!DOCTYPE html><script>\n</script>  <title>x</title>  </head>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"\n\"\n|     \"  \"\n|     <title>\n|       \"x\"\n|     \"  \"\n|   <body>\n",
-  ),
-  (
-    "tests2.dat:52", "<!DOCTYPE html><html><body><html id=x>", "| <!DOCTYPE html>\n| <html>\n|   id=\"x\"\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests2.dat:53", "<!DOCTYPE html>X</body><html id=\"x\">", "| <!DOCTYPE html>\n| <html>\n|   id=\"x\"\n|   <head>\n|   <body>\n|     \"X\"\n",
-  ),
-  (
-    "tests2.dat:54", "<!DOCTYPE html><head><html id=x>", "| <!DOCTYPE html>\n| <html>\n|   id=\"x\"\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests2.dat:55", "<!DOCTYPE html>X</html>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"XX\"\n",
-  ),
-  (
-    "tests2.dat:56", "<!DOCTYPE html>X</html> ", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"X \"\n",
-  ),
-  (
-    "tests2.dat:57", "<!DOCTYPE html>X</html><p>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"X\"\n|     <p>\n|       \"X\"\n",
-  ),
-  (
-    "tests2.dat:58", "<!DOCTYPE html>X<p/x/y/z>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"X\"\n|     <p>\n|       x=\"\"\n|       y=\"\"\n|       z=\"\"\n",
-  ),
-  (
-    "tests2.dat:59", "<!DOCTYPE html><!--x--", "| <!DOCTYPE html>\n| <!-- x -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests2.dat:60", "<!DOCTYPE html><table><tr><td></p></table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <p>\n",
-  ),
-  (
-    "tests2.dat:61", "<!DOCTYPE <!DOCTYPE HTML>><!--<!--x-->-->", "| <!DOCTYPE <!doctype>\n| <html>\n|   <head>\n|   <body>\n|     \">\"\n|     <!-- <!--x -->\n|     \"-->\"\n",
-  ),
-  (
-    "tests2.dat:62", "<!doctype html><div><form></form><div></div></div>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <form>\n|       <div>\n",
-  ),
-  (
-    "tests3.dat:0", "<head></head><style></style>", "| <html>\n|   <head>\n|     <style>\n|   <body>\n",
-  ),
-  (
-    "tests3.dat:1", "<head></head><script></script>", "| <html>\n|   <head>\n|     <script>\n|   <body>\n",
-  ),
-  (
-    "tests3.dat:2", "<head></head><!-- --><style></style><!-- --><script></script>",
-    "| <html>\n|   <head>\n|     <style>\n|     <script>\n|   <!--   -->\n|   <!--   -->\n|   <body>\n",
-  ),
-  (
-    "tests3.dat:3", "<head></head><!-- -->x<style></style><!-- --><script></script>",
-    "| <html>\n|   <head>\n|   <!--   -->\n|   <body>\n|     \"x\"\n|     <style>\n|     <!--   -->\n|     <script>\n",
-  ),
-  (
-    "tests3.dat:4", "<!DOCTYPE html><html><head></head><body><pre>\n</pre></body></html>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n",
-  ),
-  (
-    "tests3.dat:5", "<!DOCTYPE html><html><head></head><body><pre>\nfoo</pre></body></html>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"foo\"\n",
-  ),
-  (
-    "tests3.dat:6", "<!DOCTYPE html><html><head></head><body><pre>\n\nfoo</pre></body></html>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"\nfoo\"\n",
-  ),
-  (
-    "tests3.dat:7", "<!DOCTYPE html><html><head></head><body><pre>\nfoo\n</pre></body></html>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"foo\n\"\n",
-  ),
-  (
-    "tests3.dat:8", "<!DOCTYPE html><html><head></head><body><pre>x</pre><span>\n</span></body></html>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"x\"\n|     <span>\n|       \"\n\"\n",
-  ),
-  (
-    "tests3.dat:9", "<!DOCTYPE html><html><head></head><body><pre>x\ny</pre></body></html>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"x\ny\"\n",
-  ),
-  (
-    "tests3.dat:10", "<!DOCTYPE html><html><head></head><body><pre>x<div>\ny</pre></body></html>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"x\"\n|       <div>\n|         \"\ny\"\n",
-  ),
-  (
-    "tests3.dat:11", "<!DOCTYPE html><pre>&#x0a;&#x0a;A</pre>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"\nA\"\n",
-  ),
-  (
-    "tests3.dat:12", "<!DOCTYPE html><HTML><META><HEAD></HEAD></HTML>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <meta>\n|   <body>\n",
-  ),
-  (
-    "tests3.dat:13", "<!DOCTYPE html><HTML><HEAD><head></HEAD></HTML>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests3.dat:14", "<textarea>foo<span>bar</span><i>baz", "| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"foo<span>bar</span><i>baz\"\n",
-  ),
-  (
-    "tests3.dat:15", "<title>foo<span>bar</em><i>baz", "| <html>\n|   <head>\n|     <title>\n|       \"foo<span>bar</em><i>baz\"\n|   <body>\n",
-  ),
-  (
-    "tests3.dat:16", "<!DOCTYPE html><textarea>\n</textarea>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n",
-  ),
-  (
-    "tests3.dat:17", "<!DOCTYPE html><textarea>\nfoo</textarea>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"foo\"\n",
-  ),
-  (
-    "tests3.dat:18", "<!DOCTYPE html><textarea>\n\nfoo</textarea>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"\nfoo\"\n",
-  ),
-  (
-    "tests3.dat:19", "<!DOCTYPE html><html><head></head><body><ul><li><div><p><li></ul></body></html>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <ul>\n|       <li>\n|         <div>\n|           <p>\n|       <li>\n",
-  ),
-  (
-    "tests3.dat:20", "<!doctype html><nobr><nobr><nobr>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <nobr>\n|     <nobr>\n|     <nobr>\n",
-  ),
-  (
-    "tests3.dat:21", "<!doctype html><nobr><nobr></nobr><nobr>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <nobr>\n|     <nobr>\n|     <nobr>\n",
-  ),
-  (
-    "tests3.dat:22", "<!doctype html><html><body><p><table></table></body></html>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <table>\n",
-  ),
-  (
-    "tests3.dat:23", "<p><table></table>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <table>\n",
-  ),
-  (
-    "tests5.dat:0", "<style> <!-- </style>x", "| <html>\n|   <head>\n|     <style>\n|       \" <!-- \"\n|   <body>\n|     \"x\"\n",
-  ),
-  (
-    "tests5.dat:1", "<style> <!-- </style> --> </style>x", "| <html>\n|   <head>\n|     <style>\n|       \" <!-- \"\n|     \" \"\n|   <body>\n|     \"--> x\"\n",
-  ),
-  (
-    "tests5.dat:2", "<style> <!--> </style>x", "| <html>\n|   <head>\n|     <style>\n|       \" <!--> \"\n|   <body>\n|     \"x\"\n",
-  ),
-  (
-    "tests5.dat:3", "<style> <!---> </style>x", "| <html>\n|   <head>\n|     <style>\n|       \" <!---> \"\n|   <body>\n|     \"x\"\n",
-  ),
-  (
-    "tests5.dat:4", "<iframe> <!---> </iframe>x", "| <html>\n|   <head>\n|   <body>\n|     <iframe>\n|       \" <!---> \"\n|     \"x\"\n",
-  ),
-  (
-    "tests5.dat:5", "<iframe> <!--- </iframe>->x</iframe> --> </iframe>x", "| <html>\n|   <head>\n|   <body>\n|     <iframe>\n|       \" <!--- \"\n|     \"->x --> x\"\n",
-  ),
-  (
-    "tests5.dat:6", "<script> <!-- </script> --> </script>x", "| <html>\n|   <head>\n|     <script>\n|       \" <!-- \"\n|     \" \"\n|   <body>\n|     \"--> x\"\n",
-  ),
-  (
-    "tests5.dat:7", "<title> <!-- </title> --> </title>x", "| <html>\n|   <head>\n|     <title>\n|       \" <!-- \"\n|     \" \"\n|   <body>\n|     \"--> x\"\n",
-  ),
-  (
-    "tests5.dat:8", "<textarea> <!--- </textarea>->x</textarea> --> </textarea>x",
-    "| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \" <!--- \"\n|     \"->x --> x\"\n",
-  ),
-  (
-    "tests5.dat:9", "<style> <!</-- </style>x", "| <html>\n|   <head>\n|     <style>\n|       \" <!</-- \"\n|   <body>\n|     \"x\"\n",
-  ),
-  (
-    "tests5.dat:10", "<p><xmp></xmp>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <xmp>\n",
-  ),
-  (
-    "tests5.dat:11", "<xmp> <!-- > --> </xmp>", "| <html>\n|   <head>\n|   <body>\n|     <xmp>\n|       \" <!-- > --> \"\n",
-  ),
-  (
-    "tests5.dat:12", "<title>&amp;</title>", "| <html>\n|   <head>\n|     <title>\n|       \"&\"\n|   <body>\n",
-  ),
-  (
-    "tests5.dat:13", "<title><!--&amp;--></title>", "| <html>\n|   <head>\n|     <title>\n|       \"<!--&-->\"\n|   <body>\n",
-  ),
-  (
-    "tests5.dat:14", "<title><!--</title>", "| <html>\n|   <head>\n|     <title>\n|       \"<!--\"\n|   <body>\n",
-  ),
-  (
-    "tests5.dat:15", "<noscript><!--</noscript>--></noscript>", "| <html>\n|   <head>\n|     <noscript>\n|       \"<!--\"\n|   <body>\n|     \"-->\"\n",
-  ),
-  (
-    "tests5.dat:16", "<noscript><!--</noscript>--></noscript>", "| <html>\n|   <head>\n|     <noscript>\n|       <!-- </noscript> -->\n|   <body>\n",
-  ),
-  (
-    "tests6.dat:0", "<!doctype html></head> <head>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   \" \"\n|   <body>\n",
-  ),
-  (
-    "tests6.dat:1", "<!doctype html><form><div></form><div>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <form>\n|       <div>\n|         <div>\n",
-  ),
-  (
-    "tests6.dat:2", "<!doctype html><title>&amp;</title>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"&\"\n|   <body>\n",
-  ),
-  (
-    "tests6.dat:3", "<!doctype html><title><!--&amp;--></title>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"<!--&-->\"\n|   <body>\n",
-  ),
-  (
-    "tests6.dat:4", "<!doctype>", "| <!DOCTYPE >\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests6.dat:5", "<!---x", "| <!-- -x -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests6.dat:6", "<frameset></frameset>\nfoo", "| <html>\n|   <head>\n|   <frameset>\n|   \"\n\"\n",
-  ),
-  (
-    "tests6.dat:7", "<frameset></frameset>\n<noframes>", "| <html>\n|   <head>\n|   <frameset>\n|   \"\n\"\n|   <noframes>\n",
-  ),
-  (
-    "tests6.dat:8", "<frameset></frameset>\n<div>", "| <html>\n|   <head>\n|   <frameset>\n|   \"\n\"\n",
-  ),
-  (
-    "tests6.dat:9", "<frameset></frameset>\n</html>", "| <html>\n|   <head>\n|   <frameset>\n|   \"\n\"\n",
-  ),
-  (
-    "tests6.dat:10", "<frameset></frameset>\n</div>", "| <html>\n|   <head>\n|   <frameset>\n|   \"\n\"\n",
-  ),
-  (
-    "tests6.dat:11", "<form><form>", "| <html>\n|   <head>\n|   <body>\n|     <form>\n",
-  ),
-  (
-    "tests6.dat:12", "<button><button>", "| <html>\n|   <head>\n|   <body>\n|     <button>\n|     <button>\n",
-  ),
-  (
-    "tests6.dat:13", "<table><tr><td></th>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
-  ),
-  (
-    "tests6.dat:14", "<table><caption><td>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|       <tbody>\n|         <tr>\n|           <td>\n",
-  ),
-  (
-    "tests6.dat:15", "<table><caption><div>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <div>\n",
-  ),
-  (
-    "tests6.dat:16", "<table><caption><div></caption>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <div>\n",
-  ),
-  (
-    "tests6.dat:17", "<table><caption></table>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n",
-  ),
-  (
-    "tests6.dat:18", "<table><caption></body></col></colgroup></html></tbody></td></tfoot></th></thead></tr>",
-    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n",
-  ),
-  (
-    "tests6.dat:19", "<table><caption><div></div>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <div>\n",
-  ),
-  (
-    "tests6.dat:20", "<table><tr><td></body></caption></col></colgroup></html>",
-    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
-  ),
-  (
-    "tests6.dat:21", "<table><colgroup>foo", "| <html>\n|   <head>\n|   <body>\n|     \"foo\"\n|     <table>\n|       <colgroup>\n",
-  ),
-  (
-    "tests6.dat:22", "<table><colgroup></col>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n",
-  ),
-  ("tests6.dat:23", "<frameset><div>", "| <html>\n|   <head>\n|   <frameset>\n"),
-  (
-    "tests6.dat:24", "<frameset></div>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "tests6.dat:25", "<table><tr><div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|     <table>\n|       <tbody>\n|         <tr>\n",
-  ),
-  (
-    "tests6.dat:26", "<table><tr><div><td>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
-  ),
-  (
-    "tests6.dat:27", "<table><tbody></thead>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n",
-  ),
-  (
-    "tests6.dat:28", "<table><tbody></body></caption></col></colgroup></html></td></th></tr>",
-    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n",
-  ),
-  (
-    "tests6.dat:29", "<table><tbody></div>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n",
-  ),
-  (
-    "tests6.dat:30", "<table><table>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|     <table>\n",
-  ),
-  (
-    "tests6.dat:31", "<table></body></caption></col></colgroup></html></tbody></td></tfoot></th></thead></tr>",
-    "| <html>\n|   <head>\n|   <body>\n|     <table>\n",
-  ),
-  (
-    "tests6.dat:32", "<html><frameset></frameset></html> ", "| <html>\n|   <head>\n|   <frameset>\n|   \" \"\n",
-  ),
-  (
-    "tests6.dat:33", "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01//EN\"><html></html>",
-    "| <!DOCTYPE html \"-//W3C//DTD HTML 4.01//EN\" \"\">\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests6.dat:34", "<param><frameset></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "tests6.dat:35", "<source><frameset></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "tests6.dat:36", "<track><frameset></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "tests6.dat:37", "</html><frameset></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "tests6.dat:38", "</body><frameset></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "tests7.dat:0", "<!doctype html><body><title>X</title>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <title>\n|       \"X\"\n",
-  ),
-  (
-    "tests7.dat:1", "<!doctype html><table><title>X</title></table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <title>\n|       \"X\"\n|     <table>\n",
-  ),
-  (
-    "tests7.dat:2", "<!doctype html><head></head><title>X</title>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"X\"\n|   <body>\n",
-  ),
-  (
-    "tests7.dat:3", "<!doctype html></head><title>X</title>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"X\"\n|   <body>\n",
-  ),
-  (
-    "tests7.dat:4", "<!doctype html></head><base>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <base>\n|   <body>\n|     \"X\"\n",
-  ),
-  (
-    "tests7.dat:5", "<!doctype html></head><basefont>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <basefont>\n|   <body>\n|     \"X\"\n",
-  ),
-  (
-    "tests7.dat:6", "<!doctype html></head><bgsound>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <bgsound>\n|   <body>\n|     \"X\"\n",
-  ),
-  (
-    "tests7.dat:7", "<!doctype html><table><meta></table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <meta>\n|     <table>\n",
-  ),
-  (
-    "tests7.dat:8", "<!doctype html><table>X<tr><td><table> <meta></table></table>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"X\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <meta>\n|             <table>\n|               \" \"\n",
-  ),
-  (
-    "tests7.dat:9", "<!doctype html><html> <head>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests7.dat:10", "<!doctype html> <head>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests7.dat:11", "<!doctype html><table><style> <tr>x </style> </table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <style>\n|         \" <tr>x \"\n|       \" \"\n",
-  ),
-  (
-    "tests7.dat:12", "<!doctype html><table><TBODY><script> <tr>x </script> </table>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <script>\n|           \" <tr>x \"\n|         \" \"\n",
-  ),
-  (
-    "tests7.dat:13", "<!doctype html><p><applet><p>X</p></applet>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <applet>\n|         <p>\n|           \"X\"\n",
-  ),
-  (
-    "tests7.dat:14", "<!doctype html><p><object type=\"application/x-non-existant-plugin\"><p>X</p></object>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <object>\n|         type=\"application/x-non-existant-plugin\"\n|         <p>\n|           \"X\"\n",
-  ),
-  (
-    "tests7.dat:15", "<!doctype html><listing>\nX</listing>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <listing>\n|       \"X\"\n",
-  ),
-  (
-    "tests7.dat:16", "<!doctype html><select><input>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|     <input>\n|     \"X\"\n",
-  ),
-  (
-    "tests7.dat:17", "<!doctype html><select><select>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|     \"X\"\n",
-  ),
-  (
-    "tests7.dat:18", "<!doctype html><table><input type=hidDEN></table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <input>\n|         type=\"hidDEN\"\n",
-  ),
-  (
-    "tests7.dat:19", "<!doctype html><table>X<input type=hidDEN></table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"X\"\n|     <table>\n|       <input>\n|         type=\"hidDEN\"\n",
-  ),
-  (
-    "tests7.dat:20", "<!doctype html><table>  <input type=hidDEN></table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       \"  \"\n|       <input>\n|         type=\"hidDEN\"\n",
-  ),
-  (
-    "tests7.dat:21", "<!doctype html><table>  <input type='hidDEN'></table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       \"  \"\n|       <input>\n|         type=\"hidDEN\"\n",
-  ),
-  (
-    "tests7.dat:22", "<!doctype html><table><input type=\" hidden\"><input type=hidDEN></table>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <input>\n|       type=\" hidden\"\n|     <table>\n|       <input>\n|         type=\"hidDEN\"\n",
-  ),
-  (
-    "tests7.dat:23", "<!doctype html><table><select>X<tr>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       \"X\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
-  ),
-  (
-    "tests7.dat:24", "<!doctype html><select>X</select>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       \"X\"\n",
-  ),
-  (
-    "tests7.dat:25", "<!DOCTYPE hTmL><html></html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests7.dat:26", "<!DOCTYPE HTML><html></html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests7.dat:27", "<div><p>a</x> b", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <p>\n|         \"a b\"\n",
-  ),
-  (
-    "tests7.dat:28", "<table><tr><td><code></code> </table>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <code>\n|             \" \"\n",
-  ),
-  (
-    "tests7.dat:29", "<table><b><tr><td>aaa</td></tr>bbb</table>ccc", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|     <b>\n|       \"bbb\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"aaa\"\n|     <b>\n|       \"ccc\"\n",
-  ),
-  (
-    "tests7.dat:30", "A<table><tr> B</tr> B</table>", "| <html>\n|   <head>\n|   <body>\n|     \"A B B\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
-  ),
-  (
-    "tests7.dat:31", "A<table><tr> B</tr> </em>C</table>", "| <html>\n|   <head>\n|   <body>\n|     \"A BC\"\n|     <table>\n|       <tbody>\n|         <tr>\n|         \" \"\n",
-  ),
-  (
-    "tests7.dat:32", "<select><keygen>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <keygen>\n",
-  ),
-  (
-    "tests8.dat:0", "<div>\n<div></div>\n</span>x", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"\n\"\n|       <div>\n|       \"\nx\"\n",
-  ),
-  (
-    "tests8.dat:1", "<div>x<div></div>\n</span>x", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"x\"\n|       <div>\n|       \"\nx\"\n",
-  ),
-  (
-    "tests8.dat:2", "<div>x<div></div>x</span>x", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"x\"\n|       <div>\n|       \"xx\"\n",
-  ),
-  (
-    "tests8.dat:3", "<div>x<div></div>y</span>z", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"x\"\n|       <div>\n|       \"yz\"\n",
-  ),
-  (
-    "tests8.dat:4", "<table><div>x<div></div>x</span>x", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"x\"\n|       <div>\n|       \"xx\"\n|     <table>\n",
-  ),
-  (
-    "tests8.dat:5", "<table><li><li></table>", "| <html>\n|   <head>\n|   <body>\n|     <li>\n|     <li>\n|     <table>\n",
-  ),
-  (
-    "tests8.dat:6", "x<table>x", "| <html>\n|   <head>\n|   <body>\n|     \"xx\"\n|     <table>\n",
-  ),
-  (
-    "tests8.dat:7", "x<table><table>x", "| <html>\n|   <head>\n|   <body>\n|     \"x\"\n|     <table>\n|     \"x\"\n|     <table>\n",
-  ),
-  (
-    "tests8.dat:8", "<b>a<div></div><div></b>y", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"a\"\n|       <div>\n|     <div>\n|       <b>\n|       \"y\"\n",
-  ),
-  (
-    "tests8.dat:9", "<a><div><p></a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|     <div>\n|       <a>\n|       <p>\n|         <a>\n",
-  ),
-  (
-    "tests14.dat:0", "<!DOCTYPE html><html><body><xyz:abc></xyz:abc>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <xyz:abc>\n",
-  ),
-  (
-    "tests14.dat:1", "<!DOCTYPE html><html><body><xyz:abc></xyz:abc><span></span>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <xyz:abc>\n|     <span>\n",
-  ),
-  (
-    "tests14.dat:2", "<!DOCTYPE html><html><html abc:def=gh><xyz:abc></xyz:abc>",
-    "| <!DOCTYPE html>\n| <html>\n|   abc:def=\"gh\"\n|   <head>\n|   <body>\n|     <xyz:abc>\n",
-  ),
-  (
-    "tests14.dat:3", "<!DOCTYPE html><html xml:lang=bar><html xml:lang=foo>", "| <!DOCTYPE html>\n| <html>\n|   xml:lang=\"bar\"\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests14.dat:4", "<!DOCTYPE html><html 123=456>", "| <!DOCTYPE html>\n| <html>\n|   123=\"456\"\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests14.dat:5", "<!DOCTYPE html><html 123=456><html 789=012>", "| <!DOCTYPE html>\n| <html>\n|   123=\"456\"\n|   789=\"012\"\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "tests14.dat:6", "<!DOCTYPE html><html><body 789=012>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     789=\"012\"\n",
-  ),
-  (
-    "tests15.dat:0", "<!DOCTYPE html><p><b><i><u></p> <p>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <b>\n|         <i>\n|           <u>\n|     <b>\n|       <i>\n|         <u>\n|           \" \"\n|           <p>\n|             \"X\"\n",
-  ),
-  (
-    "tests15.dat:1", "<p><b><i><u></p>\n<p>X", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <b>\n|         <i>\n|           <u>\n|     <b>\n|       <i>\n|         <u>\n|           \"\n\"\n|           <p>\n|             \"X\"\n",
-  ),
-  (
-    "tests15.dat:2", "<!doctype html></html> <head>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \" \"\n",
-  ),
-  (
-    "tests15.dat:3", "<!doctype html></body><meta>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <meta>\n",
-  ),
-  (
-    "tests15.dat:4", "<html></html><!-- foo -->", "| <html>\n|   <head>\n|   <body>\n| <!--  foo  -->\n",
-  ),
-  (
-    "tests15.dat:5", "<!doctype html></body><title>X</title>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <title>\n|       \"X\"\n",
-  ),
-  (
-    "tests15.dat:6", "<!doctype html><table> X<meta></table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \" X\"\n|     <meta>\n|     <table>\n",
-  ),
-  (
-    "tests15.dat:7", "<!doctype html><table> x</table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \" x\"\n|     <table>\n",
-  ),
-  (
-    "tests15.dat:8", "<!doctype html><table> x </table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \" x \"\n|     <table>\n",
-  ),
-  (
-    "tests15.dat:9", "<!doctype html><table><tr> x</table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \" x\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
-  ),
-  (
-    "tests15.dat:10", "<!doctype html><table>X<style> <tr>x </style> </table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"X\"\n|     <table>\n|       <style>\n|         \" <tr>x \"\n|       \" \"\n",
-  ),
-  (
-    "tests15.dat:11", "<!doctype html><div><table><a>foo</a> <tr><td>bar</td> </tr></table></div>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <a>\n|         \"foo\"\n|       <table>\n|         \" \"\n|         <tbody>\n|           <tr>\n|             <td>\n|               \"bar\"\n|             \" \"\n",
-  ),
-  (
-    "tests15.dat:12", "<frame></frame></frame><frameset><frame><frameset><frame></frameset><noframes></frameset><noframes>",
-    "| <html>\n|   <head>\n|   <frameset>\n|     <frame>\n|     <frameset>\n|       <frame>\n|     <noframes>\n|       \"</frameset><noframes>\"\n",
-  ),
-  (
-    "tests15.dat:13", "<!DOCTYPE html><object></html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <object>\n",
-  ),
-  (
-    "tests16.dat:0", "<!doctype html><script>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:1", "<!doctype html><script>a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:2", "<!doctype html><script><", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:3", "<!doctype html><script></", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:4", "<!doctype html><script></S", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</S\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:5", "<!doctype html><script></SC", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</SC\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:6", "<!doctype html><script></SCR", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</SCR\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:7", "<!doctype html><script></SCRI", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</SCRI\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:8", "<!doctype html><script></SCRIP", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</SCRIP\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:9", "<!doctype html><script></SCRIPT", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</SCRIPT\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:10", "<!doctype html><script></SCRIPT ", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:11", "<!doctype html><script></s", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</s\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:12", "<!doctype html><script></sc", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</sc\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:13", "<!doctype html><script></scr", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</scr\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:14", "<!doctype html><script></scri", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</scri\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:15", "<!doctype html><script></scrip", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</scrip\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:16", "<!doctype html><script></script", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</script\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:17", "<!doctype html><script></script ", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:18", "<!doctype html><script><!", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:19", "<!doctype html><script><!a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:20", "<!doctype html><script><!-", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!-\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:21", "<!doctype html><script><!-a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!-a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:22", "<!doctype html><script><!--", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:23", "<!doctype html><script><!--a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:24", "<!doctype html><script><!--<", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:25", "<!doctype html><script><!--<a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:26", "<!doctype html><script><!--</", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--</\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:27", "<!doctype html><script><!--</script", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--</script\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:28", "<!doctype html><script><!--</script ", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:29", "<!doctype html><script><!--<s", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<s\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:30", "<!doctype html><script><!--<script", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:31", "<!doctype html><script><!--<script ", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script \"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:32", "<!doctype html><script><!--<script <", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script <\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:33", "<!doctype html><script><!--<script <a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script <a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:34", "<!doctype html><script><!--<script </", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:35", "<!doctype html><script><!--<script </s", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </s\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:36", "<!doctype html><script><!--<script </script", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:37", "<!doctype html><script><!--<script </scripta", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </scripta\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:38", "<!doctype html><script><!--<script </script ", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:39", "<!doctype html><script><!--<script </script>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script>\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:40", "<!doctype html><script><!--<script </script/", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script/\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:41", "<!doctype html><script><!--<script </script <", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script <\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:42", "<!doctype html><script><!--<script </script <a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script <a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:43", "<!doctype html><script><!--<script </script </", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script </\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:44", "<!doctype html><script><!--<script </script </script", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script </script\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:45", "<!doctype html><script><!--<script </script </script ", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:46", "<!doctype html><script><!--<script </script </script/", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:47", "<!doctype html><script><!--<script </script </script>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:48", "<!doctype html><script><!--<script -", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:49", "<!doctype html><script><!--<script -a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:50", "<!doctype html><script><!--<script -<", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -<\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:51", "<!doctype html><script><!--<script --", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:52", "<!doctype html><script><!--<script --a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:53", "<!doctype html><script><!--<script --<", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --<\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:54", "<!doctype html><script><!--<script -->", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:55", "<!doctype html><script><!--<script --><", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --><\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:56", "<!doctype html><script><!--<script --></", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --></\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:57", "<!doctype html><script><!--<script --></script", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --></script\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:58", "<!doctype html><script><!--<script --></script ", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:59", "<!doctype html><script><!--<script --></script/", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:60", "<!doctype html><script><!--<script --></script>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:61", "<!doctype html><script><!--<script><\\/script>--></script>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script><\\/script>-->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:62", "<!doctype html><script><!--<script></scr'+'ipt>--></script>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></scr'+'ipt>-->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:63", "<!doctype html><script><!--<script></script><script></script></script>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:64", "<!doctype html><script><!--<script></script><script></script>--><!--</script>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>--><!--\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:65", "<!doctype html><script><!--<script></script><script></script>-- ></script>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>-- >\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:66", "<!doctype html><script><!--<script></script><script></script>- -></script>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>- ->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:67", "<!doctype html><script><!--<script></script><script></script>- - ></script>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>- - >\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:68", "<!doctype html><script><!--<script></script><script></script>-></script>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:69", "<!doctype html><script><!--<script>--!></script>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script>--!></script>X\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:70", "<!doctype html><script><!--<scr'+'ipt></script>--></script>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<scr'+'ipt>\"\n|   <body>\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:71", "<!doctype html><script><!--<script></scr'+'ipt></script>X",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></scr'+'ipt></script>X\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:72", "<!doctype html><style><!--<style></style>--></style>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"<!--<style>\"\n|   <body>\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:73", "<!doctype html><style><!--</style>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"<!--\"\n|   <body>\n|     \"X\"\n",
-  ),
-  (
-    "tests16.dat:74", "<!doctype html><style><!--...</style>...--></style>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"<!--...\"\n|   <body>\n|     \"...-->\"\n",
-  ),
-  (
-    "tests16.dat:75", "<!doctype html><style><!--<br><html xmlns:v=\"urn:schemas-microsoft-com:vml\"><!--[if !mso]><style></style>X",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"<!--<br><html xmlns:v=\"urn:schemas-microsoft-com:vml\"><!--[if !mso]><style>\"\n|   <body>\n|     \"X\"\n",
-  ),
-  (
-    "tests16.dat:76", "<!doctype html><style><!--...<style><!--...--!></style>--></style>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"<!--...<style><!--...--!>\"\n|   <body>\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:77", "<!doctype html><style><!--...</style><!-- --><style>@import ...</style>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"<!--...\"\n|     <!--   -->\n|     <style>\n|       \"@import ...\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:78", "<!doctype html><style>...<style><!--...</style><!-- --></style>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"...<style><!--...\"\n|     <!--   -->\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:79", "<!doctype html><style>...<!--[if IE]><style>...</style>X",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"...<!--[if IE]><style>...\"\n|   <body>\n|     \"X\"\n",
-  ),
-  (
-    "tests16.dat:80", "<!doctype html><title><!--<title></title>--></title>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"<!--<title>\"\n|   <body>\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:81", "<!doctype html><title>&lt;/title></title>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"</title>\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:82", "<!doctype html><title>foo/title><link></head><body>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"foo/title><link></head><body>X\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:83", "<!doctype html><noscript><!--<noscript></noscript>--></noscript>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noscript>\n|       \"<!--<noscript>\"\n|   <body>\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:84", "<!doctype html><noscript><!--<noscript></noscript>--></noscript>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noscript>\n|       <!-- <noscript></noscript> -->\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:85", "<!doctype html><noscript><!--</noscript>X<noscript>--></noscript>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noscript>\n|       \"<!--\"\n|   <body>\n|     \"X\"\n|     <noscript>\n|       \"-->\"\n",
-  ),
-  (
-    "tests16.dat:86", "<!doctype html><noscript><!--</noscript>X<noscript>--></noscript>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noscript>\n|       <!-- </noscript>X<noscript> -->\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:87", "<!doctype html><noscript><iframe></noscript>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noscript>\n|       \"<iframe>\"\n|   <body>\n|     \"X\"\n",
-  ),
-  (
-    "tests16.dat:88", "<!doctype html><noscript><iframe></noscript>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noscript>\n|   <body>\n|     <iframe>\n|       \"</noscript>X\"\n",
-  ),
-  (
-    "tests16.dat:89", "<!doctype html><noframes><!--<noframes></noframes>--></noframes>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noframes>\n|       \"<!--<noframes>\"\n|   <body>\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:90", "<!doctype html><noframes><body><script><!--...</script></body></noframes></html>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noframes>\n|       \"<body><script><!--...</script></body>\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:91", "<!doctype html><textarea><!--<textarea></textarea>--></textarea>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"<!--<textarea>\"\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:92", "<!doctype html><textarea>&lt;/textarea></textarea>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"</textarea>\"\n",
-  ),
-  (
-    "tests16.dat:93", "<!doctype html><textarea>&lt;</textarea>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"<\"\n",
-  ),
-  (
-    "tests16.dat:94", "<!doctype html><textarea>a&lt;b</textarea>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"a<b\"\n",
-  ),
-  (
-    "tests16.dat:95", "<!doctype html><iframe><!--<iframe></iframe>--></iframe>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <iframe>\n|       \"<!--<iframe>\"\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:96", "<!doctype html><iframe>...<!--X->...<!--/X->...</iframe>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <iframe>\n|       \"...<!--X->...<!--/X->...\"\n",
-  ),
-  (
-    "tests16.dat:97", "<!doctype html><xmp><!--<xmp></xmp>--></xmp>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <xmp>\n|       \"<!--<xmp>\"\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:98", "<!doctype html><noembed><!--<noembed></noembed>--></noembed>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <noembed>\n|       \"<!--<noembed>\"\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:99", "<script>", "| <html>\n|   <head>\n|     <script>\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:100", "<script>a", "| <html>\n|   <head>\n|     <script>\n|       \"a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:101", "<script><", "| <html>\n|   <head>\n|     <script>\n|       \"<\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:102", "<script></", "| <html>\n|   <head>\n|     <script>\n|       \"</\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:103", "<script></S", "| <html>\n|   <head>\n|     <script>\n|       \"</S\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:104", "<script></SC", "| <html>\n|   <head>\n|     <script>\n|       \"</SC\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:105", "<script></SCR", "| <html>\n|   <head>\n|     <script>\n|       \"</SCR\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:106", "<script></SCRI", "| <html>\n|   <head>\n|     <script>\n|       \"</SCRI\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:107", "<script></SCRIP", "| <html>\n|   <head>\n|     <script>\n|       \"</SCRIP\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:108", "<script></SCRIPT", "| <html>\n|   <head>\n|     <script>\n|       \"</SCRIPT\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:109", "<script></SCRIPT ", "| <html>\n|   <head>\n|     <script>\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:110", "<script></s", "| <html>\n|   <head>\n|     <script>\n|       \"</s\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:111", "<script></sc", "| <html>\n|   <head>\n|     <script>\n|       \"</sc\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:112", "<script></scr", "| <html>\n|   <head>\n|     <script>\n|       \"</scr\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:113", "<script></scri", "| <html>\n|   <head>\n|     <script>\n|       \"</scri\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:114", "<script></scrip", "| <html>\n|   <head>\n|     <script>\n|       \"</scrip\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:115", "<script></script", "| <html>\n|   <head>\n|     <script>\n|       \"</script\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:116", "<script></script ", "| <html>\n|   <head>\n|     <script>\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:117", "<script><!", "| <html>\n|   <head>\n|     <script>\n|       \"<!\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:118", "<script><!a", "| <html>\n|   <head>\n|     <script>\n|       \"<!a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:119", "<script><!-", "| <html>\n|   <head>\n|     <script>\n|       \"<!-\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:120", "<script><!-a", "| <html>\n|   <head>\n|     <script>\n|       \"<!-a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:121", "<script><!--", "| <html>\n|   <head>\n|     <script>\n|       \"<!--\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:122", "<script><!--a", "| <html>\n|   <head>\n|     <script>\n|       \"<!--a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:123", "<script><!--<", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:124", "<script><!--<a", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:125", "<script><!--</", "| <html>\n|   <head>\n|     <script>\n|       \"<!--</\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:126", "<script><!--</script", "| <html>\n|   <head>\n|     <script>\n|       \"<!--</script\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:127", "<script><!--</script ", "| <html>\n|   <head>\n|     <script>\n|       \"<!--\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:128", "<script><!--<s", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<s\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:129", "<script><!--<script", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:130", "<script><!--<script ", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script \"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:131", "<script><!--<script <", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script <\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:132", "<script><!--<script <a", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script <a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:133", "<script><!--<script </", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:134", "<script><!--<script </s", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </s\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:135", "<script><!--<script </script", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:136", "<script><!--<script </scripta", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </scripta\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:137", "<script><!--<script </script ", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:138", "<script><!--<script </script>", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script>\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:139", "<script><!--<script </script/", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script/\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:140", "<script><!--<script </script <", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script <\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:141", "<script><!--<script </script <a", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script <a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:142", "<script><!--<script </script </", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script </\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:143", "<script><!--<script </script </script", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script </script\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:144", "<script><!--<script </script </script ", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:145", "<script><!--<script </script </script/", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:146", "<script><!--<script </script </script>", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:147", "<script><!--<script -", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:148", "<script><!--<script -a", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:149", "<script><!--<script --", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:150", "<script><!--<script --a", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --a\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:151", "<script><!--<script -->", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:152", "<script><!--<script --><", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --><\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:153", "<script><!--<script --></", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --></\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:154", "<script><!--<script --></script", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --></script\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:155", "<script><!--<script --></script ", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:156", "<script><!--<script --></script/", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:157", "<script><!--<script --></script>", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:158", "<script><!--<script><\\/script>--></script>", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script><\\/script>-->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:159", "<script><!--<script></scr'+'ipt>--></script>", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></scr'+'ipt>-->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:160", "<script><!--<script></script><script></script></script>",
-    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:161", "<script><!--<script></script><script></script>--><!--</script>",
-    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>--><!--\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:162", "<script><!--<script></script><script></script>-- ></script>",
-    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>-- >\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:163", "<script><!--<script></script><script></script>- -></script>",
-    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>- ->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:164", "<script><!--<script></script><script></script>- - ></script>",
-    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>- - >\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:165", "<script><!--<script></script><script></script>-></script>",
-    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>->\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:166", "<script><!--<script>--!></script>X", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script>--!></script>X\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:167", "<script><!--<scr'+'ipt></script>--></script>", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<scr'+'ipt>\"\n|   <body>\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:168", "<script><!--<script></scr'+'ipt></script>X", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></scr'+'ipt></script>X\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:169", "<style><!--<style></style>--></style>", "| <html>\n|   <head>\n|     <style>\n|       \"<!--<style>\"\n|   <body>\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:170", "<style><!--</style>X", "| <html>\n|   <head>\n|     <style>\n|       \"<!--\"\n|   <body>\n|     \"X\"\n",
-  ),
-  (
-    "tests16.dat:171", "<style><!--...</style>...--></style>", "| <html>\n|   <head>\n|     <style>\n|       \"<!--...\"\n|   <body>\n|     \"...-->\"\n",
-  ),
-  (
-    "tests16.dat:172", "<style><!--<br><html xmlns:v=\"urn:schemas-microsoft-com:vml\"><!--[if !mso]><style></style>X",
-    "| <html>\n|   <head>\n|     <style>\n|       \"<!--<br><html xmlns:v=\"urn:schemas-microsoft-com:vml\"><!--[if !mso]><style>\"\n|   <body>\n|     \"X\"\n",
-  ),
-  (
-    "tests16.dat:173", "<style><!--...<style><!--...--!></style>--></style>", "| <html>\n|   <head>\n|     <style>\n|       \"<!--...<style><!--...--!>\"\n|   <body>\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:174", "<style><!--...</style><!-- --><style>@import ...</style>",
-    "| <html>\n|   <head>\n|     <style>\n|       \"<!--...\"\n|     <!--   -->\n|     <style>\n|       \"@import ...\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:175", "<style>...<style><!--...</style><!-- --></style>", "| <html>\n|   <head>\n|     <style>\n|       \"...<style><!--...\"\n|     <!--   -->\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:176", "<style>...<!--[if IE]><style>...</style>X", "| <html>\n|   <head>\n|     <style>\n|       \"...<!--[if IE]><style>...\"\n|   <body>\n|     \"X\"\n",
-  ),
-  (
-    "tests16.dat:177", "<title><!--<title></title>--></title>", "| <html>\n|   <head>\n|     <title>\n|       \"<!--<title>\"\n|   <body>\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:178", "<title>&lt;/title></title>", "| <html>\n|   <head>\n|     <title>\n|       \"</title>\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:179", "<title>foo/title><link></head><body>X", "| <html>\n|   <head>\n|     <title>\n|       \"foo/title><link></head><body>X\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:180", "<noscript><!--<noscript></noscript>--></noscript>", "| <html>\n|   <head>\n|     <noscript>\n|       \"<!--<noscript>\"\n|   <body>\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:181", "<noscript><!--<noscript></noscript>--></noscript>", "| <html>\n|   <head>\n|     <noscript>\n|       <!-- <noscript></noscript> -->\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:182", "<noscript><!--</noscript>X<noscript>--></noscript>", "| <html>\n|   <head>\n|     <noscript>\n|       \"<!--\"\n|   <body>\n|     \"X\"\n|     <noscript>\n|       \"-->\"\n",
-  ),
-  (
-    "tests16.dat:183", "<noscript><!--</noscript>X<noscript>--></noscript>", "| <html>\n|   <head>\n|     <noscript>\n|       <!-- </noscript>X<noscript> -->\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:184", "<noscript><iframe></noscript>X", "| <html>\n|   <head>\n|     <noscript>\n|       \"<iframe>\"\n|   <body>\n|     \"X\"\n",
-  ),
-  (
-    "tests16.dat:185", "<noscript><iframe></noscript>X", "| <html>\n|   <head>\n|     <noscript>\n|   <body>\n|     <iframe>\n|       \"</noscript>X\"\n",
-  ),
-  (
-    "tests16.dat:186", "<noframes><!--<noframes></noframes>--></noframes>", "| <html>\n|   <head>\n|     <noframes>\n|       \"<!--<noframes>\"\n|   <body>\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:187", "<noframes><body><script><!--...</script></body></noframes></html>",
-    "| <html>\n|   <head>\n|     <noframes>\n|       \"<body><script><!--...</script></body>\"\n|   <body>\n",
-  ),
-  (
-    "tests16.dat:188", "<textarea><!--<textarea></textarea>--></textarea>", "| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"<!--<textarea>\"\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:189", "<textarea>&lt;/textarea></textarea>", "| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"</textarea>\"\n",
-  ),
-  (
-    "tests16.dat:190", "<iframe><!--<iframe></iframe>--></iframe>", "| <html>\n|   <head>\n|   <body>\n|     <iframe>\n|       \"<!--<iframe>\"\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:191", "<iframe>...<!--X->...<!--/X->...</iframe>", "| <html>\n|   <head>\n|   <body>\n|     <iframe>\n|       \"...<!--X->...<!--/X->...\"\n",
-  ),
-  (
-    "tests16.dat:192", "<xmp><!--<xmp></xmp>--></xmp>", "| <html>\n|   <head>\n|   <body>\n|     <xmp>\n|       \"<!--<xmp>\"\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:193", "<noembed><!--<noembed></noembed>--></noembed>", "| <html>\n|   <head>\n|   <body>\n|     <noembed>\n|       \"<!--<noembed>\"\n|     \"-->\"\n",
-  ),
-  (
-    "tests16.dat:194", "<!doctype html><table>\n", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       \"\n\"\n",
-  ),
-  (
-    "tests16.dat:195", "<!doctype html><table><td><span><font></span><span>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <span>\n|               <font>\n|             <font>\n|               <span>\n",
-  ),
-  (
-    "tests16.dat:196", "<!doctype html><form><table></form><form></table></form>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <form>\n|       <table>\n|         <form>\n",
-  ),
-  (
-    "tests17.dat:0", "<!doctype html><table><tbody><select><tr>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|     <table>\n|       <tbody>\n|         <tr>\n",
-  ),
-  (
-    "tests17.dat:1", "<!doctype html><table><tr><select><td>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
-  ),
-  (
-    "tests17.dat:2", "<!doctype html><table><tr><td><select><td>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|           <td>\n",
-  ),
-  (
-    "tests17.dat:3", "<!doctype html><table><tr><th><select><td>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <th>\n|             <select>\n|           <td>\n",
-  ),
-  (
-    "tests17.dat:4", "<!doctype html><table><caption><select><tr>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <select>\n|       <tbody>\n|         <tr>\n",
-  ),
-  (
-    "tests17.dat:5", "<!doctype html><select><tr>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
-  ),
-  (
-    "tests17.dat:6", "<!doctype html><select><td>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
-  ),
-  (
-    "tests17.dat:7", "<!doctype html><select><th>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
-  ),
-  (
-    "tests17.dat:8", "<!doctype html><select><tbody>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
-  ),
-  (
-    "tests17.dat:9", "<!doctype html><select><thead>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
-  ),
-  (
-    "tests17.dat:10", "<!doctype html><select><tfoot>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
-  ),
-  (
-    "tests17.dat:11", "<!doctype html><select><caption>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
-  ),
-  (
-    "tests17.dat:12", "<!doctype html><table><tr></table>a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|     \"a\"\n",
-  ),
-  (
-    "tests18.dat:0", "<plaintext></plaintext>", "| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
-  ),
-  (
-    "tests18.dat:1", "<!doctype html><plaintext></plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
-  ),
-  (
-    "tests18.dat:2", "<!doctype html><html><plaintext></plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
-  ),
-  (
-    "tests18.dat:3", "<!doctype html><head><plaintext></plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
-  ),
-  (
-    "tests18.dat:4", "<!doctype html><html><noscript><plaintext></plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noscript>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
-  ),
-  (
-    "tests18.dat:5", "<!doctype html></head><plaintext></plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
-  ),
-  (
-    "tests18.dat:6", "<!doctype html><body><plaintext></plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
-  ),
-  (
-    "tests18.dat:7", "<!doctype html><table><plaintext></plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n|     <table>\n",
-  ),
-  (
-    "tests18.dat:8", "<!doctype html><table><tbody><plaintext></plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n|     <table>\n|       <tbody>\n",
-  ),
-  (
-    "tests18.dat:9", "<!doctype html><table><tbody><tr><plaintext></plaintext>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
-  ),
-  (
-    "tests18.dat:10", "<!doctype html><table><td><plaintext></plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <plaintext>\n|               \"</plaintext>\"\n",
-  ),
-  (
-    "tests18.dat:11", "<!doctype html><table><caption><plaintext></plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <plaintext>\n|           \"</plaintext>\"\n",
-  ),
-  (
-    "tests18.dat:12", "<!doctype html><table><colgroup><plaintext></plaintext>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n|     <table>\n|       <colgroup>\n",
-  ),
-  (
-    "tests18.dat:13", "<!doctype html><select><plaintext></plaintext>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <plaintext>\n|         \"</plaintext>X\"\n",
-  ),
-  (
-    "tests18.dat:14", "<!doctype html><table><select><plaintext>a<caption>b", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <plaintext>\n|         \"a<caption>b\"\n|     <table>\n",
-  ),
-  (
-    "tests18.dat:15", "<!doctype html><template><plaintext>a</template>b", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <template>\n|       content\n|         <plaintext>\n|           \"a</template>b\"\n|   <body>\n",
-  ),
-  (
-    "tests18.dat:16", "<!doctype html><body></body><plaintext></plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
-  ),
-  (
-    "tests18.dat:17", "<!doctype html><frameset><plaintext></plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "tests18.dat:18", "<!doctype html><frameset></frameset><plaintext></plaintext>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "tests18.dat:19", "<!doctype html><body></body></html><plaintext></plaintext>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
-  ),
-  (
-    "tests18.dat:20", "<!doctype html><frameset></frameset></html><plaintext></plaintext>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "tests18.dat:21", "<!doctype html><svg><plaintext>a</plaintext>b", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg plaintext>\n|         \"a\"\n|       \"b\"\n",
-  ),
-  (
-    "tests18.dat:22", "<!doctype html><svg><title><plaintext>a</plaintext>b", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg title>\n|         <plaintext>\n|           \"a</plaintext>b\"\n",
-  ),
-  (
-    "tests18.dat:23", "<!doctype html><table><tr><style></script></style>abc", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"abc\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <style>\n|             \"</script>\"\n",
-  ),
-  (
-    "tests18.dat:24", "<!doctype html><table><tr><script></style></script>abc", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"abc\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <script>\n|             \"</style>\"\n",
-  ),
-  (
-    "tests18.dat:25", "<!doctype html><table><caption><style></script></style>abc",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <style>\n|           \"</script>\"\n|         \"abc\"\n",
-  ),
-  (
-    "tests18.dat:26", "<!doctype html><table><td><style></script></style>abc", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <style>\n|               \"</script>\"\n|             \"abc\"\n",
-  ),
-  (
-    "tests18.dat:27", "<!doctype html><select><script></style></script>abc", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <script>\n|         \"</style>\"\n|       \"abc\"\n",
-  ),
-  (
-    "tests18.dat:28", "<!doctype html><table><select><script></style></script>abc",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <script>\n|         \"</style>\"\n|       \"abc\"\n|     <table>\n",
-  ),
-  (
-    "tests18.dat:29", "<!doctype html><table><tr><select><script></style></script>abc",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <script>\n|         \"</style>\"\n|       \"abc\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
-  ),
-  (
-    "tests18.dat:30", "<!doctype html><frameset></frameset><noframes>abc", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|   <noframes>\n|     \"abc\"\n",
-  ),
-  (
-    "tests18.dat:31", "<!doctype html><frameset></frameset><noframes>abc</noframes><!--abc-->",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|   <noframes>\n|     \"abc\"\n|   <!-- abc -->\n",
-  ),
-  (
-    "tests18.dat:32", "<!doctype html><frameset></frameset></html><noframes>abc",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|   <noframes>\n|     \"abc\"\n",
-  ),
-  (
-    "tests18.dat:33", "<!doctype html><frameset></frameset></html><noframes>abc</noframes><!--abc-->",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|   <noframes>\n|     \"abc\"\n| <!-- abc -->\n",
-  ),
-  (
-    "tests18.dat:34", "<!doctype html><table><tr></tbody><tfoot>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|       <tfoot>\n",
-  ),
-  (
-    "tests18.dat:35", "<!doctype html><table><td><svg></svg>abc<td>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <svg svg>\n|             \"abc\"\n|           <td>\n",
-  ),
-  (
-    "tests20.dat:0", "<!doctype html><p><button><button>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|       <button>\n",
-  ),
-  (
-    "tests20.dat:1", "<!doctype html><p><button><address>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <address>\n",
-  ),
-  (
-    "tests20.dat:2", "<!doctype html><p><button><article>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <article>\n",
-  ),
-  (
-    "tests20.dat:3", "<!doctype html><p><button><aside>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <aside>\n",
-  ),
-  (
-    "tests20.dat:4", "<!doctype html><p><button><blockquote>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <blockquote>\n",
-  ),
-  (
-    "tests20.dat:5", "<!doctype html><p><button><center>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <center>\n",
-  ),
-  (
-    "tests20.dat:6", "<!doctype html><p><button><details>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <details>\n",
-  ),
-  (
-    "tests20.dat:7", "<!doctype html><p><button><dialog>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <dialog>\n",
-  ),
-  (
-    "tests20.dat:8", "<!doctype html><p><button><dir>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <dir>\n",
-  ),
-  (
-    "tests20.dat:9", "<!doctype html><p><button><div>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <div>\n",
-  ),
-  (
-    "tests20.dat:10", "<!doctype html><p><button><dl>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <dl>\n",
-  ),
-  (
-    "tests20.dat:11", "<!doctype html><p><button><fieldset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <fieldset>\n",
-  ),
-  (
-    "tests20.dat:12", "<!doctype html><p><button><figcaption>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <figcaption>\n",
-  ),
-  (
-    "tests20.dat:13", "<!doctype html><p><button><figure>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <figure>\n",
-  ),
-  (
-    "tests20.dat:14", "<!doctype html><p><button><footer>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <footer>\n",
-  ),
-  (
-    "tests20.dat:15", "<!doctype html><p><button><header>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <header>\n",
-  ),
-  (
-    "tests20.dat:16", "<!doctype html><p><button><hgroup>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <hgroup>\n",
-  ),
-  (
-    "tests20.dat:17", "<!doctype html><p><button><main>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <main>\n",
-  ),
-  (
-    "tests20.dat:18", "<!doctype html><p><button><menu>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <menu>\n",
-  ),
-  (
-    "tests20.dat:19", "<!doctype html><p><button><nav>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <nav>\n",
-  ),
-  (
-    "tests20.dat:20", "<!doctype html><p><button><ol>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <ol>\n",
-  ),
-  (
-    "tests20.dat:21", "<!doctype html><p><button><p>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <p>\n",
-  ),
-  (
-    "tests20.dat:22", "<!doctype html><p><button><search>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <search>\n",
-  ),
-  (
-    "tests20.dat:23", "<!doctype html><p><button><section>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <section>\n",
-  ),
-  (
-    "tests20.dat:24", "<!doctype html><p><button><summary>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <summary>\n",
-  ),
-  (
-    "tests20.dat:25", "<!doctype html><p><button><ul>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <ul>\n",
-  ),
-  (
-    "tests20.dat:26", "<!doctype html><p><button><h1>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <h1>\n",
-  ),
-  (
-    "tests20.dat:27", "<!doctype html><p><button><h6>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <h6>\n",
-  ),
-  (
-    "tests20.dat:28", "<!doctype html><p><button><listing>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <listing>\n",
-  ),
-  (
-    "tests20.dat:29", "<!doctype html><p><button><pre>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <pre>\n",
-  ),
-  (
-    "tests20.dat:30", "<!doctype html><p><button><form>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <form>\n",
-  ),
-  (
-    "tests20.dat:31", "<!doctype html><p><button><li>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <li>\n",
-  ),
-  (
-    "tests20.dat:32", "<!doctype html><p><button><dd>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <dd>\n",
-  ),
-  (
-    "tests20.dat:33", "<!doctype html><p><button><dt>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <dt>\n",
-  ),
-  (
-    "tests20.dat:34", "<!doctype html><p><button><plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <plaintext>\n",
-  ),
-  (
-    "tests20.dat:35", "<!doctype html><p><button><table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <table>\n",
-  ),
-  (
-    "tests20.dat:36", "<!doctype html><p><button><hr>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <hr>\n",
-  ),
-  (
-    "tests20.dat:37", "<!doctype html><p><button><xmp>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <xmp>\n",
-  ),
-  (
-    "tests20.dat:38", "<!doctype html><p><button></p>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <p>\n",
-  ),
-  (
-    "tests20.dat:39", "<!doctype html><button><p></button>x", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <button>\n|       <p>\n|     \"x\"\n",
-  ),
-  (
-    "tests20.dat:40", "<!doctype html><address><button></address>a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <address>\n|       <button>\n|     \"a\"\n",
-  ),
-  (
-    "tests20.dat:41", "<p><table></p>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <p>\n|       <table>\n",
-  ),
-  (
-    "tests20.dat:42", "<!doctype html><svg>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n",
-  ),
-  (
-    "tests20.dat:43", "<!doctype html><p><figcaption>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <figcaption>\n",
-  ),
-  (
-    "tests20.dat:44", "<!doctype html><p><summary>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <summary>\n",
-  ),
-  (
-    "tests20.dat:45", "<!doctype html><form><table><form>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <form>\n|       <table>\n",
-  ),
-  (
-    "tests20.dat:46", "<!doctype html><table><form><form>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <form>\n",
-  ),
-  (
-    "tests20.dat:47", "<!doctype html><table><form></table><form>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <form>\n",
-  ),
-  (
-    "tests20.dat:48", "<!doctype html><svg><foreignObject><p>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg foreignObject>\n|         <p>\n",
-  ),
-  (
-    "tests20.dat:49", "<!doctype html><svg><title>abc", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg title>\n|         \"abc\"\n",
-  ),
-  (
-    "tests20.dat:50", "<option><span><option>", "| <html>\n|   <head>\n|   <body>\n|     <option>\n|       <span>\n|         <option>\n",
-  ),
-  (
-    "tests20.dat:51", "<option><option>", "| <html>\n|   <head>\n|   <body>\n|     <option>\n|     <option>\n",
-  ),
-  (
-    "tests20.dat:52", "<math><annotation-xml><div>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|     <div>\n",
-  ),
-  (
-    "tests20.dat:53", "<math><annotation-xml encoding=\"application/svg+xml\"><div>",
-    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         encoding=\"application/svg+xml\"\n|     <div>\n",
-  ),
-  (
-    "tests20.dat:54", "<math><annotation-xml encoding=\"application/xhtml+xml\"><div>",
-    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         encoding=\"application/xhtml+xml\"\n|         <div>\n",
-  ),
-  (
-    "tests20.dat:55", "<math><annotation-xml encoding=\"aPPlication/xhtmL+xMl\"><div>",
-    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         encoding=\"aPPlication/xhtmL+xMl\"\n|         <div>\n",
-  ),
-  (
-    "tests20.dat:56", "<math><annotation-xml encoding=\"text/html\"><div>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         encoding=\"text/html\"\n|         <div>\n",
-  ),
-  (
-    "tests20.dat:57", "<math><annotation-xml encoding=\"Text/htmL\"><div>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         encoding=\"Text/htmL\"\n|         <div>\n",
-  ),
-  (
-    "tests20.dat:58", "<math><annotation-xml encoding=\" text/html \"><div>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         encoding=\" text/html \"\n|     <div>\n",
-  ),
-  (
-    "tests20.dat:59", "<math><annotation-xml> </annotation-xml>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         \" \"\n",
-  ),
-  (
-    "tests20.dat:60", "<math><annotation-xml>c</annotation-xml>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         \"c\"\n",
-  ),
-  (
-    "tests20.dat:61", "<math><annotation-xml><!--foo-->", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         <!-- foo -->\n",
-  ),
-  (
-    "tests20.dat:62", "<math><annotation-xml></svg>x", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         \"x\"\n",
-  ),
-  (
-    "tests20.dat:63", "<math><annotation-xml><svg>x", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         <svg svg>\n|           \"x\"\n",
-  ),
-  (
-    "tests22.dat:0", "<a><b><big><em><strong><div>X</a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <b>\n|         <big>\n|           <em>\n|             <strong>\n|     <big>\n|       <em>\n|         <strong>\n|           <div>\n|             <a>\n|               \"X\"\n",
-  ),
-  (
-    "tests22.dat:1", "<a><b><div id=1><div id=2><div id=3><div id=4><div id=5><div id=6><div id=7><div id=8>A</a>",
-    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <b>\n|     <b>\n|       <div>\n|         id=\"1\"\n|         <a>\n|         <div>\n|           id=\"2\"\n|           <a>\n|           <div>\n|             id=\"3\"\n|             <a>\n|             <div>\n|               id=\"4\"\n|               <a>\n|               <div>\n|                 id=\"5\"\n|                 <a>\n|                 <div>\n|                   id=\"6\"\n|                   <a>\n|                   <div>\n|                     id=\"7\"\n|                     <a>\n|                     <div>\n|                       id=\"8\"\n|                       <a>\n|                         \"A\"\n",
-  ),
-  (
-    "tests22.dat:2", "<a><b><div id=1><div id=2><div id=3><div id=4><div id=5><div id=6><div id=7><div id=8><div id=9>A</a>",
-    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <b>\n|     <b>\n|       <div>\n|         id=\"1\"\n|         <a>\n|         <div>\n|           id=\"2\"\n|           <a>\n|           <div>\n|             id=\"3\"\n|             <a>\n|             <div>\n|               id=\"4\"\n|               <a>\n|               <div>\n|                 id=\"5\"\n|                 <a>\n|                 <div>\n|                   id=\"6\"\n|                   <a>\n|                   <div>\n|                     id=\"7\"\n|                     <a>\n|                     <div>\n|                       id=\"8\"\n|                       <a>\n|                         <div>\n|                           id=\"9\"\n|                           \"A\"\n",
-  ),
-  (
-    "tests22.dat:3", "<a><b><div id=1><div id=2><div id=3><div id=4><div id=5><div id=6><div id=7><div id=8><div id=9><div id=10>A</a>",
-    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <b>\n|     <b>\n|       <div>\n|         id=\"1\"\n|         <a>\n|         <div>\n|           id=\"2\"\n|           <a>\n|           <div>\n|             id=\"3\"\n|             <a>\n|             <div>\n|               id=\"4\"\n|               <a>\n|               <div>\n|                 id=\"5\"\n|                 <a>\n|                 <div>\n|                   id=\"6\"\n|                   <a>\n|                   <div>\n|                     id=\"7\"\n|                     <a>\n|                     <div>\n|                       id=\"8\"\n|                       <a>\n|                         <div>\n|                           id=\"9\"\n|                           <div>\n|                             id=\"10\"\n|                             \"A\"\n",
-  ),
-  (
-    "tests22.dat:4", "<cite><b><cite><i><cite><i><cite><i><div>X</b>TEST", "| <html>\n|   <head>\n|   <body>\n|     <cite>\n|       <b>\n|         <cite>\n|           <i>\n|             <cite>\n|               <i>\n|                 <cite>\n|                   <i>\n|       <i>\n|         <i>\n|           <div>\n|             <b>\n|               \"X\"\n|             \"TEST\"\n",
-  ),
-  (
-    "tests23.dat:0", "<p><font size=4><font color=red><font size=4><font size=4><font size=4><font size=4><font size=4><font color=red><p>X",
-    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <font>\n|         size=\"4\"\n|         <font>\n|           color=\"red\"\n|           <font>\n|             size=\"4\"\n|             <font>\n|               size=\"4\"\n|               <font>\n|                 size=\"4\"\n|                 <font>\n|                   size=\"4\"\n|                   <font>\n|                     size=\"4\"\n|                     <font>\n|                       color=\"red\"\n|     <p>\n|       <font>\n|         color=\"red\"\n|         <font>\n|           size=\"4\"\n|           <font>\n|             size=\"4\"\n|             <font>\n|               size=\"4\"\n|               <font>\n|                 color=\"red\"\n|                 \"X\"\n",
-  ),
-  (
-    "tests23.dat:1", "<p><font size=4><font size=4><font size=4><font size=4><p>X",
-    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <font>\n|         size=\"4\"\n|         <font>\n|           size=\"4\"\n|           <font>\n|             size=\"4\"\n|             <font>\n|               size=\"4\"\n|     <p>\n|       <font>\n|         size=\"4\"\n|         <font>\n|           size=\"4\"\n|           <font>\n|             size=\"4\"\n|             \"X\"\n",
-  ),
-  (
-    "tests23.dat:2", "<p><font size=4><font size=4><font size=4><font size=\"5\"><font size=4><p>X",
-    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <font>\n|         size=\"4\"\n|         <font>\n|           size=\"4\"\n|           <font>\n|             size=\"4\"\n|             <font>\n|               size=\"5\"\n|               <font>\n|                 size=\"4\"\n|     <p>\n|       <font>\n|         size=\"4\"\n|         <font>\n|           size=\"4\"\n|           <font>\n|             size=\"5\"\n|             <font>\n|               size=\"4\"\n|               \"X\"\n",
-  ),
-  (
-    "tests23.dat:3", "<p><font size=4 id=a><font size=4 id=b><font size=4><font size=4><p>X",
-    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <font>\n|         id=\"a\"\n|         size=\"4\"\n|         <font>\n|           id=\"b\"\n|           size=\"4\"\n|           <font>\n|             size=\"4\"\n|             <font>\n|               size=\"4\"\n|     <p>\n|       <font>\n|         id=\"a\"\n|         size=\"4\"\n|         <font>\n|           id=\"b\"\n|           size=\"4\"\n|           <font>\n|             size=\"4\"\n|             <font>\n|               size=\"4\"\n|               \"X\"\n",
-  ),
-  (
-    "tests23.dat:4", "<p><b id=a><b id=a><b id=a><b><object><b id=a><b id=a>X</object><p>Y",
-    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <b>\n|         id=\"a\"\n|         <b>\n|           id=\"a\"\n|           <b>\n|             id=\"a\"\n|             <b>\n|               <object>\n|                 <b>\n|                   id=\"a\"\n|                   <b>\n|                     id=\"a\"\n|                     \"X\"\n|     <p>\n|       <b>\n|         id=\"a\"\n|         <b>\n|           id=\"a\"\n|           <b>\n|             id=\"a\"\n|             <b>\n|               \"Y\"\n",
-  ),
-  (
-    "tables01.dat:0", "<table><th>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <th>\n",
-  ),
-  (
-    "tables01.dat:1", "<table><td>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
-  ),
-  (
-    "tables01.dat:2", "<table><col foo='bar'>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n|         <col>\n|           foo=\"bar\"\n",
-  ),
-  (
-    "tables01.dat:3", "<table><colgroup></html>foo", "| <html>\n|   <head>\n|   <body>\n|     \"foo\"\n|     <table>\n|       <colgroup>\n",
-  ),
-  (
-    "tables01.dat:4", "<table></table><p>foo", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|     <p>\n|       \"foo\"\n",
-  ),
-  (
-    "tables01.dat:5", "<table></body></caption></col></colgroup></html></tbody></td></tfoot></th></thead></tr><td>",
-    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
-  ),
-  (
-    "tables01.dat:6", "<table><select><option>3</select></table>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|         \"3\"\n|     <table>\n",
-  ),
-  (
-    "tables01.dat:7", "<table><select><table></table></select></table>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|     <table>\n|     <table>\n",
-  ),
-  (
-    "tables01.dat:8", "<table><select></table>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|     <table>\n",
-  ),
-  (
-    "tables01.dat:9", "<table><select><option>A<tr><td>B</td></tr></table>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|         \"A\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"B\"\n",
-  ),
-  (
-    "tables01.dat:10", "<table><td></body></caption></col></colgroup></html>foo",
-    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"foo\"\n",
-  ),
-  (
-    "tables01.dat:11", "<table><td>A</table>B", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"A\"\n|     \"B\"\n",
-  ),
-  (
-    "tables01.dat:12", "<table><tr><caption>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|       <caption>\n",
-  ),
-  (
-    "tables01.dat:13", "<table><tr></body></caption></col></colgroup></html></td></th><td>foo",
-    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"foo\"\n",
-  ),
-  (
-    "tables01.dat:14", "<table><td><tr>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|         <tr>\n",
-  ),
-  (
-    "tables01.dat:15", "<table><td><button><td>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <button>\n|           <td>\n",
-  ),
-  (
-    "tables01.dat:16", "<table><tr><td><svg><desc><td>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <svg svg>\n|               <svg desc>\n|           <td>\n",
-  ),
-  (
-    "tables01.dat:17", "<div><table><svg><foreignObject><select><table><s>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <svg svg>\n|         <svg foreignObject>\n|           <select>\n|       <table>\n|       <s>\n|       <table>\n",
-  ),
-  (
-    "tables01.dat:18", "<table>a<!doctype html>", "| <html>\n|   <head>\n|   <body>\n|     \"a\"\n|     <table>\n",
-  ),
-  (
-    "entities01.dat:0", "FOO&gt;BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO>BAR\"\n",
-  ),
-  (
-    "entities01.dat:1", "FOO&gtBAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO>BAR\"\n",
-  ),
-  (
-    "entities01.dat:2", "FOO&gt BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO> BAR\"\n",
-  ),
-  (
-    "entities01.dat:3", "FOO&gt;;;BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO>;;BAR\"\n",
-  ),
-  (
-    "entities01.dat:4", "I'm &notit; I tell you", "| <html>\n|   <head>\n|   <body>\n|     \"I'm ¬it; I tell you\"\n",
-  ),
-  (
-    "entities01.dat:5", "I'm &notin; I tell you", "| <html>\n|   <head>\n|   <body>\n|     \"I'm ∉ I tell you\"\n",
-  ),
-  (
-    "entities01.dat:6", "&ammmp;", "| <html>\n|   <head>\n|   <body>\n|     \"&ammmp;\"\n",
-  ),
-  (
-    "entities01.dat:7", "&ammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmp;",
-    "| <html>\n|   <head>\n|   <body>\n|     \"&ammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmp;\"\n",
-  ),
-  (
-    "entities01.dat:8", "FOO& BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO& BAR\"\n",
-  ),
-  (
-    "entities01.dat:9", "FOO&<BAR>", "| <html>\n|   <head>\n|   <body>\n|     \"FOO&\"\n|     <bar>\n",
-  ),
-  (
-    "entities01.dat:10", "FOO&&&&gt;BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO&&&>BAR\"\n",
-  ),
-  (
-    "entities01.dat:11", "FOO&#41;BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO)BAR\"\n",
-  ),
-  (
-    "entities01.dat:12", "FOO&#x41;BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOOABAR\"\n",
-  ),
-  (
-    "entities01.dat:13", "FOO&#X41;BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOOABAR\"\n",
-  ),
-  (
-    "entities01.dat:14", "FOO&#BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO&#BAR\"\n",
-  ),
-  (
-    "entities01.dat:15", "FOO&#ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO&#ZOO\"\n",
-  ),
-  (
-    "entities01.dat:16", "FOO&#xBAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOOºR\"\n",
-  ),
-  (
-    "entities01.dat:17", "FOO&#xZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO&#xZOO\"\n",
-  ),
-  (
-    "entities01.dat:18", "FOO&#XZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO&#XZOO\"\n",
-  ),
-  (
-    "entities01.dat:19", "FOO&#41BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO)BAR\"\n",
-  ),
-  (
-    "entities01.dat:20", "FOO&#x41BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO䆺R\"\n",
-  ),
-  (
-    "entities01.dat:21", "FOO&#x41ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOAZOO\"\n",
-  ),
-  (
-    "entities01.dat:22", "FOO&#x0000;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
-  ),
-  (
-    "entities01.dat:23", "FOO&#x0078;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOxZOO\"\n",
-  ),
-  (
-    "entities01.dat:24", "FOO&#x0079;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOyZOO\"\n",
-  ),
-  (
-    "entities01.dat:25", "FOO&#x0080;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO€ZOO\"\n",
-  ),
-  (
-    "entities01.dat:26", "FOO&#x0081;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOZOO\"\n",
-  ),
-  (
-    "entities01.dat:27", "FOO&#x0082;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO‚ZOO\"\n",
-  ),
-  (
-    "entities01.dat:28", "FOO&#x0083;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOƒZOO\"\n",
-  ),
-  (
-    "entities01.dat:29", "FOO&#x0084;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO„ZOO\"\n",
-  ),
-  (
-    "entities01.dat:30", "FOO&#x0085;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO…ZOO\"\n",
-  ),
-  (
-    "entities01.dat:31", "FOO&#x0086;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO†ZOO\"\n",
-  ),
-  (
-    "entities01.dat:32", "FOO&#x0087;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO‡ZOO\"\n",
-  ),
-  (
-    "entities01.dat:33", "FOO&#x0088;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOˆZOO\"\n",
-  ),
-  (
-    "entities01.dat:34", "FOO&#x0089;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO‰ZOO\"\n",
-  ),
-  (
-    "entities01.dat:35", "FOO&#x008A;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOŠZOO\"\n",
-  ),
-  (
-    "entities01.dat:36", "FOO&#x008B;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO‹ZOO\"\n",
-  ),
-  (
-    "entities01.dat:37", "FOO&#x008C;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOŒZOO\"\n",
-  ),
-  (
-    "entities01.dat:38", "FOO&#x008D;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOZOO\"\n",
-  ),
-  (
-    "entities01.dat:39", "FOO&#x008E;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOŽZOO\"\n",
-  ),
-  (
-    "entities01.dat:40", "FOO&#x008F;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOZOO\"\n",
-  ),
-  (
-    "entities01.dat:41", "FOO&#x0090;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOZOO\"\n",
-  ),
-  (
-    "entities01.dat:42", "FOO&#x0091;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO‘ZOO\"\n",
-  ),
-  (
-    "entities01.dat:43", "FOO&#x0092;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO’ZOO\"\n",
-  ),
-  (
-    "entities01.dat:44", "FOO&#x0093;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO“ZOO\"\n",
-  ),
-  (
-    "entities01.dat:45", "FOO&#x0094;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO”ZOO\"\n",
-  ),
-  (
-    "entities01.dat:46", "FOO&#x0095;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO•ZOO\"\n",
-  ),
-  (
-    "entities01.dat:47", "FOO&#x0096;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO–ZOO\"\n",
-  ),
-  (
-    "entities01.dat:48", "FOO&#x0097;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO—ZOO\"\n",
-  ),
-  (
-    "entities01.dat:49", "FOO&#x0098;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO˜ZOO\"\n",
-  ),
-  (
-    "entities01.dat:50", "FOO&#x0099;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO™ZOO\"\n",
-  ),
-  (
-    "entities01.dat:51", "FOO&#x009A;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOšZOO\"\n",
-  ),
-  (
-    "entities01.dat:52", "FOO&#x009B;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO›ZOO\"\n",
-  ),
-  (
-    "entities01.dat:53", "FOO&#x009C;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOœZOO\"\n",
-  ),
-  (
-    "entities01.dat:54", "FOO&#x009D;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOZOO\"\n",
-  ),
-  (
-    "entities01.dat:55", "FOO&#x009E;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOžZOO\"\n",
-  ),
-  (
-    "entities01.dat:56", "FOO&#x009F;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOŸZOO\"\n",
-  ),
-  (
-    "entities01.dat:57", "FOO&#x00A0;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO ZOO\"\n",
-  ),
-  (
-    "entities01.dat:58", "FOO&#xD7FF;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO퟿ZOO\"\n",
-  ),
-  (
-    "entities01.dat:59", "FOO&#xD800;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
-  ),
-  (
-    "entities01.dat:60", "FOO&#xD801;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
-  ),
-  (
-    "entities01.dat:61", "FOO&#xDFFE;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
-  ),
-  (
-    "entities01.dat:62", "FOO&#xDFFF;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
-  ),
-  (
-    "entities01.dat:63", "FOO&#xE000;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOZOO\"\n",
-  ),
-  (
-    "entities01.dat:64", "FOO&#x10FFFE;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO􏿾ZOO\"\n",
-  ),
-  (
-    "entities01.dat:65", "FOO&#x1087D4;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO􈟔ZOO\"\n",
-  ),
-  (
-    "entities01.dat:66", "FOO&#x10FFFF;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO􏿿ZOO\"\n",
-  ),
-  (
-    "entities01.dat:67", "FOO&#x110000;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
-  ),
-  (
-    "entities01.dat:68", "FOO&#xFFFFFF;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
-  ),
-  (
-    "entities01.dat:69", "FOO&#11111111111", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�\"\n",
-  ),
-  (
-    "entities01.dat:70", "FOO&#1111111111", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�\"\n",
-  ),
-  (
-    "entities01.dat:71", "FOO&#111111111111", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�\"\n",
-  ),
-  (
-    "entities01.dat:72", "FOO&#11111111111ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
-  ),
-  (
-    "entities01.dat:73", "FOO&#1111111111ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
-  ),
-  (
-    "entities01.dat:74", "FOO&#111111111111ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
-  ),
-  (
-    "entities02.dat:0", "<div bar=\"ZZ&gt;YY\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ>YY\"\n",
-  ),
-  (
-    "entities02.dat:1", "<div bar=\"ZZ&\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&\"\n",
-  ),
-  (
-    "entities02.dat:2", "<div bar='ZZ&'></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&\"\n",
-  ),
-  (
-    "entities02.dat:3", "<div bar=ZZ&></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&\"\n",
-  ),
-  (
-    "entities02.dat:4", "<div bar=\"ZZ&gt=YY\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&gt=YY\"\n",
-  ),
-  (
-    "entities02.dat:5", "<div bar=\"ZZ&gt0YY\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&gt0YY\"\n",
-  ),
-  (
-    "entities02.dat:6", "<div bar=\"ZZ&gt9YY\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&gt9YY\"\n",
-  ),
-  (
-    "entities02.dat:7", "<div bar=\"ZZ&gtaYY\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&gtaYY\"\n",
-  ),
-  (
-    "entities02.dat:8", "<div bar=\"ZZ&gtZYY\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&gtZYY\"\n",
-  ),
-  (
-    "entities02.dat:9", "<div bar=\"ZZ&gt YY\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ> YY\"\n",
-  ),
-  (
-    "entities02.dat:10", "<div bar=\"ZZ&gt\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ>\"\n",
-  ),
-  (
-    "entities02.dat:11", "<div bar='ZZ&gt'></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ>\"\n",
-  ),
-  (
-    "entities02.dat:12", "<div bar=ZZ&gt></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ>\"\n",
-  ),
-  (
-    "entities02.dat:13", "<div bar=\"ZZ&pound_id=23\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ£_id=23\"\n",
-  ),
-  (
-    "entities02.dat:14", "<div bar=\"ZZ&prod_id=23\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&prod_id=23\"\n",
-  ),
-  (
-    "entities02.dat:15", "<div bar=\"ZZ&pound;_id=23\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ£_id=23\"\n",
-  ),
-  (
-    "entities02.dat:16", "<div bar=\"ZZ&prod;_id=23\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ∏_id=23\"\n",
-  ),
-  (
-    "entities02.dat:17", "<div bar=\"ZZ&pound=23\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&pound=23\"\n",
-  ),
-  (
-    "entities02.dat:18", "<div bar=\"ZZ&prod=23\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&prod=23\"\n",
-  ),
-  (
-    "entities02.dat:19", "<div>ZZ&pound_id=23</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"ZZ£_id=23\"\n",
-  ),
-  (
-    "entities02.dat:20", "<div>ZZ&prod_id=23</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"ZZ&prod_id=23\"\n",
-  ),
-  (
-    "entities02.dat:21", "<div>ZZ&pound;_id=23</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"ZZ£_id=23\"\n",
-  ),
-  (
-    "entities02.dat:22", "<div>ZZ&prod;_id=23</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"ZZ∏_id=23\"\n",
-  ),
-  (
-    "entities02.dat:23", "<div>ZZ&pound=23</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"ZZ£=23\"\n",
-  ),
-  (
-    "entities02.dat:24", "<div>ZZ&prod=23</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"ZZ&prod=23\"\n",
-  ),
-  (
-    "entities02.dat:25", "<div>ZZ&AElig=</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"ZZÆ=\"\n",
-  ),
-  (
-    "comments01.dat:0", "FOO<!-- BAR -->BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR  -->\n|     \"BAZ\"\n",
-  ),
-  (
-    "comments01.dat:1", "FOO<!-- BAR --!>BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR  -->\n|     \"BAZ\"\n",
-  ),
-  (
-    "comments01.dat:2", "FOO<!-- BAR --! >BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR --! >BAZ -->\n",
-  ),
-  (
-    "comments01.dat:3", "FOO<!-- BAR --!\n>BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR --!\n>BAZ -->\n",
-  ),
-  (
-    "comments01.dat:4", "FOO<!-- BAR --   >BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR --   >BAZ -->\n",
-  ),
-  (
-    "comments01.dat:5", "FOO<!-- BAR -- <QUX> -- MUX -->BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR -- <QUX> -- MUX  -->\n|     \"BAZ\"\n",
-  ),
-  (
-    "comments01.dat:6", "FOO<!-- BAR -- <QUX> -- MUX --!>BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR -- <QUX> -- MUX  -->\n|     \"BAZ\"\n",
-  ),
-  (
-    "comments01.dat:7", "FOO<!-- BAR -- <QUX> -- MUX -- >BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR -- <QUX> -- MUX -- >BAZ -->\n",
-  ),
-  (
-    "comments01.dat:8", "FOO<!---->BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  -->\n|     \"BAZ\"\n",
-  ),
-  (
-    "comments01.dat:9", "FOO<!--->BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  -->\n|     \"BAZ\"\n",
-  ),
-  (
-    "comments01.dat:10", "FOO<!-->BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  -->\n|     \"BAZ\"\n",
-  ),
-  (
-    "comments01.dat:11", "<?xml version=\"1.0\">Hi", "| <!-- ?xml version=\"1.0\" -->\n| <html>\n|   <head>\n|   <body>\n|     \"Hi\"\n",
-  ),
-  (
-    "comments01.dat:12", "<?xml version=\"1.0\">", "| <!-- ?xml version=\"1.0\" -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "comments01.dat:13", "<?xml version", "| <!-- ?xml version -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "comments01.dat:14", "FOO<!----->BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!-- - -->\n|     \"BAZ\"\n",
-  ),
-  (
-    "comments01.dat:15", "<html><!-- comment --><title>Comment before head</title>",
-    "| <html>\n|   <!--  comment  -->\n|   <head>\n|     <title>\n|       \"Comment before head\"\n|   <body>\n",
-  ),
-  (
-    "doctype01.dat:0", "<!DOCTYPE html>Hello", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:1", "<!dOctYpE HtMl>Hello", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:2", "<!DOCTYPEhtml>Hello", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:3", "<!DOCTYPE>Hello", "| <!DOCTYPE >\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:4", "<!DOCTYPE >Hello", "| <!DOCTYPE >\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:5", "<!DOCTYPE potato>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:6", "<!DOCTYPE potato >Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:7", "<!DOCTYPE potato taco>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:8", "<!DOCTYPE potato taco \"ddd>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:9", "<!DOCTYPE potato sYstEM>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:10", "<!DOCTYPE potato sYstEM    >Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:11", "<!DOCTYPE   potato       sYstEM  ggg>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:12", "<!DOCTYPE potato SYSTEM taco  >Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:13", "<!DOCTYPE potato SYSTEM 'taco\"'>Hello", "| <!DOCTYPE potato \"\" \"taco\"\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:14", "<!DOCTYPE potato SYSTEM \"taco\">Hello", "| <!DOCTYPE potato \"\" \"taco\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:15", "<!DOCTYPE potato SYSTEM \"tai'co\">Hello", "| <!DOCTYPE potato \"\" \"tai'co\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:16", "<!DOCTYPE potato SYSTEMtaco \"ddd\">Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:17", "<!DOCTYPE potato grass SYSTEM taco>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:18", "<!DOCTYPE potato pUbLIc>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:19", "<!DOCTYPE potato pUbLIc >Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:20", "<!DOCTYPE potato pUbLIcgoof>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:21", "<!DOCTYPE potato PUBLIC goof>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:22", "<!DOCTYPE potato PUBLIC \"go'of\">Hello", "| <!DOCTYPE potato \"go'of\" \"\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:23", "<!DOCTYPE potato PUBLIC 'go'of'>Hello", "| <!DOCTYPE potato \"go\" \"\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:24", "<!DOCTYPE potato PUBLIC 'go:hh   of' >Hello", "| <!DOCTYPE potato \"go:hh   of\" \"\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:25", "<!DOCTYPE potato PUBLIC \"W3C-//dfdf\" SYSTEM ggg>Hello",
-    "| <!DOCTYPE potato \"W3C-//dfdf\" \"\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:26", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n   \"http://www.w3.org/TR/html4/strict.dtd\">Hello",
-    "| <!DOCTYPE html \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:27", "<!DOCTYPE ...>Hello", "| <!DOCTYPE ...>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
-  ),
-  (
-    "doctype01.dat:28", "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">",
-    "| <!DOCTYPE html \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "doctype01.dat:29", "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//EN\"\n\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">",
-    "| <!DOCTYPE html \"-//W3C//DTD XHTML 1.0 Frameset//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "doctype01.dat:30", "<!DOCTYPE root-element [SYSTEM OR PUBLIC FPI] \"uri\" [ \n<!-- internal declarations -->\n]>",
-    "| <!DOCTYPE root-element>\n| <html>\n|   <head>\n|   <body>\n|     \"]>\"\n",
-  ),
-  (
-    "doctype01.dat:31", "<!DOCTYPE html PUBLIC\n  \"-//WAPFORUM//DTD XHTML Mobile 1.0//EN\"\n    \"http://www.wapforum.org/DTD/xhtml-mobile10.dtd\">",
-    "| <!DOCTYPE html \"-//WAPFORUM//DTD XHTML Mobile 1.0//EN\" \"http://www.wapforum.org/DTD/xhtml-mobile10.dtd\">\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "doctype01.dat:32", "<!DOCTYPE HTML SYSTEM \"http://www.w3.org/DTD/HTML4-strict.dtd\"><body><b>Mine!</b></body>",
-    "| <!DOCTYPE html \"\" \"http://www.w3.org/DTD/HTML4-strict.dtd\">\n| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"Mine!\"\n",
-  ),
-  (
-    "doctype01.dat:33", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\"http://www.w3.org/TR/html4/strict.dtd\">",
-    "| <!DOCTYPE html \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "doctype01.dat:34", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"'http://www.w3.org/TR/html4/strict.dtd'>",
-    "| <!DOCTYPE html \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "doctype01.dat:35", "<!DOCTYPE HTML PUBLIC\"-//W3C//DTD HTML 4.01//EN\"'http://www.w3.org/TR/html4/strict.dtd'>",
-    "| <!DOCTYPE html \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "doctype01.dat:36", "<!DOCTYPE HTML PUBLIC'-//W3C//DTD HTML 4.01//EN''http://www.w3.org/TR/html4/strict.dtd'>",
-    "| <!DOCTYPE html \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:0", "<svg><![CDATA[foo\nbar]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"foo\nbar\"\n",
-  ),
-  (
-    "domjs-unsafe.dat:1", "<svg><![CDATA[foo\nbar]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"foo\nbar\"\n",
-  ),
-  (
-    "domjs-unsafe.dat:2", "<svg><![CDATA[foo\nbar]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"foo\nbar\"\n",
-  ),
-  (
-    "domjs-unsafe.dat:3", "<script>a='\u{0}'</script>", "| <html>\n|   <head>\n|     <script>\n|       \"a='�'\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:4", "<script type=\"data\"><!--\u{0}</script>", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--�\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:5", "<script type=\"data\"><!--foo\u{0}</script>", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--foo�\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:6", "<script type=\"data\"><!-- foo-\u{0}</script>", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!-- foo-�\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:7", "<script type=\"data\"><!-- foo--\u{0}</script>", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!-- foo--�\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:8", "<script type=\"data\"><!-- foo-", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!-- foo-\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:9", "<script type=\"data\"><!-- foo-<</script>", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!-- foo-<\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:10", "<script type=\"data\"><!-- foo-<S", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!-- foo-<S\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:11", "<script type=\"data\"><!-- foo-</SCRIPT>", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!-- foo-\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:12", "<script type=\"data\"><!--<p></script>", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<p>\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:13", "<script type=\"data\"><!--<script></script></script>",
-    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script></script>\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:14", "<script type=\"data\"><!--<script>\u{0}</script></script>",
-    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script>�</script>\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:15", "<script type=\"data\"><!--<script>-\u{0}</script></script>",
-    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script>-�</script>\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:16", "<script type=\"data\"><!--<script>--\u{0}</script></script>",
-    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script>--�</script>\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:17", "<script type=\"data\"><!--<script>---</script></script>",
-    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script>---</script>\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:18", "<script type=\"data\"><!--<script></scrip></SCRIPT></script>",
-    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script></scrip></SCRIPT>\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:19", "<script type=\"data\"><!--<script></scrip </SCRIPT></script>",
-    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script></scrip </SCRIPT>\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:20", "<script type=\"data\"><!--<script></scrip/</SCRIPT></script>",
-    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script></scrip/</SCRIPT>\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:21", "<script type=\"data\"></scrip/></script>", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"</scrip/>\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:22", "<script type=\"data\"></scrip ></script>", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"</scrip >\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:23", "<script type=\"data\"><!--</scrip></script>", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--</scrip>\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:24", "<script type=\"data\"><!--</scrip </script>", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--</scrip \"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:25", "<script type=\"data\"><!--</scrip/</script>", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--</scrip/\"\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:26", "<!DOCTYPE html><!DOCTYPE html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:27", "<html><!DOCTYPE html>", "| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:28", "<html><head><!DOCTYPE html></head>", "| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:29", "<html><head></head><!DOCTYPE html>", "| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:30", "<body></body><!DOCTYPE html>", "| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:31", "<table><!DOCTYPE html></table>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n",
-  ),
-  (
-    "domjs-unsafe.dat:32", "<select><!DOCTYPE html></select>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n",
-  ),
-  (
-    "domjs-unsafe.dat:33", "<table><colgroup><!DOCTYPE html></colgroup></table>",
-    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n",
-  ),
-  (
-    "domjs-unsafe.dat:34", "<table><colgroup><!--test--></colgroup></table>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n|         <!-- test -->\n",
-  ),
-  (
-    "domjs-unsafe.dat:35", "<table><colgroup><html></colgroup></table>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n",
-  ),
-  (
-    "domjs-unsafe.dat:36", "<table><colgroup> foo</colgroup></table>", "| <html>\n|   <head>\n|   <body>\n|     \"foo\"\n|     <table>\n|       <colgroup>\n|         \" \"\n",
-  ),
-  (
-    "domjs-unsafe.dat:37", "<select><!--test--></select>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <!-- test -->\n",
-  ),
-  (
-    "domjs-unsafe.dat:38", "<select><html></select>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n",
-  ),
-  (
-    "domjs-unsafe.dat:39", "<frameset><html></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "domjs-unsafe.dat:40", "<frameset></frameset><html>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "domjs-unsafe.dat:41", "<frameset></frameset><!DOCTYPE html>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "domjs-unsafe.dat:42", "<html><body></body></html><!DOCTYPE html>", "| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "domjs-unsafe.dat:43", "<svg><!DOCTYPE html></svg>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n",
-  ),
-  (
-    "domjs-unsafe.dat:44", "<svg><font></font></svg>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg font>\n",
-  ),
-  (
-    "domjs-unsafe.dat:45", "<svg><font id=foo></font></svg>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg font>\n|         id=\"foo\"\n",
-  ),
-  (
-    "domjs-unsafe.dat:46", "<svg><font size=4></font></svg>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|     <font>\n|       size=\"4\"\n",
-  ),
-  (
-    "domjs-unsafe.dat:47", "<svg><font color=red></font></svg>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|     <font>\n|       color=\"red\"\n",
-  ),
-  (
-    "domjs-unsafe.dat:48", "<svg><font font=sans></font></svg>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg font>\n|         font=\"sans\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:0", "FOO&#x000D;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\nZOO\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:1", "<html>\u{0}<frameset></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "plain-text-unsafe.dat:2", "<html> \u{0} <frameset></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "plain-text-unsafe.dat:3", "<html>a\u{0}a<frameset></frameset>", "| <html>\n|   <head>\n|   <body>\n|     \"aa\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:4", "<html>\u{0}\u{0}<frameset></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "plain-text-unsafe.dat:5", "<html>\u{0}\n<frameset></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "plain-text-unsafe.dat:6", "<html><select>\u{0}", "| <html>\n|   <head>\n|   <body>\n|     <select>\n",
-  ),
-  ("plain-text-unsafe.dat:7", "\u{0}", "| <html>\n|   <head>\n|   <body>\n"),
-  (
-    "plain-text-unsafe.dat:8", "<body>\u{0}", "| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "plain-text-unsafe.dat:9", "<plaintext>\u{0}filler\u{0}text\u{0}", "| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"�filler�text�\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:10", "<svg><![CDATA[\u{0}filler\u{0}text\u{0}]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"�filler�text�\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:11", "<body><!\u{0}>", "| <html>\n|   <head>\n|   <body>\n|     <!-- � -->\n",
-  ),
-  (
-    "plain-text-unsafe.dat:12", "<body><!\u{0}filler\u{0}text>", "| <html>\n|   <head>\n|   <body>\n|     <!-- �filler�text -->\n",
-  ),
-  (
-    "plain-text-unsafe.dat:13", "<body><svg><foreignObject>\u{0}filler\u{0}text",
-    "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg foreignObject>\n|         \"fillertext\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:14", "<svg>\u{0}filler\u{0}text", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"�filler�text\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:15", "<svg>\u{0}<frameset>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"�\"\n|       <svg frameset>\n",
-  ),
-  (
-    "plain-text-unsafe.dat:16", "<svg>\u{0} <frameset>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"� \"\n|       <svg frameset>\n",
-  ),
-  (
-    "plain-text-unsafe.dat:17", "<svg>\u{0}a<frameset>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"�a\"\n|       <svg frameset>\n",
-  ),
-  (
-    "plain-text-unsafe.dat:18", "<svg>\u{0}</svg><frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "plain-text-unsafe.dat:19", "<svg>\u{0} </svg><frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "plain-text-unsafe.dat:20", "<svg>\u{0}a</svg><frameset>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"�a\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:21", "<svg><path></path></svg><frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "plain-text-unsafe.dat:22", "<svg><p><frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "plain-text-unsafe.dat:23", "<!DOCTYPE html><pre>\n\nA</pre>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"\nA\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:24", "<!DOCTYPE html><pre>\n\nA</pre>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"\nA\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:25", "<!DOCTYPE html><pre>\nA</pre>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"A\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:26", "<!DOCTYPE html><table><tr><td><math><mtext>\u{0}a",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <math math>\n|               <math mtext>\n|                 \"a\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:27", "<!DOCTYPE html><table><tr><td><svg><foreignObject>\u{0}a",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <svg svg>\n|               <svg foreignObject>\n|                 \"a\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:28", "<!DOCTYPE html><math><mi>a\u{0}b", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mi>\n|         \"ab\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:29", "<!DOCTYPE html><math><mo>a\u{0}b", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mo>\n|         \"ab\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:30", "<!DOCTYPE html><math><mn>a\u{0}b", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mn>\n|         \"ab\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:31", "<!DOCTYPE html><math><ms>a\u{0}b", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math ms>\n|         \"ab\"\n",
-  ),
-  (
-    "plain-text-unsafe.dat:32", "<!DOCTYPE html><math><mtext>a\u{0}b", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mtext>\n|         \"ab\"\n",
-  ),
-  (
-    "scriptdata01.dat:0", "FOO<script>'Hello'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'Hello'\"\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:1", "FOO<script></script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:2", "FOO<script></script >BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:3", "FOO<script></script/>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:4", "FOO<script></script/ >BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:5", "FOO<script type=\"text/plain\"></scriptx>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"</scriptx>BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:6", "FOO<script></script foo=\">\" dd>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:7", "FOO<script>'<'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<'\"\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:8", "FOO<script>'<!'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!'\"\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:9", "FOO<script>'<!-'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!-'\"\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:10", "FOO<script>'<!--'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!--'\"\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:11", "FOO<script>'<!---'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!---'\"\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:12", "FOO<script>'<!-->'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!-->'\"\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:13", "FOO<script>'<!-- potato'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!-- potato'\"\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:14", "FOO<script>'<!-- <sCrIpt'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!-- <sCrIpt'\"\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:15", "FOO<script type=\"text/plain\">'<!-- <sCrIpt>'</script>BAR",
-    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt>'</script>BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:16", "FOO<script type=\"text/plain\">'<!-- <sCrIpt> -'</script>BAR",
-    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt> -'</script>BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:17", "FOO<script type=\"text/plain\">'<!-- <sCrIpt> --'</script>BAR",
-    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt> --'</script>BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:18", "FOO<script>'<!-- <sCrIpt> -->'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!-- <sCrIpt> -->'\"\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:19", "FOO<script type=\"text/plain\">'<!-- <sCrIpt> --!>'</script>BAR",
-    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt> --!>'</script>BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:20", "FOO<script type=\"text/plain\">'<!-- <sCrIpt> -- >'</script>BAR",
-    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt> -- >'</script>BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:21", "FOO<script type=\"text/plain\">'<!-- <sCrIpt '</script>BAR",
-    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt '</script>BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:22", "FOO<script type=\"text/plain\">'<!-- <sCrIpt/'</script>BAR",
-    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt/'</script>BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:23", "FOO<script type=\"text/plain\">'<!-- <sCrIpt\\'</script>BAR",
-    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt\\'\"\n|     \"BAR\"\n",
-  ),
-  (
-    "scriptdata01.dat:24", "FOO<script type=\"text/plain\">'<!-- <sCrIpt/'</script>BAR</script>QUX",
-    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt/'</script>BAR\"\n|     \"QUX\"\n",
-  ),
-  (
-    "scriptdata01.dat:25", "FOO<script><!--<script>-></script>--></script>QUX", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"<!--<script>-></script>-->\"\n|     \"QUX\"\n",
-  ),
-  (
-    "webkit01.dat:0", "Test", "| <html>\n|   <head>\n|   <body>\n|     \"Test\"\n",
-  ),
-  (
-    "webkit01.dat:1", "<div></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n",
-  ),
-  (
-    "webkit01.dat:2", "<div>Test</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"Test\"\n",
-  ),
-  ("webkit01.dat:3", "<di", "| <html>\n|   <head>\n|   <body>\n"),
-  (
-    "webkit01.dat:4", "<div>Hello</div>\n<script>\nconsole.log(\"PASS\");\n</script>\n<div>Bye</div>",
-    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"Hello\"\n|     \"\n\"\n|     <script>\n|       \"\nconsole.log(\"PASS\");\n\"\n|     \"\n\"\n|     <div>\n|       \"Bye\"\n",
-  ),
-  (
-    "webkit01.dat:5", "<div foo=\"bar\">Hello</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       foo=\"bar\"\n|       \"Hello\"\n",
-  ),
-  (
-    "webkit01.dat:6", "<div>Hello</div>\n<script>\nconsole.log(\"FOO<span>BAR</span>BAZ\");\n</script>\n<div>Bye</div>",
-    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"Hello\"\n|     \"\n\"\n|     <script>\n|       \"\nconsole.log(\"FOO<span>BAR</span>BAZ\");\n\"\n|     \"\n\"\n|     <div>\n|       \"Bye\"\n",
-  ),
-  (
-    "webkit01.dat:7", "<foo bar=\"baz\"></foo><potato quack=\"duck\"></potato>",
-    "| <html>\n|   <head>\n|   <body>\n|     <foo>\n|       bar=\"baz\"\n|     <potato>\n|       quack=\"duck\"\n",
-  ),
-  (
-    "webkit01.dat:8", "<foo bar=\"baz\"><potato quack=\"duck\"></potato></foo>",
-    "| <html>\n|   <head>\n|   <body>\n|     <foo>\n|       bar=\"baz\"\n|       <potato>\n|         quack=\"duck\"\n",
-  ),
-  (
-    "webkit01.dat:9", "<foo></foo bar=\"baz\"><potato></potato quack=\"duck\">",
-    "| <html>\n|   <head>\n|   <body>\n|     <foo>\n|     <potato>\n",
-  ),
-  (
-    "webkit01.dat:10", "</ tttt>", "| <!--  tttt -->\n| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "webkit01.dat:11", "<div FOO ><img><img></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       foo=\"\"\n|       <img>\n|       <img>\n",
-  ),
-  (
-    "webkit01.dat:12", "<p>Test</p<p>Test2</p>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"TestTest2\"\n",
-  ),
-  (
-    "webkit01.dat:13", "<rdar://problem/6869687>", "| <html>\n|   <head>\n|   <body>\n|     <rdar:>\n|       6869687=\"\"\n|       problem=\"\"\n",
-  ),
-  (
-    "webkit01.dat:14", "<A>test< /A>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"test< /A>\"\n",
-  ),
-  ("webkit01.dat:15", "&lt;", "| <html>\n|   <head>\n|   <body>\n|     \"<\"\n"),
-  (
-    "webkit01.dat:16", "<body foo='bar'><body foo='baz' yo='mama'>", "| <html>\n|   <head>\n|   <body>\n|     foo=\"bar\"\n|     yo=\"mama\"\n",
-  ),
-  (
-    "webkit01.dat:17", "<body></br foo=\"bar\"></body>", "| <html>\n|   <head>\n|   <body>\n|     <br>\n",
-  ),
-  (
-    "webkit01.dat:18", "<bdy><br foo=\"bar\"></body>", "| <html>\n|   <head>\n|   <body>\n|     <bdy>\n|       <br>\n|         foo=\"bar\"\n",
-  ),
-  (
-    "webkit01.dat:19", "<body></body></br foo=\"bar\">", "| <html>\n|   <head>\n|   <body>\n|     <br>\n",
-  ),
-  (
-    "webkit01.dat:20", "<bdy></body><br foo=\"bar\">", "| <html>\n|   <head>\n|   <body>\n|     <bdy>\n|       <br>\n|         foo=\"bar\"\n",
-  ),
-  (
-    "webkit01.dat:21", "<html><body></body></html><!-- Hi there -->", "| <html>\n|   <head>\n|   <body>\n| <!--  Hi there  -->\n",
-  ),
-  (
-    "webkit01.dat:22", "<html><body></body></html><!-- Comment A --><!-- Comment B --><!-- Comment C --><!-- Comment D --><!-- Comment E -->",
-    "| <html>\n|   <head>\n|   <body>\n| <!--  Comment A  -->\n| <!--  Comment B  -->\n| <!--  Comment C  -->\n| <!--  Comment D  -->\n| <!--  Comment E  -->\n",
-  ),
-  (
-    "webkit01.dat:23", "<html><body></body></html>x<!-- Hi there -->", "| <html>\n|   <head>\n|   <body>\n|     \"x\"\n|     <!--  Hi there  -->\n",
-  ),
-  (
-    "webkit01.dat:24", "<html><body></body></html>x<!-- Hi there --></html><!-- Again -->",
-    "| <html>\n|   <head>\n|   <body>\n|     \"x\"\n|     <!--  Hi there  -->\n| <!--  Again  -->\n",
-  ),
-  (
-    "webkit01.dat:25", "<html><body></body></html>x<!-- Hi there --></body></html><!-- Again -->",
-    "| <html>\n|   <head>\n|   <body>\n|     \"x\"\n|     <!--  Hi there  -->\n| <!--  Again  -->\n",
-  ),
-  (
-    "webkit01.dat:26", "<html><body></body>\n   <!-- Hi there --></html>", "| <html>\n|   <head>\n|   <body>\n|     \"\n   \"\n|   <!--  Hi there  -->\n",
-  ),
-  (
-    "webkit01.dat:27", "<html><body></body></html>\n   <!-- Hi there -->", "| <html>\n|   <head>\n|   <body>\n|     \"\n   \"\n| <!--  Hi there  -->\n",
-  ),
-  (
-    "webkit01.dat:28", "<html><body><ruby><div><rp>xx</rp></div></ruby></body></html>",
-    "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       <div>\n|         <rp>\n|           \"xx\"\n",
-  ),
-  (
-    "webkit01.dat:29", "<html><body><ruby><div><rt>xx</rt></div></ruby></body></html>",
-    "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       <div>\n|         <rt>\n|           \"xx\"\n",
-  ),
-  (
-    "webkit01.dat:30", "<html><frameset><!--1--><noframes>A</noframes><!--2--></frameset><!--3--><noframes>B</noframes><!--4--></html><!--5--><noframes>C</noframes><!--6-->",
-    "| <html>\n|   <head>\n|   <frameset>\n|     <!-- 1 -->\n|     <noframes>\n|       \"A\"\n|     <!-- 2 -->\n|   <!-- 3 -->\n|   <noframes>\n|     \"B\"\n|   <!-- 4 -->\n|   <noframes>\n|     \"C\"\n| <!-- 5 -->\n| <!-- 6 -->\n",
-  ),
-  (
-    "webkit01.dat:31", "<select><option>A<select><option>B<select><option>C<select><option>D<select><option>E<select><option>F<select><option>G<select>",
-    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|         \"A\"\n|     <option>\n|       \"B\"\n|       <select>\n|         <option>\n|           \"C\"\n|     <option>\n|       \"D\"\n|       <select>\n|         <option>\n|           \"E\"\n|     <option>\n|       \"F\"\n|       <select>\n|         <option>\n|           \"G\"\n",
-  ),
-  (
-    "webkit01.dat:32", "<dd><dd><dt><dt><dd><li><li>", "| <html>\n|   <head>\n|   <body>\n|     <dd>\n|     <dd>\n|     <dt>\n|     <dt>\n|     <dd>\n|       <li>\n|       <li>\n",
-  ),
-  (
-    "webkit01.dat:33", "<div><b></div><div><nobr>a<nobr>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <b>\n|     <div>\n|       <b>\n|         <nobr>\n|           \"a\"\n|         <nobr>\n",
-  ),
-  (
-    "webkit01.dat:34", "<head></head>\n<body></body>", "| <html>\n|   <head>\n|   \"\n\"\n|   <body>\n",
-  ),
-  (
-    "webkit01.dat:35", "<head></head> <style></style>ddd", "| <html>\n|   <head>\n|     <style>\n|   \" \"\n|   <body>\n|     \"ddd\"\n",
-  ),
-  (
-    "webkit01.dat:36", "<kbd><table></kbd><col><select><tr>", "| <html>\n|   <head>\n|   <body>\n|     <kbd>\n|       <select>\n|       <table>\n|         <colgroup>\n|           <col>\n|         <tbody>\n|           <tr>\n",
-  ),
-  (
-    "webkit01.dat:37", "<kbd><table></kbd><col><select><tr></table><div>", "| <html>\n|   <head>\n|   <body>\n|     <kbd>\n|       <select>\n|       <table>\n|         <colgroup>\n|           <col>\n|         <tbody>\n|           <tr>\n|       <div>\n",
-  ),
-  (
-    "webkit01.dat:38", "<a><li><style></style><title></title></a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|     <li>\n|       <a>\n|         <style>\n|         <title>\n",
-  ),
-  (
-    "webkit01.dat:39", "<font></p><p><meta><title></title></font>", "| <html>\n|   <head>\n|   <body>\n|     <font>\n|       <p>\n|     <p>\n|       <font>\n|         <meta>\n|         <title>\n",
-  ),
-  (
-    "webkit01.dat:40", "<a><center><title></title><a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|     <center>\n|       <a>\n|         <title>\n|       <a>\n",
-  ),
-  (
-    "webkit01.dat:41", "<svg><title><div>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg title>\n|         <div>\n",
-  ),
-  (
-    "webkit01.dat:42", "<svg><title><rect><div>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg title>\n|         <rect>\n|           <div>\n",
-  ),
-  (
-    "webkit01.dat:43", "<svg><title><svg><div>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg title>\n|         <svg svg>\n|         <div>\n",
-  ),
-  (
-    "webkit01.dat:44", "<img <=\"\" FAIL>", "| <html>\n|   <head>\n|   <body>\n|     <img>\n|       <=\"\"\n|       fail=\"\"\n",
-  ),
-  (
-    "webkit01.dat:45", "<ul><li><div id='foo'/>A</li><li>B<div>C</div></li></ul>",
-    "| <html>\n|   <head>\n|   <body>\n|     <ul>\n|       <li>\n|         <div>\n|           id=\"foo\"\n|           \"A\"\n|       <li>\n|         \"B\"\n|         <div>\n|           \"C\"\n",
-  ),
-  (
-    "webkit01.dat:46", "<svg><em><desc></em>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|     <em>\n|       <desc>\n",
-  ),
-  (
-    "webkit01.dat:47", "<table><tr><td><svg><desc><td></desc><circle>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <svg svg>\n|               <svg desc>\n|           <td>\n|             <circle>\n",
-  ),
-  (
-    "webkit01.dat:48", "<svg><tfoot></mi><td>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg tfoot>\n|         <svg td>\n",
-  ),
-  (
-    "webkit01.dat:49", "<math><mrow><mrow><mn>1</mn></mrow><mi>a</mi></mrow></math>",
-    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mrow>\n|         <math mrow>\n|           <math mn>\n|             \"1\"\n|         <math mi>\n|           \"a\"\n",
-  ),
-  (
-    "webkit01.dat:50", "<!doctype html><input type=\"hidden\"><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
-  ),
-  (
-    "webkit01.dat:51", "<!doctype html><input type=\"button\"><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <input>\n|       type=\"button\"\n",
-  ),
-  (
-    "webkit02.dat:0", "<foo bar=qux/>", "| <html>\n|   <head>\n|   <body>\n|     <foo>\n|       bar=\"qux/\"\n",
-  ),
-  (
-    "webkit02.dat:1", "<p id=\"status\"><noscript><strong>A</strong></noscript><span>B</span></p>",
-    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       id=\"status\"\n|       <noscript>\n|         \"<strong>A</strong>\"\n|       <span>\n|         \"B\"\n",
-  ),
-  (
-    "webkit02.dat:2", "<p id=\"status\"><noscript><strong>A</strong></noscript><span>B</span></p>",
-    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       id=\"status\"\n|       <noscript>\n|         <strong>\n|           \"A\"\n|       <span>\n|         \"B\"\n",
-  ),
-  (
-    "webkit02.dat:3", "<div><sarcasm><div></div></sarcasm></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <sarcasm>\n|         <div>\n",
-  ),
-  (
-    "webkit02.dat:4", "<html><body><img src=\"\" border=\"0\" alt=\"><div>A</div></body></html>",
-    "| <html>\n|   <head>\n|   <body>\n",
-  ),
-  (
-    "webkit02.dat:5", "<table><td></tbody>A", "| <html>\n|   <head>\n|   <body>\n|     \"A\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
-  ),
-  (
-    "webkit02.dat:6", "<table><td></thead>A", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"A\"\n",
-  ),
-  (
-    "webkit02.dat:7", "<table><td></tfoot>A", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"A\"\n",
-  ),
-  (
-    "webkit02.dat:8", "<table><thead><td></tbody>A", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <thead>\n|         <tr>\n|           <td>\n|             \"A\"\n",
-  ),
-  (
-    "webkit02.dat:9", "<legend>test</legend>", "| <html>\n|   <head>\n|   <body>\n|     <legend>\n|       \"test\"\n",
-  ),
-  (
-    "webkit02.dat:10", "<table><input>", "| <html>\n|   <head>\n|   <body>\n|     <input>\n|     <table>\n",
-  ),
-  (
-    "webkit02.dat:11", "<b><em><foo><foo><aside></b>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <em>\n|         <foo>\n|           <foo>\n|     <em>\n|       <aside>\n|         <b>\n",
-  ),
-  (
-    "webkit02.dat:12", "<b><em><foo><foo><aside></b></em>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <em>\n|         <foo>\n|           <foo>\n|     <em>\n|     <aside>\n|       <em>\n|         <b>\n",
-  ),
-  (
-    "webkit02.dat:13", "<b><em><foo><foo><foo><aside></b>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <em>\n|         <foo>\n|           <foo>\n|             <foo>\n|     <aside>\n|       <b>\n",
-  ),
-  (
-    "webkit02.dat:14", "<b><em><foo><foo><foo><aside></b></em>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <em>\n|         <foo>\n|           <foo>\n|             <foo>\n|     <aside>\n|       <b>\n",
-  ),
-  (
-    "webkit02.dat:15", "<svg><foreignObject><div>foo</div><plaintext></foreignObject></svg><div>bar</div>",
-    "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg foreignObject>\n|         <div>\n|           \"foo\"\n|         <plaintext>\n|           \"</foreignObject></svg><div>bar</div>\"\n",
-  ),
-  (
-    "webkit02.dat:16", "<svg><foreignObject></foreignObject><title></svg>foo", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg foreignObject>\n|       <svg title>\n|     \"foo\"\n",
-  ),
-  (
-    "webkit02.dat:17", "</foreignObject><plaintext><div>foo</div>", "| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"<div>foo</div>\"\n",
-  ),
-  (
-    "webkit02.dat:18", "<svg xml:base xml:lang xml:space xml:baaah definitionurl>",
-    "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       definitionurl=\"\"\n|       xml lang=\"\"\n|       xml space=\"\"\n|       xml:baaah=\"\"\n|       xml:base=\"\"\n",
-  ),
-  (
-    "webkit02.dat:19", "<math definitionurl xlink:title xlink:show>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       definitionURL=\"\"\n|       xlink show=\"\"\n|       xlink title=\"\"\n",
-  ),
-  (
-    "webkit02.dat:20", "<math DEFINITIONURL>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       definitionURL=\"\"\n",
-  ),
-  (
-    "webkit02.dat:21", "<select><hr>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <hr>\n",
-  ),
-  (
-    "webkit02.dat:22", "<select><option><hr>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|       <hr>\n",
-  ),
-  (
-    "webkit02.dat:23", "<select><optgroup><option><hr>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <optgroup>\n|         <option>\n|       <hr>\n",
-  ),
-  (
-    "webkit02.dat:24", "<select><optgroup><hr>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <optgroup>\n|       <hr>\n",
-  ),
-  (
-    "webkit02.dat:25", "<select><option><optgroup><hr>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|       <optgroup>\n|       <hr>\n",
-  ),
-  (
-    "webkit02.dat:26", "<table><tr><td><select><hr>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <hr>\n",
-  ),
-  (
-    "webkit02.dat:27", "<table><tr><td><select><option><hr>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <option>\n|               <hr>\n",
-  ),
-  (
-    "webkit02.dat:28", "<table><tr><td><select><optgroup><option><hr>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <optgroup>\n|                 <option>\n|               <hr>\n",
-  ),
-  (
-    "webkit02.dat:29", "<table><tr><td><select><optgroup><hr>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <optgroup>\n|               <hr>\n",
-  ),
-  (
-    "webkit02.dat:30", "<table><tr><td><select><option><optgroup><hr>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <option>\n|               <optgroup>\n|               <hr>\n",
-  ),
-  (
-    "webkit02.dat:31", "<select><div><i></div><option>option", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <div>\n|         <i>\n|       <i>\n|         <option>\n|           \"option\"\n",
-  ),
-  (
-    "webkit02.dat:32", "<div><i></div><option>option", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <i>\n|     <i>\n|       <option>\n|         \"option\"\n",
-  ),
-  (
-    "webkit02.dat:33", "<select><div>div 1</div><button>button</button><div>div 2</div><datalist><option>option</option></datalist><div>div 3</div></select>",
-    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <div>\n|         \"div 1\"\n|       <button>\n|         \"button\"\n|       <div>\n|         \"div 2\"\n|       <datalist>\n|         <option>\n|           \"option\"\n|       <div>\n|         \"div 3\"\n",
-  ),
-  (
-    "webkit02.dat:34", "<select><button>button</select>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         \"button\"\n",
-  ),
-  (
-    "webkit02.dat:35", "<select><datalist>datalist</select>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <datalist>\n|         \"datalist\"\n",
-  ),
-  (
-    "webkit02.dat:36", "<select><button><select></select></button></select>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n",
-  ),
-  (
-    "webkit02.dat:37", "<select><button><div><select></select>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         <div>\n",
-  ),
-  (
-    "webkit02.dat:38", "<select><div><option><img>option</option></div></select>",
-    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <div>\n|         <option>\n|           <img>\n|           \"option\"\n",
-  ),
-  (
-    "webkit02.dat:39", "<select><input>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|     <input>\n",
-  ),
-  (
-    "webkit02.dat:40", "<select><button><selectedcontent></button><option>X", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         <selectedcontent>\n|           \"X\"\n|       <option>\n|         \"X\"\n",
-  ),
-  (
-    "webkit02.dat:41", "<select><button><selectedcontent></button><option>x<i>i<b>ib</i>b",
-    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         <selectedcontent>\n|           \"x\"\n|           <i>\n|             \"i\"\n|             <b>\n|               \"ib\"\n|           <b>\n|             \"b\"\n|       <option>\n|         \"x\"\n|         <i>\n|           \"i\"\n|           <b>\n|             \"ib\"\n|         <b>\n|           \"b\"\n",
-  ),
-  (
-    "webkit02.dat:42", "<select><button><selectedcontent></button><option>X<option>Y",
-    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         <selectedcontent>\n|           \"X\"\n|       <option>\n|         \"X\"\n|       <option>\n|         \"Y\"\n",
-  ),
-  (
-    "webkit02.dat:43", "<select><button><selectedcontent></button><option>X<option selected>Y",
-    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         <selectedcontent>\n|           \"Y\"\n|       <option>\n|         \"X\"\n|       <option>\n|         selected=\"\"\n|         \"Y\"\n",
-  ),
-  (
-    "webkit02.dat:44", "<font><select><option>a</option></font></select>", "| <html>\n|   <head>\n|   <body>\n|     <font>\n|       <select>\n|         <option>\n|           \"a\"\n",
-  ),
-  (
-    "adoption01.dat:0", "<a><p></a></p>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|     <p>\n|       <a>\n",
-  ),
-  (
-    "adoption01.dat:1", "<a>1<p>2</a>3</p>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"1\"\n|     <p>\n|       <a>\n|         \"2\"\n|       \"3\"\n",
-  ),
-  (
-    "adoption01.dat:2", "<a>1<button>2</a>3</button>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"1\"\n|     <button>\n|       <a>\n|         \"2\"\n|       \"3\"\n",
-  ),
-  (
-    "adoption01.dat:3", "<a>1<b>2</a>3</b>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"1\"\n|       <b>\n|         \"2\"\n|     <b>\n|       \"3\"\n",
-  ),
-  (
-    "adoption01.dat:4", "<a>1<div>2<div>3</a>4</div>5</div>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"1\"\n|     <div>\n|       <a>\n|         \"2\"\n|       <div>\n|         <a>\n|           \"3\"\n|         \"4\"\n|       \"5\"\n",
-  ),
-  (
-    "adoption01.dat:5", "<table><a>1<p>2</a>3</p>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"1\"\n|     <p>\n|       <a>\n|         \"2\"\n|       \"3\"\n|     <table>\n",
-  ),
-  (
-    "adoption01.dat:6", "<b><b><a><p></a>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <b>\n|         <a>\n|         <p>\n|           <a>\n",
-  ),
-  (
-    "adoption01.dat:7", "<b><a><b><p></a>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <a>\n|         <b>\n|       <b>\n|         <p>\n|           <a>\n",
-  ),
-  (
-    "adoption01.dat:8", "<a><b><b><p></a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <b>\n|         <b>\n|     <b>\n|       <b>\n|         <p>\n|           <a>\n",
-  ),
-  (
-    "adoption01.dat:9", "<p>1<s id=\"A\">2<b id=\"B\">3</p>4</s>5</b>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"1\"\n|       <s>\n|         id=\"A\"\n|         \"2\"\n|         <b>\n|           id=\"B\"\n|           \"3\"\n|     <s>\n|       id=\"A\"\n|       <b>\n|         id=\"B\"\n|         \"4\"\n|     <b>\n|       id=\"B\"\n|       \"5\"\n",
-  ),
-  (
-    "adoption01.dat:10", "<table><a>1<td>2</td>3</table>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"1\"\n|     <a>\n|       \"3\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"2\"\n",
-  ),
-  (
-    "adoption01.dat:11", "<table>A<td>B</td>C</table>", "| <html>\n|   <head>\n|   <body>\n|     \"AC\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"B\"\n",
-  ),
-  (
-    "adoption01.dat:12", "<a><svg><tr><input></a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <svg svg>\n|         <svg tr>\n|           <svg input>\n",
-  ),
-  (
-    "adoption01.dat:13", "<div><a><b><div><div><div><div><div><div><div><div><div><div></a>",
+    "adoption01.dat:13", "document", "", "<div><a><b><div><div><div><div><div><div><div><div><div><div></a>",
     "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <a>\n|         <b>\n|       <b>\n|         <div>\n|           <a>\n|           <div>\n|             <a>\n|             <div>\n|               <a>\n|               <div>\n|                 <a>\n|                 <div>\n|                   <a>\n|                   <div>\n|                     <a>\n|                     <div>\n|                       <a>\n|                       <div>\n|                         <a>\n|                           <div>\n|                             <div>\n",
   ),
   (
-    "adoption01.dat:14", "<div><a><b><u><i><code><div></a>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <a>\n|         <b>\n|           <u>\n|             <i>\n|               <code>\n|       <u>\n|         <i>\n|           <code>\n|             <div>\n|               <a>\n",
+    "adoption01.dat:14", "document", "", "<div><a><b><u><i><code><div></a>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <a>\n|         <b>\n|           <u>\n|             <i>\n|               <code>\n|       <u>\n|         <i>\n|           <code>\n|             <div>\n|               <a>\n",
   ),
   (
-    "adoption01.dat:15", "<b><b><b><b>x</b></b></b></b>y", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <b>\n|         <b>\n|           <b>\n|             \"x\"\n|     \"y\"\n",
+    "adoption01.dat:15", "document", "", "<b><b><b><b>x</b></b></b></b>y", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <b>\n|         <b>\n|           <b>\n|             \"x\"\n|     \"y\"\n",
   ),
   (
-    "adoption01.dat:16", "<p><b><b><b><b><p>x", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <b>\n|         <b>\n|           <b>\n|             <b>\n|     <p>\n|       <b>\n|         <b>\n|           <b>\n|             \"x\"\n",
+    "adoption01.dat:16", "document", "", "<p><b><b><b><b><p>x", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <b>\n|         <b>\n|           <b>\n|             <b>\n|     <p>\n|       <b>\n|         <b>\n|           <b>\n|             \"x\"\n",
   ),
   (
-    "adoption02.dat:0", "<b>1<i>2<p>3</b>4", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"1\"\n|       <i>\n|         \"2\"\n|     <i>\n|       <p>\n|         <b>\n|           \"3\"\n|         \"4\"\n",
+    "adoption01.dat:17", "fragment", "div", "<b><em><foo><foob><fooc><aside></b></em>",
+    "| <b>\n|   <em>\n|     <foo>\n|       <foob>\n|         <fooc>\n| <aside>\n|   <b>\n",
   ),
   (
-    "adoption02.dat:1", "<a><div><style></style><address><a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|     <div>\n|       <a>\n|         <style>\n|       <address>\n|         <a>\n|         <a>\n",
+    "adoption02.dat:0", "document", "", "<b>1<i>2<p>3</b>4", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"1\"\n|       <i>\n|         \"2\"\n|     <i>\n|       <p>\n|         <b>\n|           \"3\"\n|         \"4\"\n",
   ),
   (
-    "adoption02.dat:2", "<nobr><table><marquee></table><nobr>", "| <html>\n|   <head>\n|   <body>\n|     <nobr>\n|       <marquee>\n|       <table>\n|     <nobr>\n",
+    "adoption02.dat:1", "document", "", "<a><div><style></style><address><a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|     <div>\n|       <a>\n|         <style>\n|       <address>\n|         <a>\n|         <a>\n",
   ),
   (
-    "blocks.dat:0", "<!doctype html><p>foo<address>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <address>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "adoption02.dat:2", "document", "", "<nobr><table><marquee></table><nobr>", "| <html>\n|   <head>\n|   <body>\n|     <nobr>\n|       <marquee>\n|       <table>\n|     <nobr>\n",
   ),
   (
-    "blocks.dat:1", "<!doctype html><address><p>foo</address>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <address>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:0", "document", "", "<!doctype html><p>foo<address>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <address>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:2", "<!doctype html><p>foo<article>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <article>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:1", "document", "", "<!doctype html><address><p>foo</address>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <address>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:3", "<!doctype html><article><p>foo</article>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <article>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:2", "document", "", "<!doctype html><p>foo<article>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <article>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:4", "<!doctype html><p>foo<aside>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <aside>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:3", "document", "", "<!doctype html><article><p>foo</article>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <article>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:5", "<!doctype html><aside><p>foo</aside>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <aside>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:4", "document", "", "<!doctype html><p>foo<aside>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <aside>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:6", "<!doctype html><p>foo<blockquote>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <blockquote>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:5", "document", "", "<!doctype html><aside><p>foo</aside>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <aside>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:7", "<!doctype html><blockquote><p>foo</blockquote>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <blockquote>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:6", "document", "", "<!doctype html><p>foo<blockquote>bar<p>baz",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <blockquote>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:8", "<!doctype html><p>foo<center>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <center>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:7", "document", "", "<!doctype html><blockquote><p>foo</blockquote>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <blockquote>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:9", "<!doctype html><center><p>foo</center>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <center>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:8", "document", "", "<!doctype html><p>foo<center>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <center>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:10", "<!doctype html><p>foo<details>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <details>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:9", "document", "", "<!doctype html><center><p>foo</center>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <center>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:11", "<!doctype html><details><p>foo</details>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <details>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:10", "document", "", "<!doctype html><p>foo<details>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <details>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:12", "<!doctype html><p>foo<dialog>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <dialog>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:11", "document", "", "<!doctype html><details><p>foo</details>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <details>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:13", "<!doctype html><dialog><p>foo</dialog>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <dialog>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:12", "document", "", "<!doctype html><p>foo<dialog>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <dialog>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:14", "<!doctype html><p>foo<dir>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <dir>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:13", "document", "", "<!doctype html><dialog><p>foo</dialog>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <dialog>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:15", "<!doctype html><dir><p>foo</dir>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <dir>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:14", "document", "", "<!doctype html><p>foo<dir>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <dir>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:16", "<!doctype html><p>foo<div>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <div>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:15", "document", "", "<!doctype html><dir><p>foo</dir>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <dir>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:17", "<!doctype html><div><p>foo</div>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:16", "document", "", "<!doctype html><p>foo<div>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <div>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:18", "<!doctype html><p>foo<dl>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <dl>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:17", "document", "", "<!doctype html><div><p>foo</div>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:19", "<!doctype html><dl><p>foo</dl>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <dl>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:18", "document", "", "<!doctype html><p>foo<dl>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <dl>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:20", "<!doctype html><p>foo<fieldset>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <fieldset>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:19", "document", "", "<!doctype html><dl><p>foo</dl>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <dl>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:21", "<!doctype html><fieldset><p>foo</fieldset>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <fieldset>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:20", "document", "", "<!doctype html><p>foo<fieldset>bar<p>baz",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <fieldset>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:22", "<!doctype html><p>foo<figcaption>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <figcaption>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:21", "document", "", "<!doctype html><fieldset><p>foo</fieldset>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <fieldset>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:23", "<!doctype html><figcaption><p>foo</figcaption>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <figcaption>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:22", "document", "", "<!doctype html><p>foo<figcaption>bar<p>baz",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <figcaption>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:24", "<!doctype html><p>foo<figure>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <figure>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:23", "document", "", "<!doctype html><figcaption><p>foo</figcaption>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <figcaption>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:25", "<!doctype html><figure><p>foo</figure>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <figure>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:24", "document", "", "<!doctype html><p>foo<figure>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <figure>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:26", "<!doctype html><p>foo<footer>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <footer>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:25", "document", "", "<!doctype html><figure><p>foo</figure>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <figure>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:27", "<!doctype html><footer><p>foo</footer>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <footer>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:26", "document", "", "<!doctype html><p>foo<footer>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <footer>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:28", "<!doctype html><p>foo<header>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <header>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:27", "document", "", "<!doctype html><footer><p>foo</footer>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <footer>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:29", "<!doctype html><header><p>foo</header>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <header>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:28", "document", "", "<!doctype html><p>foo<header>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <header>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:30", "<!doctype html><p>foo<hgroup>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <hgroup>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:29", "document", "", "<!doctype html><header><p>foo</header>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <header>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:31", "<!doctype html><hgroup><p>foo</hgroup>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <hgroup>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:30", "document", "", "<!doctype html><p>foo<hgroup>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <hgroup>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:32", "<!doctype html><p>foo<listing>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <listing>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:31", "document", "", "<!doctype html><hgroup><p>foo</hgroup>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <hgroup>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:33", "<!doctype html><listing><p>foo</listing>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <listing>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:32", "document", "", "<!doctype html><p>foo<listing>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <listing>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:34", "<!doctype html><p>foo<menu>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <menu>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:33", "document", "", "<!doctype html><listing><p>foo</listing>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <listing>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:35", "<!doctype html><menu><p>foo</menu>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <menu>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:34", "document", "", "<!doctype html><p>foo<menu>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <menu>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:36", "<!doctype html><p>foo<nav>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <nav>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:35", "document", "", "<!doctype html><menu><p>foo</menu>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <menu>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:37", "<!doctype html><nav><p>foo</nav>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <nav>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:36", "document", "", "<!doctype html><p>foo<nav>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <nav>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:38", "<!doctype html><p>foo<ol>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <ol>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:37", "document", "", "<!doctype html><nav><p>foo</nav>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <nav>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:39", "<!doctype html><ol><p>foo</ol>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <ol>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:38", "document", "", "<!doctype html><p>foo<ol>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <ol>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:40", "<!doctype html><p>foo<pre>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <pre>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:39", "document", "", "<!doctype html><ol><p>foo</ol>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <ol>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:41", "<!doctype html><pre><p>foo</pre>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:40", "document", "", "<!doctype html><p>foo<pre>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <pre>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:42", "<!doctype html><p>foo<section>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <section>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:41", "document", "", "<!doctype html><pre><p>foo</pre>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:43", "<!doctype html><section><p>foo</section>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <section>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:42", "document", "", "<!doctype html><p>foo<section>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <section>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:44", "<!doctype html><p>foo<summary>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <summary>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:43", "document", "", "<!doctype html><section><p>foo</section>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <section>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:45", "<!doctype html><summary><p>foo</summary>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <summary>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:44", "document", "", "<!doctype html><p>foo<summary>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <summary>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "blocks.dat:46", "<!doctype html><p>foo<ul>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <ul>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "blocks.dat:45", "document", "", "<!doctype html><summary><p>foo</summary>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <summary>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "blocks.dat:47", "<!doctype html><ul><p>foo</ul>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <ul>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "blocks.dat:46", "document", "", "<!doctype html><p>foo<ul>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <ul>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "inbody01.dat:0", "<button>1</foo>", "| <html>\n|   <head>\n|   <body>\n|     <button>\n|       \"1\"\n",
+    "blocks.dat:47", "document", "", "<!doctype html><ul><p>foo</ul>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <ul>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "inbody01.dat:1", "<foo>1<p>2</foo>", "| <html>\n|   <head>\n|   <body>\n|     <foo>\n|       \"1\"\n|       <p>\n|         \"2\"\n",
+    "comments01.dat:0", "document", "", "FOO<!-- BAR -->BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR  -->\n|     \"BAZ\"\n",
   ),
   (
-    "inbody01.dat:2", "<dd>1</foo>", "| <html>\n|   <head>\n|   <body>\n|     <dd>\n|       \"1\"\n",
+    "comments01.dat:1", "document", "", "FOO<!-- BAR --!>BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR  -->\n|     \"BAZ\"\n",
   ),
   (
-    "inbody01.dat:3", "<foo>1<dd>2</foo>", "| <html>\n|   <head>\n|   <body>\n|     <foo>\n|       \"1\"\n|       <dd>\n|         \"2\"\n",
+    "comments01.dat:2", "document", "", "FOO<!-- BAR --! >BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR --! >BAZ -->\n",
   ),
   (
-    "isindex.dat:0", "<isindex>", "| <html>\n|   <head>\n|   <body>\n|     <isindex>\n",
+    "comments01.dat:3", "document", "", "FOO<!-- BAR --!\n>BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR --!\n>BAZ -->\n",
   ),
   (
-    "isindex.dat:1", "<isindex name=\"A\" action=\"B\" prompt=\"C\" foo=\"D\">",
+    "comments01.dat:4", "document", "", "FOO<!-- BAR --   >BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR --   >BAZ -->\n",
+  ),
+  (
+    "comments01.dat:5", "document", "", "FOO<!-- BAR -- <QUX> -- MUX -->BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR -- <QUX> -- MUX  -->\n|     \"BAZ\"\n",
+  ),
+  (
+    "comments01.dat:6", "document", "", "FOO<!-- BAR -- <QUX> -- MUX --!>BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR -- <QUX> -- MUX  -->\n|     \"BAZ\"\n",
+  ),
+  (
+    "comments01.dat:7", "document", "", "FOO<!-- BAR -- <QUX> -- MUX -- >BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR -- <QUX> -- MUX -- >BAZ -->\n",
+  ),
+  (
+    "comments01.dat:8", "document", "", "FOO<!---->BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  -->\n|     \"BAZ\"\n",
+  ),
+  (
+    "comments01.dat:9", "document", "", "FOO<!--->BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  -->\n|     \"BAZ\"\n",
+  ),
+  (
+    "comments01.dat:10", "document", "", "FOO<!-->BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  -->\n|     \"BAZ\"\n",
+  ),
+  (
+    "comments01.dat:11", "document", "", "<?xml version=\"1.0\">Hi", "| <!-- ?xml version=\"1.0\" -->\n| <html>\n|   <head>\n|   <body>\n|     \"Hi\"\n",
+  ),
+  (
+    "comments01.dat:12", "document", "", "<?xml version=\"1.0\">", "| <!-- ?xml version=\"1.0\" -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "comments01.dat:13", "document", "", "<?xml version", "| <!-- ?xml version -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "comments01.dat:14", "document", "", "FOO<!----->BAZ", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!-- - -->\n|     \"BAZ\"\n",
+  ),
+  (
+    "comments01.dat:15", "document", "", "<html><!-- comment --><title>Comment before head</title>",
+    "| <html>\n|   <!--  comment  -->\n|   <head>\n|     <title>\n|       \"Comment before head\"\n|   <body>\n",
+  ),
+  (
+    "doctype01.dat:0", "document", "", "<!DOCTYPE html>Hello", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:1", "document", "", "<!dOctYpE HtMl>Hello", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:2", "document", "", "<!DOCTYPEhtml>Hello", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:3", "document", "", "<!DOCTYPE>Hello", "| <!DOCTYPE >\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:4", "document", "", "<!DOCTYPE >Hello", "| <!DOCTYPE >\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:5", "document", "", "<!DOCTYPE potato>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:6", "document", "", "<!DOCTYPE potato >Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:7", "document", "", "<!DOCTYPE potato taco>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:8", "document", "", "<!DOCTYPE potato taco \"ddd>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:9", "document", "", "<!DOCTYPE potato sYstEM>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:10", "document", "", "<!DOCTYPE potato sYstEM    >Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:11", "document", "", "<!DOCTYPE   potato       sYstEM  ggg>Hello",
+    "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:12", "document", "", "<!DOCTYPE potato SYSTEM taco  >Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:13", "document", "", "<!DOCTYPE potato SYSTEM 'taco\"'>Hello",
+    "| <!DOCTYPE potato \"\" \"taco\"\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:14", "document", "", "<!DOCTYPE potato SYSTEM \"taco\">Hello",
+    "| <!DOCTYPE potato \"\" \"taco\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:15", "document", "", "<!DOCTYPE potato SYSTEM \"tai'co\">Hello",
+    "| <!DOCTYPE potato \"\" \"tai'co\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:16", "document", "", "<!DOCTYPE potato SYSTEMtaco \"ddd\">Hello",
+    "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:17", "document", "", "<!DOCTYPE potato grass SYSTEM taco>Hello",
+    "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:18", "document", "", "<!DOCTYPE potato pUbLIc>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:19", "document", "", "<!DOCTYPE potato pUbLIc >Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:20", "document", "", "<!DOCTYPE potato pUbLIcgoof>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:21", "document", "", "<!DOCTYPE potato PUBLIC goof>Hello", "| <!DOCTYPE potato>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:22", "document", "", "<!DOCTYPE potato PUBLIC \"go'of\">Hello",
+    "| <!DOCTYPE potato \"go'of\" \"\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:23", "document", "", "<!DOCTYPE potato PUBLIC 'go'of'>Hello",
+    "| <!DOCTYPE potato \"go\" \"\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:24", "document", "", "<!DOCTYPE potato PUBLIC 'go:hh   of' >Hello",
+    "| <!DOCTYPE potato \"go:hh   of\" \"\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:25", "document", "", "<!DOCTYPE potato PUBLIC \"W3C-//dfdf\" SYSTEM ggg>Hello",
+    "| <!DOCTYPE potato \"W3C-//dfdf\" \"\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:26", "document", "", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n   \"http://www.w3.org/TR/html4/strict.dtd\">Hello",
+    "| <!DOCTYPE html \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:27", "document", "", "<!DOCTYPE ...>Hello", "| <!DOCTYPE ...>\n| <html>\n|   <head>\n|   <body>\n|     \"Hello\"\n",
+  ),
+  (
+    "doctype01.dat:28", "document", "", "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">",
+    "| <!DOCTYPE html \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "doctype01.dat:29", "document", "", "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//EN\"\n\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">",
+    "| <!DOCTYPE html \"-//W3C//DTD XHTML 1.0 Frameset//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "doctype01.dat:30", "document", "", "<!DOCTYPE root-element [SYSTEM OR PUBLIC FPI] \"uri\" [ \n<!-- internal declarations -->\n]>",
+    "| <!DOCTYPE root-element>\n| <html>\n|   <head>\n|   <body>\n|     \"]>\"\n",
+  ),
+  (
+    "doctype01.dat:31", "document", "", "<!DOCTYPE html PUBLIC\n  \"-//WAPFORUM//DTD XHTML Mobile 1.0//EN\"\n    \"http://www.wapforum.org/DTD/xhtml-mobile10.dtd\">",
+    "| <!DOCTYPE html \"-//WAPFORUM//DTD XHTML Mobile 1.0//EN\" \"http://www.wapforum.org/DTD/xhtml-mobile10.dtd\">\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "doctype01.dat:32", "document", "", "<!DOCTYPE HTML SYSTEM \"http://www.w3.org/DTD/HTML4-strict.dtd\"><body><b>Mine!</b></body>",
+    "| <!DOCTYPE html \"\" \"http://www.w3.org/DTD/HTML4-strict.dtd\">\n| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"Mine!\"\n",
+  ),
+  (
+    "doctype01.dat:33", "document", "", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\"http://www.w3.org/TR/html4/strict.dtd\">",
+    "| <!DOCTYPE html \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "doctype01.dat:34", "document", "", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"'http://www.w3.org/TR/html4/strict.dtd'>",
+    "| <!DOCTYPE html \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "doctype01.dat:35", "document", "", "<!DOCTYPE HTML PUBLIC\"-//W3C//DTD HTML 4.01//EN\"'http://www.w3.org/TR/html4/strict.dtd'>",
+    "| <!DOCTYPE html \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "doctype01.dat:36", "document", "", "<!DOCTYPE HTML PUBLIC'-//W3C//DTD HTML 4.01//EN''http://www.w3.org/TR/html4/strict.dtd'>",
+    "| <!DOCTYPE html \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:0", "document", "", "<svg><![CDATA[foo\nbar]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"foo\nbar\"\n",
+  ),
+  (
+    "domjs-unsafe.dat:1", "document", "", "<svg><![CDATA[foobar]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"foo\nbar\"\n",
+  ),
+  (
+    "domjs-unsafe.dat:2", "document", "", "<svg><![CDATA[foo\nbar]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"foo\nbar\"\n",
+  ),
+  (
+    "domjs-unsafe.dat:3", "document", "", "<script>a='\u{0}'</script>", "| <html>\n|   <head>\n|     <script>\n|       \"a='�'\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:4", "document", "", "<script type=\"data\"><!--\u{0}</script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--�\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:5", "document", "", "<script type=\"data\"><!--foo\u{0}</script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--foo�\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:6", "document", "", "<script type=\"data\"><!-- foo-\u{0}</script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!-- foo-�\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:7", "document", "", "<script type=\"data\"><!-- foo--\u{0}</script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!-- foo--�\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:8", "document", "", "<script type=\"data\"><!-- foo-", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!-- foo-\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:9", "document", "", "<script type=\"data\"><!-- foo-<</script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!-- foo-<\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:10", "document", "", "<script type=\"data\"><!-- foo-<S", "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!-- foo-<S\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:11", "document", "", "<script type=\"data\"><!-- foo-</SCRIPT>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!-- foo-\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:12", "document", "", "<script type=\"data\"><!--<p></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<p>\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:13", "document", "", "<script type=\"data\"><!--<script></script></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script></script>\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:14", "document", "", "<script type=\"data\"><!--<script>\u{0}</script></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script>�</script>\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:15", "document", "", "<script type=\"data\"><!--<script>-\u{0}</script></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script>-�</script>\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:16", "document", "", "<script type=\"data\"><!--<script>--\u{0}</script></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script>--�</script>\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:17", "document", "", "<script type=\"data\"><!--<script>---</script></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script>---</script>\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:18", "document", "", "<script type=\"data\"><!--<script></scrip></SCRIPT></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script></scrip></SCRIPT>\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:19", "document", "", "<script type=\"data\"><!--<script></scrip </SCRIPT></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script></scrip </SCRIPT>\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:20", "document", "", "<script type=\"data\"><!--<script></scrip/</SCRIPT></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--<script></scrip/</SCRIPT>\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:21", "document", "", "<script type=\"data\"></scrip/></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"</scrip/>\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:22", "document", "", "<script type=\"data\"></scrip ></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"</scrip >\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:23", "document", "", "<script type=\"data\"><!--</scrip></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--</scrip>\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:24", "document", "", "<script type=\"data\"><!--</scrip </script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--</scrip \"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:25", "document", "", "<script type=\"data\"><!--</scrip/</script>",
+    "| <html>\n|   <head>\n|     <script>\n|       type=\"data\"\n|       \"<!--</scrip/\"\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:26", "document", "", "<!DOCTYPE html><!DOCTYPE html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:27", "document", "", "<html><!DOCTYPE html>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:28", "document", "", "<html><head><!DOCTYPE html></head>",
+    "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:29", "document", "", "<html><head></head><!DOCTYPE html>",
+    "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:30", "document", "", "<body></body><!DOCTYPE html>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:31", "document", "", "<table><!DOCTYPE html></table>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n",
+  ),
+  (
+    "domjs-unsafe.dat:32", "document", "", "<select><!DOCTYPE html></select>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n",
+  ),
+  (
+    "domjs-unsafe.dat:33", "document", "", "<table><colgroup><!DOCTYPE html></colgroup></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n",
+  ),
+  (
+    "domjs-unsafe.dat:34", "document", "", "<table><colgroup><!--test--></colgroup></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n|         <!-- test -->\n",
+  ),
+  (
+    "domjs-unsafe.dat:35", "document", "", "<table><colgroup><html></colgroup></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n",
+  ),
+  (
+    "domjs-unsafe.dat:36", "document", "", "<table><colgroup> foo</colgroup></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     \"foo\"\n|     <table>\n|       <colgroup>\n|         \" \"\n",
+  ),
+  (
+    "domjs-unsafe.dat:37", "document", "", "<select><!--test--></select>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <!-- test -->\n",
+  ),
+  (
+    "domjs-unsafe.dat:38", "document", "", "<select><html></select>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n",
+  ),
+  (
+    "domjs-unsafe.dat:39", "document", "", "<frameset><html></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "domjs-unsafe.dat:40", "document", "", "<frameset></frameset><html>", "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "domjs-unsafe.dat:41", "document", "", "<frameset></frameset><!DOCTYPE html>",
+    "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "domjs-unsafe.dat:42", "document", "", "<html><body></body></html><!DOCTYPE html>",
+    "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "domjs-unsafe.dat:43", "document", "", "<svg><!DOCTYPE html></svg>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n",
+  ),
+  (
+    "domjs-unsafe.dat:44", "document", "", "<svg><font></font></svg>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg font>\n",
+  ),
+  (
+    "domjs-unsafe.dat:45", "document", "", "<svg><font id=foo></font></svg>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg font>\n|         id=\"foo\"\n",
+  ),
+  (
+    "domjs-unsafe.dat:46", "document", "", "<svg><font size=4></font></svg>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|     <font>\n|       size=\"4\"\n",
+  ),
+  (
+    "domjs-unsafe.dat:47", "document", "", "<svg><font color=red></font></svg>",
+    "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|     <font>\n|       color=\"red\"\n",
+  ),
+  (
+    "domjs-unsafe.dat:48", "document", "", "<svg><font font=sans></font></svg>",
+    "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg font>\n|         font=\"sans\"\n",
+  ),
+  (
+    "entities01.dat:0", "document", "", "FOO&gt;BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO>BAR\"\n",
+  ),
+  (
+    "entities01.dat:1", "document", "", "FOO&gtBAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO>BAR\"\n",
+  ),
+  (
+    "entities01.dat:2", "document", "", "FOO&gt BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO> BAR\"\n",
+  ),
+  (
+    "entities01.dat:3", "document", "", "FOO&gt;;;BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO>;;BAR\"\n",
+  ),
+  (
+    "entities01.dat:4", "document", "", "I'm &notit; I tell you", "| <html>\n|   <head>\n|   <body>\n|     \"I'm ¬it; I tell you\"\n",
+  ),
+  (
+    "entities01.dat:5", "document", "", "I'm &notin; I tell you", "| <html>\n|   <head>\n|   <body>\n|     \"I'm ∉ I tell you\"\n",
+  ),
+  (
+    "entities01.dat:6", "document", "", "&ammmp;", "| <html>\n|   <head>\n|   <body>\n|     \"&ammmp;\"\n",
+  ),
+  (
+    "entities01.dat:7", "document", "", "&ammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmp;",
+    "| <html>\n|   <head>\n|   <body>\n|     \"&ammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmp;\"\n",
+  ),
+  (
+    "entities01.dat:8", "document", "", "FOO& BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO& BAR\"\n",
+  ),
+  (
+    "entities01.dat:9", "document", "", "FOO&<BAR>", "| <html>\n|   <head>\n|   <body>\n|     \"FOO&\"\n|     <bar>\n",
+  ),
+  (
+    "entities01.dat:10", "document", "", "FOO&&&&gt;BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO&&&>BAR\"\n",
+  ),
+  (
+    "entities01.dat:11", "document", "", "FOO&#41;BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO)BAR\"\n",
+  ),
+  (
+    "entities01.dat:12", "document", "", "FOO&#x41;BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOOABAR\"\n",
+  ),
+  (
+    "entities01.dat:13", "document", "", "FOO&#X41;BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOOABAR\"\n",
+  ),
+  (
+    "entities01.dat:14", "document", "", "FOO&#BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO&#BAR\"\n",
+  ),
+  (
+    "entities01.dat:15", "document", "", "FOO&#ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO&#ZOO\"\n",
+  ),
+  (
+    "entities01.dat:16", "document", "", "FOO&#xBAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOOºR\"\n",
+  ),
+  (
+    "entities01.dat:17", "document", "", "FOO&#xZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO&#xZOO\"\n",
+  ),
+  (
+    "entities01.dat:18", "document", "", "FOO&#XZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO&#XZOO\"\n",
+  ),
+  (
+    "entities01.dat:19", "document", "", "FOO&#41BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO)BAR\"\n",
+  ),
+  (
+    "entities01.dat:20", "document", "", "FOO&#x41BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO䆺R\"\n",
+  ),
+  (
+    "entities01.dat:21", "document", "", "FOO&#x41ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOAZOO\"\n",
+  ),
+  (
+    "entities01.dat:22", "document", "", "FOO&#x0000;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
+  ),
+  (
+    "entities01.dat:23", "document", "", "FOO&#x0078;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOxZOO\"\n",
+  ),
+  (
+    "entities01.dat:24", "document", "", "FOO&#x0079;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOyZOO\"\n",
+  ),
+  (
+    "entities01.dat:25", "document", "", "FOO&#x0080;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO€ZOO\"\n",
+  ),
+  (
+    "entities01.dat:26", "document", "", "FOO&#x0081;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOZOO\"\n",
+  ),
+  (
+    "entities01.dat:27", "document", "", "FOO&#x0082;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO‚ZOO\"\n",
+  ),
+  (
+    "entities01.dat:28", "document", "", "FOO&#x0083;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOƒZOO\"\n",
+  ),
+  (
+    "entities01.dat:29", "document", "", "FOO&#x0084;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO„ZOO\"\n",
+  ),
+  (
+    "entities01.dat:30", "document", "", "FOO&#x0085;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO…ZOO\"\n",
+  ),
+  (
+    "entities01.dat:31", "document", "", "FOO&#x0086;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO†ZOO\"\n",
+  ),
+  (
+    "entities01.dat:32", "document", "", "FOO&#x0087;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO‡ZOO\"\n",
+  ),
+  (
+    "entities01.dat:33", "document", "", "FOO&#x0088;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOˆZOO\"\n",
+  ),
+  (
+    "entities01.dat:34", "document", "", "FOO&#x0089;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO‰ZOO\"\n",
+  ),
+  (
+    "entities01.dat:35", "document", "", "FOO&#x008A;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOŠZOO\"\n",
+  ),
+  (
+    "entities01.dat:36", "document", "", "FOO&#x008B;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO‹ZOO\"\n",
+  ),
+  (
+    "entities01.dat:37", "document", "", "FOO&#x008C;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOŒZOO\"\n",
+  ),
+  (
+    "entities01.dat:38", "document", "", "FOO&#x008D;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOZOO\"\n",
+  ),
+  (
+    "entities01.dat:39", "document", "", "FOO&#x008E;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOŽZOO\"\n",
+  ),
+  (
+    "entities01.dat:40", "document", "", "FOO&#x008F;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOZOO\"\n",
+  ),
+  (
+    "entities01.dat:41", "document", "", "FOO&#x0090;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOZOO\"\n",
+  ),
+  (
+    "entities01.dat:42", "document", "", "FOO&#x0091;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO‘ZOO\"\n",
+  ),
+  (
+    "entities01.dat:43", "document", "", "FOO&#x0092;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO’ZOO\"\n",
+  ),
+  (
+    "entities01.dat:44", "document", "", "FOO&#x0093;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO“ZOO\"\n",
+  ),
+  (
+    "entities01.dat:45", "document", "", "FOO&#x0094;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO”ZOO\"\n",
+  ),
+  (
+    "entities01.dat:46", "document", "", "FOO&#x0095;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO•ZOO\"\n",
+  ),
+  (
+    "entities01.dat:47", "document", "", "FOO&#x0096;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO–ZOO\"\n",
+  ),
+  (
+    "entities01.dat:48", "document", "", "FOO&#x0097;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO—ZOO\"\n",
+  ),
+  (
+    "entities01.dat:49", "document", "", "FOO&#x0098;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO˜ZOO\"\n",
+  ),
+  (
+    "entities01.dat:50", "document", "", "FOO&#x0099;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO™ZOO\"\n",
+  ),
+  (
+    "entities01.dat:51", "document", "", "FOO&#x009A;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOšZOO\"\n",
+  ),
+  (
+    "entities01.dat:52", "document", "", "FOO&#x009B;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO›ZOO\"\n",
+  ),
+  (
+    "entities01.dat:53", "document", "", "FOO&#x009C;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOœZOO\"\n",
+  ),
+  (
+    "entities01.dat:54", "document", "", "FOO&#x009D;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOZOO\"\n",
+  ),
+  (
+    "entities01.dat:55", "document", "", "FOO&#x009E;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOžZOO\"\n",
+  ),
+  (
+    "entities01.dat:56", "document", "", "FOO&#x009F;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOŸZOO\"\n",
+  ),
+  (
+    "entities01.dat:57", "document", "", "FOO&#x00A0;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO ZOO\"\n",
+  ),
+  (
+    "entities01.dat:58", "document", "", "FOO&#xD7FF;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO퟿ZOO\"\n",
+  ),
+  (
+    "entities01.dat:59", "document", "", "FOO&#xD800;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
+  ),
+  (
+    "entities01.dat:60", "document", "", "FOO&#xD801;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
+  ),
+  (
+    "entities01.dat:61", "document", "", "FOO&#xDFFE;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
+  ),
+  (
+    "entities01.dat:62", "document", "", "FOO&#xDFFF;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
+  ),
+  (
+    "entities01.dat:63", "document", "", "FOO&#xE000;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOZOO\"\n",
+  ),
+  (
+    "entities01.dat:64", "document", "", "FOO&#x10FFFE;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO􏿾ZOO\"\n",
+  ),
+  (
+    "entities01.dat:65", "document", "", "FOO&#x1087D4;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO􈟔ZOO\"\n",
+  ),
+  (
+    "entities01.dat:66", "document", "", "FOO&#x10FFFF;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO􏿿ZOO\"\n",
+  ),
+  (
+    "entities01.dat:67", "document", "", "FOO&#x110000;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
+  ),
+  (
+    "entities01.dat:68", "document", "", "FOO&#xFFFFFF;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
+  ),
+  (
+    "entities01.dat:69", "document", "", "FOO&#11111111111", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�\"\n",
+  ),
+  (
+    "entities01.dat:70", "document", "", "FOO&#1111111111", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�\"\n",
+  ),
+  (
+    "entities01.dat:71", "document", "", "FOO&#111111111111", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�\"\n",
+  ),
+  (
+    "entities01.dat:72", "document", "", "FOO&#11111111111ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
+  ),
+  (
+    "entities01.dat:73", "document", "", "FOO&#1111111111ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
+  ),
+  (
+    "entities01.dat:74", "document", "", "FOO&#111111111111ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOO�ZOO\"\n",
+  ),
+  (
+    "entities02.dat:0", "document", "", "<div bar=\"ZZ&gt;YY\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ>YY\"\n",
+  ),
+  (
+    "entities02.dat:1", "document", "", "<div bar=\"ZZ&\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&\"\n",
+  ),
+  (
+    "entities02.dat:2", "document", "", "<div bar='ZZ&'></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&\"\n",
+  ),
+  (
+    "entities02.dat:3", "document", "", "<div bar=ZZ&></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&\"\n",
+  ),
+  (
+    "entities02.dat:4", "document", "", "<div bar=\"ZZ&gt=YY\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&gt=YY\"\n",
+  ),
+  (
+    "entities02.dat:5", "document", "", "<div bar=\"ZZ&gt0YY\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&gt0YY\"\n",
+  ),
+  (
+    "entities02.dat:6", "document", "", "<div bar=\"ZZ&gt9YY\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&gt9YY\"\n",
+  ),
+  (
+    "entities02.dat:7", "document", "", "<div bar=\"ZZ&gtaYY\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&gtaYY\"\n",
+  ),
+  (
+    "entities02.dat:8", "document", "", "<div bar=\"ZZ&gtZYY\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&gtZYY\"\n",
+  ),
+  (
+    "entities02.dat:9", "document", "", "<div bar=\"ZZ&gt YY\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ> YY\"\n",
+  ),
+  (
+    "entities02.dat:10", "document", "", "<div bar=\"ZZ&gt\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ>\"\n",
+  ),
+  (
+    "entities02.dat:11", "document", "", "<div bar='ZZ&gt'></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ>\"\n",
+  ),
+  (
+    "entities02.dat:12", "document", "", "<div bar=ZZ&gt></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ>\"\n",
+  ),
+  (
+    "entities02.dat:13", "document", "", "<div bar=\"ZZ&pound_id=23\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ£_id=23\"\n",
+  ),
+  (
+    "entities02.dat:14", "document", "", "<div bar=\"ZZ&prod_id=23\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&prod_id=23\"\n",
+  ),
+  (
+    "entities02.dat:15", "document", "", "<div bar=\"ZZ&pound;_id=23\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ£_id=23\"\n",
+  ),
+  (
+    "entities02.dat:16", "document", "", "<div bar=\"ZZ&prod;_id=23\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ∏_id=23\"\n",
+  ),
+  (
+    "entities02.dat:17", "document", "", "<div bar=\"ZZ&pound=23\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&pound=23\"\n",
+  ),
+  (
+    "entities02.dat:18", "document", "", "<div bar=\"ZZ&prod=23\"></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       bar=\"ZZ&prod=23\"\n",
+  ),
+  (
+    "entities02.dat:19", "document", "", "<div>ZZ&pound_id=23</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"ZZ£_id=23\"\n",
+  ),
+  (
+    "entities02.dat:20", "document", "", "<div>ZZ&prod_id=23</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"ZZ&prod_id=23\"\n",
+  ),
+  (
+    "entities02.dat:21", "document", "", "<div>ZZ&pound;_id=23</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"ZZ£_id=23\"\n",
+  ),
+  (
+    "entities02.dat:22", "document", "", "<div>ZZ&prod;_id=23</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"ZZ∏_id=23\"\n",
+  ),
+  (
+    "entities02.dat:23", "document", "", "<div>ZZ&pound=23</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"ZZ£=23\"\n",
+  ),
+  (
+    "entities02.dat:24", "document", "", "<div>ZZ&prod=23</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"ZZ&prod=23\"\n",
+  ),
+  (
+    "entities02.dat:25", "document", "", "<div>ZZ&AElig=</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"ZZÆ=\"\n",
+  ),
+  (
+    "foreign-fragment.dat:0", "fragment", "svg path", "<nobr>X", "| <nobr>\n|   \"X\"\n",
+  ),
+  (
+    "foreign-fragment.dat:1", "fragment", "svg path", "<font color></font>X", "| <font>\n|   color=\"\"\n| \"X\"\n",
+  ),
+  (
+    "foreign-fragment.dat:2", "fragment", "svg path", "<font></font>X", "| <svg font>\n| \"X\"\n",
+  ),
+  (
+    "foreign-fragment.dat:3", "fragment", "svg path", "<g></path>X", "| <svg g>\n|   \"X\"\n",
+  ),
+  ("foreign-fragment.dat:4", "fragment", "svg path", "</path>X", "| \"X\"\n"),
+  (
+    "foreign-fragment.dat:5", "fragment", "svg foreignObject", "</foreignObject>X",
+    "| \"X\"\n",
+  ),
+  ("foreign-fragment.dat:6", "fragment", "svg desc", "</desc>X", "| \"X\"\n"),
+  ("foreign-fragment.dat:7", "fragment", "svg title", "</title>X", "| \"X\"\n"),
+  ("foreign-fragment.dat:8", "fragment", "svg svg", "</svg>X", "| \"X\"\n"),
+  (
+    "foreign-fragment.dat:9", "fragment", "math mfenced", "</mfenced>X", "| \"X\"\n",
+  ),
+  (
+    "foreign-fragment.dat:10", "fragment", "math malignmark", "</malignmark>X", "| \"X\"\n",
+  ),
+  ("foreign-fragment.dat:11", "fragment", "math math", "</math>X", "| \"X\"\n"),
+  (
+    "foreign-fragment.dat:12", "fragment", "math annotation-xml", "</annotation-xml>X",
+    "| \"X\"\n",
+  ),
+  (
+    "foreign-fragment.dat:13", "fragment", "math mtext", "</mtext>X", "| \"X\"\n",
+  ),
+  ("foreign-fragment.dat:14", "fragment", "math mi", "</mi>X", "| \"X\"\n"),
+  ("foreign-fragment.dat:15", "fragment", "math mo", "</mo>X", "| \"X\"\n"),
+  ("foreign-fragment.dat:16", "fragment", "math mn", "</mn>X", "| \"X\"\n"),
+  ("foreign-fragment.dat:17", "fragment", "math ms", "</ms>X", "| \"X\"\n"),
+  (
+    "foreign-fragment.dat:18", "fragment", "math ms", "<b></b><mglyph/><i></i><malignmark/><u></u><ms/>X",
+    "| <b>\n| <math mglyph>\n| <i>\n| <math malignmark>\n| <u>\n| <ms>\n|   \"X\"\n",
+  ),
+  (
+    "foreign-fragment.dat:19", "fragment", "math ms", "<malignmark></malignmark>",
+    "| <math malignmark>\n",
+  ),
+  ("foreign-fragment.dat:20", "fragment", "math ms", "<div></div>", "| <div>\n"),
+  (
+    "foreign-fragment.dat:21", "fragment", "math ms", "<figure></figure>", "| <figure>\n",
+  ),
+  (
+    "foreign-fragment.dat:22", "fragment", "math mn", "<b></b><mglyph/><i></i><malignmark/><u></u><mn/>X",
+    "| <b>\n| <math mglyph>\n| <i>\n| <math malignmark>\n| <u>\n| <mn>\n|   \"X\"\n",
+  ),
+  (
+    "foreign-fragment.dat:23", "fragment", "math mn", "<malignmark></malignmark>",
+    "| <math malignmark>\n",
+  ),
+  ("foreign-fragment.dat:24", "fragment", "math mn", "<div></div>", "| <div>\n"),
+  (
+    "foreign-fragment.dat:25", "fragment", "math mn", "<figure></figure>", "| <figure>\n",
+  ),
+  (
+    "foreign-fragment.dat:26", "fragment", "math mo", "<b></b><mglyph/><i></i><malignmark/><u></u><mo/>X",
+    "| <b>\n| <math mglyph>\n| <i>\n| <math malignmark>\n| <u>\n| <mo>\n|   \"X\"\n",
+  ),
+  (
+    "foreign-fragment.dat:27", "fragment", "math mo", "<malignmark></malignmark>",
+    "| <math malignmark>\n",
+  ),
+  ("foreign-fragment.dat:28", "fragment", "math mo", "<div></div>", "| <div>\n"),
+  (
+    "foreign-fragment.dat:29", "fragment", "math mo", "<figure></figure>", "| <figure>\n",
+  ),
+  (
+    "foreign-fragment.dat:30", "fragment", "math mi", "<b></b><mglyph/><i></i><malignmark/><u></u><mi/>X",
+    "| <b>\n| <math mglyph>\n| <i>\n| <math malignmark>\n| <u>\n| <mi>\n|   \"X\"\n",
+  ),
+  (
+    "foreign-fragment.dat:31", "fragment", "math mi", "<malignmark></malignmark>",
+    "| <math malignmark>\n",
+  ),
+  ("foreign-fragment.dat:32", "fragment", "math mi", "<div></div>", "| <div>\n"),
+  (
+    "foreign-fragment.dat:33", "fragment", "math mi", "<figure></figure>", "| <figure>\n",
+  ),
+  (
+    "foreign-fragment.dat:34", "fragment", "math mtext", "<b></b><mglyph/><i></i><malignmark/><u></u><mtext/>X",
+    "| <b>\n| <math mglyph>\n| <i>\n| <math malignmark>\n| <u>\n| <mtext>\n|   \"X\"\n",
+  ),
+  (
+    "foreign-fragment.dat:35", "fragment", "math mtext", "<malignmark></malignmark>",
+    "| <math malignmark>\n",
+  ),
+  (
+    "foreign-fragment.dat:36", "fragment", "math mtext", "<div></div>", "| <div>\n",
+  ),
+  (
+    "foreign-fragment.dat:37", "fragment", "math mtext", "<figure></figure>", "| <figure>\n",
+  ),
+  (
+    "foreign-fragment.dat:38", "fragment", "math annotation-xml", "<div></div>",
+    "| <div>\n",
+  ),
+  (
+    "foreign-fragment.dat:39", "fragment", "math annotation-xml", "<figure></figure>",
+    "| <math figure>\n",
+  ),
+  (
+    "foreign-fragment.dat:40", "fragment", "math math", "<div></div>", "| <div>\n",
+  ),
+  (
+    "foreign-fragment.dat:41", "fragment", "math math", "<figure></figure>", "| <math figure>\n",
+  ),
+  (
+    "foreign-fragment.dat:42", "fragment", "svg foreignObject", "<div></div>", "| <div>\n",
+  ),
+  (
+    "foreign-fragment.dat:43", "fragment", "svg foreignObject", "<figure></figure>",
+    "| <figure>\n",
+  ),
+  (
+    "foreign-fragment.dat:44", "fragment", "svg title", "<div></div>", "| <div>\n",
+  ),
+  (
+    "foreign-fragment.dat:45", "fragment", "svg title", "<figure></figure>", "| <figure>\n",
+  ),
+  (
+    "foreign-fragment.dat:46", "fragment", "svg desc", "<figure></figure>", "| <figure>\n",
+  ),
+  (
+    "foreign-fragment.dat:47", "fragment", "svg svg", "<div><h1>X</h1></div>", "| <div>\n|   <h1>\n|     \"X\"\n",
+  ),
+  ("foreign-fragment.dat:48", "fragment", "svg svg", "<div></div>", "| <div>\n"),
+  (
+    "foreign-fragment.dat:49", "fragment", "svg desc", "<div></div>", "| <div>\n",
+  ),
+  (
+    "foreign-fragment.dat:50", "fragment", "svg desc", "<plaintext><foo>", "| <plaintext>\n|   \"<foo>\"\n",
+  ),
+  (
+    "foreign-fragment.dat:51", "fragment", "svg desc", "<frameset>X", "| \"X\"\n",
+  ),
+  ("foreign-fragment.dat:52", "fragment", "svg desc", "<head>X", "| \"X\"\n"),
+  ("foreign-fragment.dat:53", "fragment", "svg desc", "<body>X", "| \"X\"\n"),
+  ("foreign-fragment.dat:54", "fragment", "svg desc", "<html>X", "| \"X\"\n"),
+  (
+    "foreign-fragment.dat:55", "fragment", "svg desc", "<html class=\"foo\">X", "| \"X\"\n",
+  ),
+  (
+    "foreign-fragment.dat:56", "fragment", "svg desc", "<body class=\"foo\">X", "| \"X\"\n",
+  ),
+  (
+    "foreign-fragment.dat:57", "fragment", "div", "<svg><p>", "| <svg svg>\n| <p>\n",
+  ),
+  ("foreign-fragment.dat:58", "fragment", "svg svg", "<p>", "| <p>\n"),
+  (
+    "foreign-fragment.dat:59", "fragment", "div", "<svg></p><foo>", "| <svg svg>\n| <p>\n| <foo>\n",
+  ),
+  (
+    "foreign-fragment.dat:60", "fragment", "div", "<svg></br><foo>", "| <svg svg>\n| <br>\n| <foo>\n",
+  ),
+  (
+    "foreign-fragment.dat:61", "fragment", "svg svg", "</p><foo>", "| <p>\n| <svg foo>\n",
+  ),
+  (
+    "foreign-fragment.dat:62", "fragment", "svg svg", "</br><foo>", "| <br>\n| <svg foo>\n",
+  ),
+  (
+    "foreign-fragment.dat:63", "fragment", "svg svg", "<body><foo>", "| <svg foo>\n",
+  ),
+  (
+    "foreign-fragment.dat:64", "fragment", "svg svg", "<p><foo>", "| <p>\n|   <foo>\n",
+  ),
+  (
+    "foreign-fragment.dat:65", "fragment", "svg svg", "<p></p><foo>", "| <p>\n| <svg foo>\n",
+  ),
+  (
+    "html5test-com.dat:0", "document", "", "<div<div>", "| <html>\n|   <head>\n|   <body>\n|     <div<div>\n",
+  ),
+  (
+    "html5test-com.dat:1", "document", "", "<div foo<bar=''>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       foo<bar=\"\"\n",
+  ),
+  (
+    "html5test-com.dat:2", "document", "", "<div foo=`bar`>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       foo=\"`bar`\"\n",
+  ),
+  (
+    "html5test-com.dat:3", "document", "", "<div \\\"foo=''>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \\\"foo=\"\"\n",
+  ),
+  (
+    "html5test-com.dat:4", "document", "", "<a href='\\nbar'></a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       href=\"\\nbar\"\n",
+  ),
+  (
+    "html5test-com.dat:5", "document", "", "<!DOCTYPE html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "html5test-com.dat:6", "document", "", "&lang;&rang;", "| <html>\n|   <head>\n|   <body>\n|     \"⟨⟩\"\n",
+  ),
+  (
+    "html5test-com.dat:7", "document", "", "&apos;", "| <html>\n|   <head>\n|   <body>\n|     \"'\"\n",
+  ),
+  (
+    "html5test-com.dat:8", "document", "", "&ImaginaryI;", "| <html>\n|   <head>\n|   <body>\n|     \"ⅈ\"\n",
+  ),
+  (
+    "html5test-com.dat:9", "document", "", "&Kopf;", "| <html>\n|   <head>\n|   <body>\n|     \"𝕂\"\n",
+  ),
+  (
+    "html5test-com.dat:10", "document", "", "&notinva;", "| <html>\n|   <head>\n|   <body>\n|     \"∉\"\n",
+  ),
+  (
+    "html5test-com.dat:11", "document", "", "<?import namespace=\"foo\" implementation=\"#bar\">",
+    "| <!-- ?import namespace=\"foo\" implementation=\"#bar\" -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "html5test-com.dat:12", "document", "", "<!--foo--bar-->", "| <!-- foo--bar -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "html5test-com.dat:13", "document", "", "<![CDATA[x]]>", "| <!-- [CDATA[x]] -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "html5test-com.dat:14", "document", "", "<textarea><!--</textarea>--></textarea>",
+    "| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"<!--\"\n|     \"-->\"\n",
+  ),
+  (
+    "html5test-com.dat:15", "document", "", "<textarea><!--</textarea>-->", "| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"<!--\"\n|     \"-->\"\n",
+  ),
+  (
+    "html5test-com.dat:16", "document", "", "<style><!--</style>--></style>", "| <html>\n|   <head>\n|     <style>\n|       \"<!--\"\n|   <body>\n|     \"-->\"\n",
+  ),
+  (
+    "html5test-com.dat:17", "document", "", "<style><!--</style>-->", "| <html>\n|   <head>\n|     <style>\n|       \"<!--\"\n|   <body>\n|     \"-->\"\n",
+  ),
+  (
+    "html5test-com.dat:18", "document", "", "<ul><li>A </li> <li>B</li></ul>", "| <html>\n|   <head>\n|   <body>\n|     <ul>\n|       <li>\n|         \"A \"\n|       \" \"\n|       <li>\n|         \"B\"\n",
+  ),
+  (
+    "html5test-com.dat:19", "document", "", "<table><form><input type=hidden><input></form><div></div></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <input>\n|     <div>\n|     <table>\n|       <form>\n|       <input>\n|         type=\"hidden\"\n",
+  ),
+  (
+    "html5test-com.dat:20", "document", "", "<i>A<b>B<p></i>C</b>D", "| <html>\n|   <head>\n|   <body>\n|     <i>\n|       \"A\"\n|       <b>\n|         \"B\"\n|     <b>\n|     <p>\n|       <b>\n|         <i>\n|         \"C\"\n|       \"D\"\n",
+  ),
+  (
+    "html5test-com.dat:21", "document", "", "<div></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n",
+  ),
+  (
+    "html5test-com.dat:22", "document", "", "<svg></svg>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n",
+  ),
+  (
+    "html5test-com.dat:23", "document", "", "<math></math>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n",
+  ),
+  (
+    "inbody01.dat:0", "document", "", "<button>1</foo>", "| <html>\n|   <head>\n|   <body>\n|     <button>\n|       \"1\"\n",
+  ),
+  (
+    "inbody01.dat:1", "document", "", "<foo>1<p>2</foo>", "| <html>\n|   <head>\n|   <body>\n|     <foo>\n|       \"1\"\n|       <p>\n|         \"2\"\n",
+  ),
+  (
+    "inbody01.dat:2", "document", "", "<dd>1</foo>", "| <html>\n|   <head>\n|   <body>\n|     <dd>\n|       \"1\"\n",
+  ),
+  (
+    "inbody01.dat:3", "document", "", "<foo>1<dd>2</foo>", "| <html>\n|   <head>\n|   <body>\n|     <foo>\n|       \"1\"\n|       <dd>\n|         \"2\"\n",
+  ),
+  (
+    "isindex.dat:0", "document", "", "<isindex>", "| <html>\n|   <head>\n|   <body>\n|     <isindex>\n",
+  ),
+  (
+    "isindex.dat:1", "document", "", "<isindex name=\"A\" action=\"B\" prompt=\"C\" foo=\"D\">",
     "| <html>\n|   <head>\n|   <body>\n|     <isindex>\n|       action=\"B\"\n|       foo=\"D\"\n|       name=\"A\"\n|       prompt=\"C\"\n",
   ),
   (
-    "isindex.dat:2", "<form><isindex>", "| <html>\n|   <head>\n|   <body>\n|     <form>\n|       <isindex>\n",
+    "isindex.dat:2", "document", "", "<form><isindex>", "| <html>\n|   <head>\n|   <body>\n|     <form>\n|       <isindex>\n",
   ),
   (
-    "isindex.dat:3", "<!doctype html><isindex>x</isindex>x", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <isindex>\n|       \"x\"\n|     \"x\"\n",
+    "isindex.dat:3", "document", "", "<!doctype html><isindex>x</isindex>x", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <isindex>\n|       \"x\"\n|     \"x\"\n",
   ),
   (
-    "search-element.dat:0", "<!doctype html><p>foo<search>bar<p>baz", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <search>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+    "main-element.dat:0", "document", "", "<!doctype html><p>foo<main>bar<p>baz",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <main>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
   ),
   (
-    "search-element.dat:1", "<!doctype html><search><p>foo</search>bar", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <search>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+    "main-element.dat:1", "document", "", "<!doctype html><main><p>foo</main>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <main>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
   ),
   (
-    "search-element.dat:2", "<!DOCTYPE html>xxx<svg><x><g><a><search><b>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"xxx\"\n|     <svg svg>\n|       <svg x>\n|         <svg g>\n|           <svg a>\n|             <svg search>\n|     <b>\n",
+    "main-element.dat:2", "document", "", "<!DOCTYPE html>xxx<svg><x><g><a><main><b>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"xxx\"\n|     <svg svg>\n|       <svg x>\n|         <svg g>\n|           <svg a>\n|             <svg main>\n|     <b>\n",
   ),
   (
-    "tricky01.dat:0", "<b><p>Bold </b> Not bold</p>\nAlso not bold.", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|     <p>\n|       <b>\n|         \"Bold \"\n|       \" Not bold\"\n|     \"\nAlso not bold.\"\n",
+    "math.dat:0", "fragment", "td", "<math><tr><td><mo><tr>", "| <math math>\n|   <math tr>\n|     <math td>\n|       <math mo>\n",
   ),
   (
-    "tricky01.dat:1", "<html>\n<font color=red><i>Italic and Red<p>Italic and Red </font> Just italic.</p> Italic only.</i> Plain\n<p>I should not be red. <font color=red>Red. <i>Italic and red.</p>\n<p>Italic and red. </i> Red.</font> I should not be red.</p>\n<b>Bold <i>Bold and italic</b> Only Italic </i> Plain",
+    "math.dat:1", "fragment", "tr", "<math><tr><td><mo><tr>", "| <math math>\n|   <math tr>\n|     <math td>\n|       <math mo>\n",
+  ),
+  (
+    "math.dat:2", "fragment", "thead", "<math><thead><mo><tbody>", "| <math math>\n|   <math thead>\n|     <math mo>\n",
+  ),
+  (
+    "math.dat:3", "fragment", "tfoot", "<math><tfoot><mo><tbody>", "| <math math>\n|   <math tfoot>\n|     <math mo>\n",
+  ),
+  (
+    "math.dat:4", "fragment", "tbody", "<math><tbody><mo><tfoot>", "| <math math>\n|   <math tbody>\n|     <math mo>\n",
+  ),
+  (
+    "math.dat:5", "fragment", "tbody", "<math><tbody><mo></table>", "| <math math>\n|   <math tbody>\n|     <math mo>\n",
+  ),
+  (
+    "math.dat:6", "fragment", "tbody", "<math><thead><mo></table>", "| <math math>\n|   <math thead>\n|     <math mo>\n",
+  ),
+  (
+    "math.dat:7", "fragment", "tbody", "<math><tfoot><mo></table>", "| <math math>\n|   <math tfoot>\n|     <math mo>\n",
+  ),
+  (
+    "menuitem-element.dat:0", "document", "", "<menuitem>", "| <html>\n|   <head>\n|   <body>\n|     <menuitem>\n",
+  ),
+  (
+    "menuitem-element.dat:1", "document", "", "</menuitem>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "menuitem-element.dat:2", "document", "", "<!DOCTYPE html><body><menuitem>A",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <menuitem>\n|       \"A\"\n",
+  ),
+  (
+    "menuitem-element.dat:3", "document", "", "<!DOCTYPE html><body><menuitem>A<menuitem>B",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <menuitem>\n|       \"A\"\n|       <menuitem>\n|         \"B\"\n",
+  ),
+  (
+    "menuitem-element.dat:4", "document", "", "<!DOCTYPE html><body><menuitem>A<menu>B</menu>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <menuitem>\n|       \"A\"\n|       <menu>\n|         \"B\"\n",
+  ),
+  (
+    "menuitem-element.dat:5", "document", "", "<!DOCTYPE html><body><menuitem>A<hr>B",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <menuitem>\n|       \"A\"\n|       <hr>\n|       \"B\"\n",
+  ),
+  (
+    "menuitem-element.dat:6", "document", "", "<!DOCTYPE html><li><menuitem><li>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <li>\n|       <menuitem>\n|     <li>\n",
+  ),
+  (
+    "menuitem-element.dat:7", "document", "", "<!DOCTYPE html><menuitem><p></menuitem>x",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <menuitem>\n|       <p>\n|         \"x\"\n",
+  ),
+  (
+    "menuitem-element.dat:8", "document", "", "<!DOCTYPE html><p><b></p><menuitem>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <b>\n|     <b>\n|       <menuitem>\n",
+  ),
+  (
+    "menuitem-element.dat:9", "document", "", "<!DOCTYPE html><menuitem><asdf></menuitem>x",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <menuitem>\n|       <asdf>\n|     \"x\"\n",
+  ),
+  (
+    "menuitem-element.dat:10", "document", "", "<!DOCTYPE html></menuitem>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "menuitem-element.dat:11", "document", "", "<!DOCTYPE html><html></menuitem>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "menuitem-element.dat:12", "document", "", "<!DOCTYPE html><head></menuitem>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "menuitem-element.dat:13", "document", "", "<!DOCTYPE html><select><menuitem></select>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <menuitem>\n",
+  ),
+  (
+    "menuitem-element.dat:14", "document", "", "<!DOCTYPE html><option><menuitem>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <option>\n|       <menuitem>\n",
+  ),
+  (
+    "menuitem-element.dat:15", "document", "", "<!DOCTYPE html><menuitem><option>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <menuitem>\n|       <option>\n",
+  ),
+  (
+    "menuitem-element.dat:16", "document", "", "<!DOCTYPE html><menuitem></body>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <menuitem>\n",
+  ),
+  (
+    "menuitem-element.dat:17", "document", "", "<!DOCTYPE html><menuitem></html>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <menuitem>\n",
+  ),
+  (
+    "menuitem-element.dat:18", "document", "", "<!DOCTYPE html><menuitem><p>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <menuitem>\n|       <p>\n",
+  ),
+  (
+    "menuitem-element.dat:19", "document", "", "<!DOCTYPE html><menuitem><li>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <menuitem>\n|       <li>\n",
+  ),
+  (
+    "namespace-sensitivity.dat:0", "document", "", "<body><table><tr><td><svg><td><foreignObject><span></td>Foo",
+    "| <html>\n|   <head>\n|   <body>\n|     \"Foo\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <svg svg>\n|               <svg td>\n|                 <svg foreignObject>\n|                   <span>\n",
+  ),
+  (
+    "noscript01.dat:0", "document", "", "<head><noscript><!doctype html><!--foo--></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|       <!-- foo -->\n|   <body>\n",
+  ),
+  (
+    "noscript01.dat:1", "document", "", "<head><noscript><html class=\"foo\"><!--foo--></noscript>",
+    "| <html>\n|   class=\"foo\"\n|   <head>\n|     <noscript>\n|       <!-- foo -->\n|   <body>\n",
+  ),
+  (
+    "noscript01.dat:2", "document", "", "<head><noscript></noscript>", "| <html>\n|   <head>\n|     <noscript>\n|   <body>\n",
+  ),
+  (
+    "noscript01.dat:3", "document", "", "<head><noscript>   </noscript>", "| <html>\n|   <head>\n|     <noscript>\n|       \"   \"\n|   <body>\n",
+  ),
+  (
+    "noscript01.dat:4", "document", "", "<head><noscript><!--foo--></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|       <!-- foo -->\n|   <body>\n",
+  ),
+  (
+    "noscript01.dat:5", "document", "", "<head><noscript><basefont><!--foo--></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|       <basefont>\n|       <!-- foo -->\n|   <body>\n",
+  ),
+  (
+    "noscript01.dat:6", "document", "", "<head><noscript><bgsound><!--foo--></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|       <bgsound>\n|       <!-- foo -->\n|   <body>\n",
+  ),
+  (
+    "noscript01.dat:7", "document", "", "<head><noscript><link><!--foo--></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|       <link>\n|       <!-- foo -->\n|   <body>\n",
+  ),
+  (
+    "noscript01.dat:8", "document", "", "<head><noscript><meta><!--foo--></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|       <meta>\n|       <!-- foo -->\n|   <body>\n",
+  ),
+  (
+    "noscript01.dat:9", "document", "", "<head><noscript><noframes>XXX</noscript></noframes></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|       <noframes>\n|         \"XXX</noscript>\"\n|   <body>\n",
+  ),
+  (
+    "noscript01.dat:10", "document", "", "<head><noscript><style>XXX</style></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|       <style>\n|         \"XXX\"\n|   <body>\n",
+  ),
+  (
+    "noscript01.dat:11", "document", "", "<head><noscript></br><!--foo--></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|   <body>\n|     <br>\n|     <!-- foo -->\n",
+  ),
+  (
+    "noscript01.dat:12", "document", "", "<head><noscript><head class=\"foo\"><!--foo--></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|       <!-- foo -->\n|   <body>\n",
+  ),
+  (
+    "noscript01.dat:13", "document", "", "<head><noscript><noscript class=\"foo\"><!--foo--></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|       <!-- foo -->\n|   <body>\n",
+  ),
+  (
+    "noscript01.dat:14", "document", "", "<head><noscript></p><!--foo--></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|       <!-- foo -->\n|   <body>\n",
+  ),
+  (
+    "noscript01.dat:15", "document", "", "<head><noscript><p><!--foo--></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|   <body>\n|     <p>\n|       <!-- foo -->\n",
+  ),
+  (
+    "noscript01.dat:16", "document", "", "<head><noscript>XXX<!--foo--></noscript></head>",
+    "| <html>\n|   <head>\n|     <noscript>\n|   <body>\n|     \"XXX\"\n|     <!-- foo -->\n",
+  ),
+  (
+    "noscript01.dat:17", "document", "", "<head><noscript>", "| <html>\n|   <head>\n|     <noscript>\n|   <body>\n",
+  ),
+  (
+    "pending-spec-changes-plain-text-unsafe.dat:0", "document", "", "<body><table>\u{0}filler\u{0}text\u{0}",
+    "| <html>\n|   <head>\n|   <body>\n|     \"fillertext\"\n|     <table>\n",
+  ),
+  (
+    "pending-spec-changes.dat:0", "document", "", "<input type=\"hidden\"><frameset>",
+    "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "pending-spec-changes.dat:1", "document", "", "<!DOCTYPE html><table><caption><svg>foo</table>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <svg svg>\n|           \"foo\"\n|     \"bar\"\n",
+  ),
+  (
+    "pending-spec-changes.dat:2", "document", "", "<table><tr><td><svg><desc><td></desc><circle>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <svg svg>\n|               <svg desc>\n|           <td>\n|             <circle>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:0", "document", "", "FOO&#x000D;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOZOO\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:1", "document", "", "<html>\u{0}<frameset></frameset>",
+    "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:2", "document", "", "<html> \u{0} <frameset></frameset>",
+    "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:3", "document", "", "<html>a\u{0}a<frameset></frameset>",
+    "| <html>\n|   <head>\n|   <body>\n|     \"aa\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:4", "document", "", "<html>\u{0}\u{0}<frameset></frameset>",
+    "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:5", "document", "", "<html>\u{0}\n<frameset></frameset>",
+    "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:6", "document", "", "<html><select>\u{0}", "| <html>\n|   <head>\n|   <body>\n|     <select>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:7", "document", "", "\u{0}", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:8", "document", "", "<body>\u{0}", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:9", "document", "", "<plaintext>\u{0}filler\u{0}text\u{0}",
+    "| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"�filler�text�\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:10", "document", "", "<svg><![CDATA[\u{0}filler\u{0}text\u{0}]]>",
+    "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"�filler�text�\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:11", "document", "", "<body><!\u{0}>", "| <html>\n|   <head>\n|   <body>\n|     <!-- � -->\n",
+  ),
+  (
+    "plain-text-unsafe.dat:12", "document", "", "<body><!\u{0}filler\u{0}text>",
+    "| <html>\n|   <head>\n|   <body>\n|     <!-- �filler�text -->\n",
+  ),
+  (
+    "plain-text-unsafe.dat:13", "document", "", "<body><svg><foreignObject>\u{0}filler\u{0}text",
+    "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg foreignObject>\n|         \"fillertext\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:14", "document", "", "<svg>\u{0}filler\u{0}text", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"�filler�text\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:15", "document", "", "<svg>\u{0}<frameset>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"�\"\n|       <svg frameset>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:16", "document", "", "<svg>\u{0} <frameset>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"� \"\n|       <svg frameset>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:17", "document", "", "<svg>\u{0}a<frameset>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"�a\"\n|       <svg frameset>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:18", "document", "", "<svg>\u{0}</svg><frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:19", "document", "", "<svg>\u{0} </svg><frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:20", "document", "", "<svg>\u{0}a</svg><frameset>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"�a\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:21", "document", "", "<svg><path></path></svg><frameset>",
+    "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:22", "document", "", "<svg><p><frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "plain-text-unsafe.dat:23", "document", "", "<!DOCTYPE html><pre>\n\nA</pre>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"\nA\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:24", "document", "", "<!DOCTYPE html><pre>A</pre>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"\nA\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:25", "document", "", "<!DOCTYPE html><pre>A</pre>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"A\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:26", "document", "", "<!DOCTYPE html><table><tr><td><math><mtext>\u{0}a",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <math math>\n|               <math mtext>\n|                 \"a\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:27", "document", "", "<!DOCTYPE html><table><tr><td><svg><foreignObject>\u{0}a",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <svg svg>\n|               <svg foreignObject>\n|                 \"a\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:28", "document", "", "<!DOCTYPE html><math><mi>a\u{0}b",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mi>\n|         \"ab\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:29", "document", "", "<!DOCTYPE html><math><mo>a\u{0}b",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mo>\n|         \"ab\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:30", "document", "", "<!DOCTYPE html><math><mn>a\u{0}b",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mn>\n|         \"ab\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:31", "document", "", "<!DOCTYPE html><math><ms>a\u{0}b",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math ms>\n|         \"ab\"\n",
+  ),
+  (
+    "plain-text-unsafe.dat:32", "document", "", "<!DOCTYPE html><math><mtext>a\u{0}b",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mtext>\n|         \"ab\"\n",
+  ),
+  (
+    "quirks01.dat:0", "document", "", "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//EN\"\n\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\"><p><table>",
+    "| <!DOCTYPE html \"-//W3C//DTD XHTML 1.0 Frameset//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <table>\n",
+  ),
+  (
+    "quirks01.dat:1", "document", "", "<!DOCTYPE html SYSTEM \"http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd\"><p><table>",
+    "| <!DOCTYPE html \"\" \"http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd\">\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <table>\n",
+  ),
+  (
+    "quirks01.dat:2", "document", "", "<!DOCTYPE html PUBLIC \"html\"><p><table>",
+    "| <!DOCTYPE html \"html\" \"\">\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <table>\n",
+  ),
+  (
+    "quirks01.dat:3", "document", "", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\"\n   \"http://www.w3.org/TR/html4/strict.dtd\"><p><table>",
+    "| <!DOCTYPE html \"-//W3C//DTD HTML 3.2//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <table>\n",
+  ),
+  (
+    "ruby.dat:0", "document", "", "<html><ruby>a<rb>b<rb></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rb>\n|         \"b\"\n|       <rb>\n",
+  ),
+  (
+    "ruby.dat:1", "document", "", "<html><ruby>a<rb>b<rt></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rb>\n|         \"b\"\n|       <rt>\n",
+  ),
+  (
+    "ruby.dat:2", "document", "", "<html><ruby>a<rb>b<rtc></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rb>\n|         \"b\"\n|       <rtc>\n",
+  ),
+  (
+    "ruby.dat:3", "document", "", "<html><ruby>a<rb>b<rp></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rb>\n|         \"b\"\n|       <rp>\n",
+  ),
+  (
+    "ruby.dat:4", "document", "", "<html><ruby>a<rb>b<span></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rb>\n|         \"b\"\n|         <span>\n",
+  ),
+  (
+    "ruby.dat:5", "document", "", "<html><ruby>a<rt>b<rb></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rt>\n|         \"b\"\n|       <rb>\n",
+  ),
+  (
+    "ruby.dat:6", "document", "", "<html><ruby>a<rt>b<rt></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rt>\n|         \"b\"\n|       <rt>\n",
+  ),
+  (
+    "ruby.dat:7", "document", "", "<html><ruby>a<rt>b<rtc></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rt>\n|         \"b\"\n|       <rtc>\n",
+  ),
+  (
+    "ruby.dat:8", "document", "", "<html><ruby>a<rt>b<rp></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rt>\n|         \"b\"\n|       <rp>\n",
+  ),
+  (
+    "ruby.dat:9", "document", "", "<html><ruby>a<rt>b<span></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rt>\n|         \"b\"\n|         <span>\n",
+  ),
+  (
+    "ruby.dat:10", "document", "", "<html><ruby>a<rtc>b<rb></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rtc>\n|         \"b\"\n|       <rb>\n",
+  ),
+  (
+    "ruby.dat:11", "document", "", "<html><ruby>a<rtc>b<rt>c<rt>d</ruby></html>",
+    "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rtc>\n|         \"b\"\n|         <rt>\n|           \"c\"\n|         <rt>\n|           \"d\"\n",
+  ),
+  (
+    "ruby.dat:12", "document", "", "<html><ruby>a<rtc>b<rtc></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rtc>\n|         \"b\"\n|       <rtc>\n",
+  ),
+  (
+    "ruby.dat:13", "document", "", "<html><ruby>a<rtc>b<rp></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rtc>\n|         \"b\"\n|         <rp>\n",
+  ),
+  (
+    "ruby.dat:14", "document", "", "<html><ruby>a<rtc>b<span></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rtc>\n|         \"b\"\n|         <span>\n",
+  ),
+  (
+    "ruby.dat:15", "document", "", "<html><ruby>a<rp>b<rb></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rp>\n|         \"b\"\n|       <rb>\n",
+  ),
+  (
+    "ruby.dat:16", "document", "", "<html><ruby>a<rp>b<rt></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rp>\n|         \"b\"\n|       <rt>\n",
+  ),
+  (
+    "ruby.dat:17", "document", "", "<html><ruby>a<rp>b<rtc></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rp>\n|         \"b\"\n|       <rtc>\n",
+  ),
+  (
+    "ruby.dat:18", "document", "", "<html><ruby>a<rp>b<rp></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rp>\n|         \"b\"\n|       <rp>\n",
+  ),
+  (
+    "ruby.dat:19", "document", "", "<html><ruby>a<rp>b<span></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rp>\n|         \"b\"\n|         <span>\n",
+  ),
+  (
+    "ruby.dat:20", "document", "", "<html><ruby><rtc><ruby>a<rb>b<rt></ruby></ruby></html>",
+    "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       <rtc>\n|         <ruby>\n|           \"a\"\n|           <rb>\n|             \"b\"\n|           <rt>\n",
+  ),
+  (
+    "scriptdata01.dat:0", "document", "", "FOO<script>'Hello'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'Hello'\"\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:1", "document", "", "FOO<script></script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:2", "document", "", "FOO<script></script >BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:3", "document", "", "FOO<script></script/>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:4", "document", "", "FOO<script></script/ >BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:5", "document", "", "FOO<script type=\"text/plain\"></scriptx>BAR",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"</scriptx>BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:6", "document", "", "FOO<script></script foo=\">\" dd>BAR",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:7", "document", "", "FOO<script>'<'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<'\"\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:8", "document", "", "FOO<script>'<!'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!'\"\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:9", "document", "", "FOO<script>'<!-'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!-'\"\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:10", "document", "", "FOO<script>'<!--'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!--'\"\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:11", "document", "", "FOO<script>'<!---'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!---'\"\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:12", "document", "", "FOO<script>'<!-->'</script>BAR", "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!-->'\"\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:13", "document", "", "FOO<script>'<!-- potato'</script>BAR",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!-- potato'\"\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:14", "document", "", "FOO<script>'<!-- <sCrIpt'</script>BAR",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!-- <sCrIpt'\"\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:15", "document", "", "FOO<script type=\"text/plain\">'<!-- <sCrIpt>'</script>BAR",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt>'</script>BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:16", "document", "", "FOO<script type=\"text/plain\">'<!-- <sCrIpt> -'</script>BAR",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt> -'</script>BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:17", "document", "", "FOO<script type=\"text/plain\">'<!-- <sCrIpt> --'</script>BAR",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt> --'</script>BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:18", "document", "", "FOO<script>'<!-- <sCrIpt> -->'</script>BAR",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"'<!-- <sCrIpt> -->'\"\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:19", "document", "", "FOO<script type=\"text/plain\">'<!-- <sCrIpt> --!>'</script>BAR",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt> --!>'</script>BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:20", "document", "", "FOO<script type=\"text/plain\">'<!-- <sCrIpt> -- >'</script>BAR",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt> -- >'</script>BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:21", "document", "", "FOO<script type=\"text/plain\">'<!-- <sCrIpt '</script>BAR",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt '</script>BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:22", "document", "", "FOO<script type=\"text/plain\">'<!-- <sCrIpt/'</script>BAR",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt/'</script>BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:23", "document", "", "FOO<script type=\"text/plain\">'<!-- <sCrIpt\\'</script>BAR",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt\\'\"\n|     \"BAR\"\n",
+  ),
+  (
+    "scriptdata01.dat:24", "document", "", "FOO<script type=\"text/plain\">'<!-- <sCrIpt/'</script>BAR</script>QUX",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       type=\"text/plain\"\n|       \"'<!-- <sCrIpt/'</script>BAR\"\n|     \"QUX\"\n",
+  ),
+  (
+    "scriptdata01.dat:25", "document", "", "FOO<script><!--<script>-></script>--></script>QUX",
+    "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <script>\n|       \"<!--<script>-></script>-->\"\n|     \"QUX\"\n",
+  ),
+  (
+    "search-element.dat:0", "document", "", "<!doctype html><p>foo<search>bar<p>baz",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|     <search>\n|       \"bar\"\n|       <p>\n|         \"baz\"\n",
+  ),
+  (
+    "search-element.dat:1", "document", "", "<!doctype html><search><p>foo</search>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <search>\n|       <p>\n|         \"foo\"\n|     \"bar\"\n",
+  ),
+  (
+    "search-element.dat:2", "document", "", "<!DOCTYPE html>xxx<svg><x><g><a><search><b>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"xxx\"\n|     <svg svg>\n|       <svg x>\n|         <svg g>\n|           <svg a>\n|             <svg search>\n|     <b>\n",
+  ),
+  (
+    "svg.dat:0", "fragment", "td", "<svg><tr><td><title><tr>", "| <svg svg>\n|   <svg tr>\n|     <svg td>\n|       <svg title>\n",
+  ),
+  (
+    "svg.dat:1", "fragment", "tr", "<svg><tr><td><title><tr>", "| <svg svg>\n|   <svg tr>\n|     <svg td>\n|       <svg title>\n",
+  ),
+  (
+    "svg.dat:2", "fragment", "thead", "<svg><thead><title><tbody>", "| <svg svg>\n|   <svg thead>\n|     <svg title>\n",
+  ),
+  (
+    "svg.dat:3", "fragment", "tfoot", "<svg><tfoot><title><tbody>", "| <svg svg>\n|   <svg tfoot>\n|     <svg title>\n",
+  ),
+  (
+    "svg.dat:4", "fragment", "tbody", "<svg><tbody><title><tfoot>", "| <svg svg>\n|   <svg tbody>\n|     <svg title>\n",
+  ),
+  (
+    "svg.dat:5", "fragment", "tbody", "<svg><tbody><title></table>", "| <svg svg>\n|   <svg tbody>\n|     <svg title>\n",
+  ),
+  (
+    "svg.dat:6", "fragment", "tbody", "<svg><thead><title></table>", "| <svg svg>\n|   <svg thead>\n|     <svg title>\n",
+  ),
+  (
+    "svg.dat:7", "fragment", "tbody", "<svg><tfoot><title></table>", "| <svg svg>\n|   <svg tfoot>\n|     <svg title>\n",
+  ),
+  (
+    "tables01.dat:0", "document", "", "<table><th>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <th>\n",
+  ),
+  (
+    "tables01.dat:1", "document", "", "<table><td>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
+  ),
+  (
+    "tables01.dat:2", "document", "", "<table><col foo='bar'>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n|         <col>\n|           foo=\"bar\"\n",
+  ),
+  (
+    "tables01.dat:3", "document", "", "<table><colgroup></html>foo", "| <html>\n|   <head>\n|   <body>\n|     \"foo\"\n|     <table>\n|       <colgroup>\n",
+  ),
+  (
+    "tables01.dat:4", "document", "", "<table></table><p>foo", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|     <p>\n|       \"foo\"\n",
+  ),
+  (
+    "tables01.dat:5", "document", "", "<table></body></caption></col></colgroup></html></tbody></td></tfoot></th></thead></tr><td>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
+  ),
+  (
+    "tables01.dat:6", "document", "", "<table><select><option>3</select></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|         \"3\"\n|     <table>\n",
+  ),
+  (
+    "tables01.dat:7", "document", "", "<table><select><table></table></select></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|     <table>\n|     <table>\n",
+  ),
+  (
+    "tables01.dat:8", "document", "", "<table><select></table>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|     <table>\n",
+  ),
+  (
+    "tables01.dat:9", "document", "", "<table><select><option>A<tr><td>B</td></tr></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|         \"A\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"B\"\n",
+  ),
+  (
+    "tables01.dat:10", "document", "", "<table><td></body></caption></col></colgroup></html>foo",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"foo\"\n",
+  ),
+  (
+    "tables01.dat:11", "document", "", "<table><td>A</table>B", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"A\"\n|     \"B\"\n",
+  ),
+  (
+    "tables01.dat:12", "document", "", "<table><tr><caption>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|       <caption>\n",
+  ),
+  (
+    "tables01.dat:13", "document", "", "<table><tr></body></caption></col></colgroup></html></td></th><td>foo",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"foo\"\n",
+  ),
+  (
+    "tables01.dat:14", "document", "", "<table><td><tr>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|         <tr>\n",
+  ),
+  (
+    "tables01.dat:15", "document", "", "<table><td><button><td>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <button>\n|           <td>\n",
+  ),
+  (
+    "tables01.dat:16", "document", "", "<table><tr><td><svg><desc><td>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <svg svg>\n|               <svg desc>\n|           <td>\n",
+  ),
+  (
+    "tables01.dat:17", "document", "", "<div><table><svg><foreignObject><select><table><s>",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <svg svg>\n|         <svg foreignObject>\n|           <select>\n|       <table>\n|       <s>\n|       <table>\n",
+  ),
+  (
+    "tables01.dat:18", "document", "", "<table>a<!doctype html>", "| <html>\n|   <head>\n|   <body>\n|     \"a\"\n|     <table>\n",
+  ),
+  (
+    "template.dat:0", "document", "", "<body><template>Hello</template>", "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         \"Hello\"\n",
+  ),
+  (
+    "template.dat:1", "document", "", "<template>Hello</template>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         \"Hello\"\n|   <body>\n",
+  ),
+  (
+    "template.dat:2", "document", "", "<template></template><div></div>", "| <html>\n|   <head>\n|     <template>\n|       content\n|   <body>\n|     <div>\n",
+  ),
+  (
+    "template.dat:3", "document", "", "<html><template>Hello</template>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         \"Hello\"\n|   <body>\n",
+  ),
+  (
+    "template.dat:4", "document", "", "<head><template><div></div></template></head>",
+    "| <html>\n|   <head>\n|     <template>\n|       content\n|         <div>\n|   <body>\n",
+  ),
+  (
+    "template.dat:5", "document", "", "<div><template><div><span></template><b>",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <template>\n|         content\n|           <div>\n|             <span>\n|       <b>\n",
+  ),
+  (
+    "template.dat:6", "document", "", "<div><template></div>Hello", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <template>\n|         content\n|           \"Hello\"\n",
+  ),
+  (
+    "template.dat:7", "document", "", "<div></template></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n",
+  ),
+  (
+    "template.dat:8", "document", "", "<table><template></template></table>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <template>\n|         content\n",
+  ),
+  (
+    "template.dat:9", "document", "", "<table><template></template></div>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <template>\n|         content\n",
+  ),
+  (
+    "template.dat:10", "document", "", "<table><div><template></template></div>",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <template>\n|         content\n|     <table>\n",
+  ),
+  (
+    "template.dat:11", "document", "", "<table><template></template><div></div>",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|     <table>\n|       <template>\n|         content\n",
+  ),
+  (
+    "template.dat:12", "document", "", "<table>   <template></template></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       \"   \"\n|       <template>\n|         content\n",
+  ),
+  (
+    "template.dat:13", "document", "", "<table><tbody><template></template></tbody>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <template>\n|           content\n",
+  ),
+  (
+    "template.dat:14", "document", "", "<table><tbody><template></tbody></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <template>\n|           content\n",
+  ),
+  (
+    "template.dat:15", "document", "", "<table><tbody><template></template></tbody></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <template>\n|           content\n",
+  ),
+  (
+    "template.dat:16", "document", "", "<table><thead><template></template></thead>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <thead>\n|         <template>\n|           content\n",
+  ),
+  (
+    "template.dat:17", "document", "", "<table><tfoot><template></template></tfoot>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tfoot>\n|         <template>\n|           content\n",
+  ),
+  (
+    "template.dat:18", "document", "", "<select><template></template></select>",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <template>\n|         content\n",
+  ),
+  (
+    "template.dat:19", "document", "", "<select><template><option></option></template></select>",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <template>\n|         content\n|           <option>\n",
+  ),
+  (
+    "template.dat:20", "document", "", "<template><option></option></select><option></option></template>",
+    "| <html>\n|   <head>\n|     <template>\n|       content\n|         <option>\n|         <option>\n|   <body>\n",
+  ),
+  (
+    "template.dat:21", "document", "", "<select><template></template><option></select>",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <template>\n|         content\n|       <option>\n",
+  ),
+  (
+    "template.dat:22", "document", "", "<select><option><template></template></select>",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|         <template>\n|           content\n",
+  ),
+  (
+    "template.dat:23", "document", "", "<select><template>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <template>\n|         content\n",
+  ),
+  (
+    "template.dat:24", "document", "", "<select><option></option><template>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|       <template>\n|         content\n",
+  ),
+  (
+    "template.dat:25", "document", "", "<select><option></option><template><option>",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|       <template>\n|         content\n|           <option>\n",
+  ),
+  (
+    "template.dat:26", "document", "", "<table><thead><template><td></template></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <thead>\n|         <template>\n|           content\n|             <td>\n",
+  ),
+  (
+    "template.dat:27", "document", "", "<table><template><thead></template></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <template>\n|         content\n|           <thead>\n",
+  ),
+  (
+    "template.dat:28", "document", "", "<body><table><template><td></tr><div></template></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <template>\n|         content\n|           <td>\n|             <div>\n",
+  ),
+  (
+    "template.dat:29", "document", "", "<table><template><thead></template></thead></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <template>\n|         content\n|           <thead>\n",
+  ),
+  (
+    "template.dat:30", "document", "", "<table><thead><template><tr></template></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <thead>\n|         <template>\n|           content\n|             <tr>\n",
+  ),
+  (
+    "template.dat:31", "document", "", "<table><template><tr></template></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <template>\n|         content\n|           <tr>\n",
+  ),
+  (
+    "template.dat:32", "document", "", "<table><tr><template><td>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <template>\n|             content\n|               <td>\n",
+  ),
+  (
+    "template.dat:33", "document", "", "<table><template><tr><template><td></template></tr></template></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <template>\n|         content\n|           <tr>\n|             <template>\n|               content\n|                 <td>\n",
+  ),
+  (
+    "template.dat:34", "document", "", "<table><template><tr><template><td></td></template></tr></template></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <template>\n|         content\n|           <tr>\n|             <template>\n|               content\n|                 <td>\n",
+  ),
+  (
+    "template.dat:35", "document", "", "<table><template><td></template>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <template>\n|         content\n|           <td>\n",
+  ),
+  (
+    "template.dat:36", "document", "", "<body><template><td></td></template>", "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <td>\n",
+  ),
+  (
+    "template.dat:37", "document", "", "<body><template><template><tr></tr></template><td></td></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <template>\n|           content\n|             <tr>\n|         <td>\n",
+  ),
+  (
+    "template.dat:38", "document", "", "<table><colgroup><template><col>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n|         <template>\n|           content\n|             <col>\n",
+  ),
+  (
+    "template.dat:39", "document", "", "<frameset><template><frame></frame></template></frameset>",
+    "| <html>\n|   <head>\n|   <frameset>\n|     <frame>\n",
+  ),
+  (
+    "template.dat:40", "document", "", "<template><frame></frame></frameset><frame></frame></template>",
+    "| <html>\n|   <head>\n|     <template>\n|       content\n|   <body>\n",
+  ),
+  (
+    "template.dat:41", "document", "", "<template><div><frameset><span></span></div><span></span></template>",
+    "| <html>\n|   <head>\n|     <template>\n|       content\n|         <div>\n|           <span>\n|         <span>\n|   <body>\n",
+  ),
+  (
+    "template.dat:42", "document", "", "<body><template><div><frameset><span></span></div><span></span></template></body>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <div>\n|           <span>\n|         <span>\n",
+  ),
+  (
+    "template.dat:43", "document", "", "<body><template><script>var i = 1;</script><td></td></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <script>\n|           \"var i = 1;\"\n|         <td>\n",
+  ),
+  (
+    "template.dat:44", "document", "", "<body><template><tr><div></div></tr></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <tr>\n|         <div>\n",
+  ),
+  (
+    "template.dat:45", "document", "", "<body><template><tr></tr><td></td></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <tr>\n|         <tr>\n|           <td>\n",
+  ),
+  (
+    "template.dat:46", "document", "", "<body><template><td></td></tr><td></td></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <td>\n|         <td>\n",
+  ),
+  (
+    "template.dat:47", "document", "", "<body><template><td></td><tbody><td></td></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <td>\n|         <td>\n",
+  ),
+  (
+    "template.dat:48", "document", "", "<body><template><td></td><caption></caption><td></td></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <td>\n|         <td>\n",
+  ),
+  (
+    "template.dat:49", "document", "", "<body><template><td></td><colgroup></caption><td></td></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <td>\n|         <td>\n",
+  ),
+  (
+    "template.dat:50", "document", "", "<body><template><td></td></table><td></td></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <td>\n|         <td>\n",
+  ),
+  (
+    "template.dat:51", "document", "", "<body><template><tr></tr><tbody><tr></tr></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <tr>\n|         <tr>\n",
+  ),
+  (
+    "template.dat:52", "document", "", "<body><template><tr></tr><caption><tr></tr></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <tr>\n|         <tr>\n",
+  ),
+  (
+    "template.dat:53", "document", "", "<body><template><tr></tr></table><tr></tr></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <tr>\n|         <tr>\n",
+  ),
+  (
+    "template.dat:54", "document", "", "<body><template><thead></thead><caption></caption><tbody></tbody></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <thead>\n|         <caption>\n|         <tbody>\n",
+  ),
+  (
+    "template.dat:55", "document", "", "<body><template><thead></thead></table><tbody></tbody></template></body>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <thead>\n|         <tbody>\n",
+  ),
+  (
+    "template.dat:56", "document", "", "<body><template><div><tr></tr></div></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <div>\n",
+  ),
+  (
+    "template.dat:57", "document", "", "<body><template><em>Hello</em></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <em>\n|           \"Hello\"\n",
+  ),
+  (
+    "template.dat:58", "document", "", "<body><template><!--comment--></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <!-- comment -->\n",
+  ),
+  (
+    "template.dat:59", "document", "", "<body><template><style></style><td></td></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <style>\n|         <td>\n",
+  ),
+  (
+    "template.dat:60", "document", "", "<body><template><meta><td></td></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <meta>\n|         <td>\n",
+  ),
+  (
+    "template.dat:61", "document", "", "<body><template><link><td></td></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <link>\n|         <td>\n",
+  ),
+  (
+    "template.dat:62", "document", "", "<body><table><colgroup><template><col></col></template></colgroup></table></body>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n|         <template>\n|           content\n|             <col>\n",
+  ),
+  (
+    "template.dat:63", "document", "", "<body a=b><template><div></div><body c=d><div></div></body></template></body>",
+    "| <html>\n|   <head>\n|   <body>\n|     a=\"b\"\n|     <template>\n|       content\n|         <div>\n|         <div>\n",
+  ),
+  (
+    "template.dat:64", "document", "", "<html a=b><template><div><html b=c><span></template>",
+    "| <html>\n|   a=\"b\"\n|   <head>\n|     <template>\n|       content\n|         <div>\n|           <span>\n|   <body>\n",
+  ),
+  (
+    "template.dat:65", "document", "", "<html a=b><template><col></col><html b=c><col></col></template>",
+    "| <html>\n|   a=\"b\"\n|   <head>\n|     <template>\n|       content\n|         <col>\n|         <col>\n|   <body>\n",
+  ),
+  (
+    "template.dat:66", "document", "", "<html a=b><template><frame></frame><html b=c><frame></frame></template>",
+    "| <html>\n|   a=\"b\"\n|   <head>\n|     <template>\n|       content\n|   <body>\n",
+  ),
+  (
+    "template.dat:67", "document", "", "<body><template><tr></tr><template></template><td></td></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <tr>\n|         <template>\n|           content\n|         <tr>\n|           <td>\n",
+  ),
+  (
+    "template.dat:68", "document", "", "<body><template><thead></thead><template><tr></tr></template><tr></tr><tfoot></tfoot></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <thead>\n|         <template>\n|           content\n|             <tr>\n|         <tbody>\n|           <tr>\n|         <tfoot>\n",
+  ),
+  (
+    "template.dat:69", "document", "", "<body><template><template><b><template></template></template>text</template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <template>\n|           content\n|             <b>\n|               <template>\n|                 content\n|         \"text\"\n",
+  ),
+  (
+    "template.dat:70", "document", "", "<body><template><col><colgroup>", "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <col>\n",
+  ),
+  (
+    "template.dat:71", "document", "", "<body><template><col></colgroup>", "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <col>\n",
+  ),
+  (
+    "template.dat:72", "document", "", "<body><template><col><colgroup></template></body>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <col>\n",
+  ),
+  (
+    "template.dat:73", "document", "", "<body><template><col><div>", "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <col>\n",
+  ),
+  (
+    "template.dat:74", "document", "", "<body><template><col></div>", "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <col>\n",
+  ),
+  (
+    "template.dat:75", "document", "", "<body><template><col>Hello", "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <col>\n",
+  ),
+  (
+    "template.dat:76", "document", "", "<body><template><i><menu>Foo</i>", "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <i>\n|         <menu>\n|           <i>\n|             \"Foo\"\n",
+  ),
+  (
+    "template.dat:77", "document", "", "<body><template></div><div>Foo</div><template></template><tr></tr>",
+    "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n|         <div>\n|           \"Foo\"\n|         <template>\n|           content\n",
+  ),
+  (
+    "template.dat:78", "document", "", "<body><div><template></div><tr><td>Foo</td></tr></template>",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <template>\n|         content\n|           <tr>\n|             <td>\n|               \"Foo\"\n",
+  ),
+  (
+    "template.dat:79", "document", "", "<template></figcaption><sub><table></table>",
+    "| <html>\n|   <head>\n|     <template>\n|       content\n|         <sub>\n|           <table>\n|   <body>\n",
+  ),
+  (
+    "template.dat:80", "document", "", "<template><template>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <template>\n|           content\n|   <body>\n",
+  ),
+  (
+    "template.dat:81", "document", "", "<template><div>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <div>\n|   <body>\n",
+  ),
+  (
+    "template.dat:82", "document", "", "<template><template><div>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <template>\n|           content\n|             <div>\n|   <body>\n",
+  ),
+  (
+    "template.dat:83", "document", "", "<template><template><table>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <template>\n|           content\n|             <table>\n|   <body>\n",
+  ),
+  (
+    "template.dat:84", "document", "", "<template><template><tbody>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <template>\n|           content\n|             <tbody>\n|   <body>\n",
+  ),
+  (
+    "template.dat:85", "document", "", "<template><template><tr>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <template>\n|           content\n|             <tr>\n|   <body>\n",
+  ),
+  (
+    "template.dat:86", "document", "", "<template><template><td>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <template>\n|           content\n|             <td>\n|   <body>\n",
+  ),
+  (
+    "template.dat:87", "document", "", "<template><template><caption>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <template>\n|           content\n|             <caption>\n|   <body>\n",
+  ),
+  (
+    "template.dat:88", "document", "", "<template><template><colgroup>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <template>\n|           content\n|             <colgroup>\n|   <body>\n",
+  ),
+  (
+    "template.dat:89", "document", "", "<template><template><col>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <template>\n|           content\n|             <col>\n|   <body>\n",
+  ),
+  (
+    "template.dat:90", "document", "", "<template><template><tbody><select>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <template>\n|           content\n|             <tbody>\n|             <select>\n|   <body>\n",
+  ),
+  (
+    "template.dat:91", "document", "", "<template><template><table>Foo", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <template>\n|           content\n|             \"Foo\"\n|             <table>\n|   <body>\n",
+  ),
+  (
+    "template.dat:92", "document", "", "<template><template><frame>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <template>\n|           content\n|   <body>\n",
+  ),
+  (
+    "template.dat:93", "document", "", "<template><template><script>var i", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <template>\n|           content\n|             <script>\n|               \"var i\"\n|   <body>\n",
+  ),
+  (
+    "template.dat:94", "document", "", "<template><template><style>var i", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <template>\n|           content\n|             <style>\n|               \"var i\"\n|   <body>\n",
+  ),
+  (
+    "template.dat:95", "document", "", "<template><table></template><body><span>Foo",
+    "| <html>\n|   <head>\n|     <template>\n|       content\n|         <table>\n|   <body>\n|     <span>\n|       \"Foo\"\n",
+  ),
+  (
+    "template.dat:96", "document", "", "<template><td></template><body><span>Foo",
+    "| <html>\n|   <head>\n|     <template>\n|       content\n|         <td>\n|   <body>\n|     <span>\n|       \"Foo\"\n",
+  ),
+  (
+    "template.dat:97", "document", "", "<template><object></template><body><span>Foo",
+    "| <html>\n|   <head>\n|     <template>\n|       content\n|         <object>\n|   <body>\n|     <span>\n|       \"Foo\"\n",
+  ),
+  (
+    "template.dat:98", "document", "", "<template><svg><template>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <svg svg>\n|           <svg template>\n|   <body>\n",
+  ),
+  (
+    "template.dat:99", "document", "", "<template><svg><foo><template><foreignObject><div></template><div>",
+    "| <html>\n|   <head>\n|     <template>\n|       content\n|         <svg svg>\n|           <svg foo>\n|             <svg template>\n|               <svg foreignObject>\n|                 <div>\n|   <body>\n|     <div>\n",
+  ),
+  (
+    "template.dat:100", "document", "", "<dummy><template><span></dummy>", "| <html>\n|   <head>\n|   <body>\n|     <dummy>\n|       <template>\n|         content\n|           <span>\n",
+  ),
+  (
+    "template.dat:101", "document", "", "<body><table><tr><td><select><template>Foo</template><caption>A</table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <template>\n|                 content\n|                   \"Foo\"\n|       <caption>\n|         \"A\"\n",
+  ),
+  (
+    "template.dat:102", "document", "", "<body></body><template>", "| <html>\n|   <head>\n|   <body>\n|     <template>\n|       content\n",
+  ),
+  (
+    "template.dat:103", "document", "", "<head></head><template>", "| <html>\n|   <head>\n|     <template>\n|       content\n|   <body>\n",
+  ),
+  (
+    "template.dat:104", "document", "", "<head></head><template>Foo</template>",
+    "| <html>\n|   <head>\n|     <template>\n|       content\n|         \"Foo\"\n|   <body>\n",
+  ),
+  (
+    "template.dat:105", "document", "", "<html><head></head><template></template><head>",
+    "| <html>\n|   <head>\n|     <template>\n|       content\n|   <body>\n",
+  ),
+  (
+    "template.dat:106", "document", "", "<!DOCTYPE HTML><dummy><table><template><table><template><table><script>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <dummy>\n|       <table>\n|         <template>\n|           content\n|             <table>\n|               <template>\n|                 content\n|                   <table>\n|                     <script>\n",
+  ),
+  (
+    "template.dat:107", "document", "", "<template><a><table><a>", "| <html>\n|   <head>\n|     <template>\n|       content\n|         <a>\n|           <a>\n|           <table>\n|   <body>\n",
+  ),
+  (
+    "template.dat:108", "fragment", "template", "<template><form><input name=\"q\"></form><div>second</div></template>",
+    "| <template>\n|   content\n|     <form>\n|       <input>\n|         name=\"q\"\n|     <div>\n|       \"second\"\n",
+  ),
+  (
+    "template.dat:109", "document", "", "<!DOCTYPE HTML><template><tr><td>cell</td></tr></template>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <template>\n|       content\n|         <tr>\n|           <td>\n|             \"cell\"\n|   <body>\n",
+  ),
+  (
+    "template.dat:110", "document", "", "<!DOCTYPE HTML><template> <tr> <td>cell</td> </tr> </template>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <template>\n|       content\n|         \" \"\n|         <tr>\n|           \" \"\n|           <td>\n|             \"cell\"\n|           \" \"\n|         \" \"\n|   <body>\n",
+  ),
+  (
+    "template.dat:111", "document", "", "<!DOCTYPE HTML><template><tr><td>cell</td></tr>a</template>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <template>\n|       content\n|         <tr>\n|           <td>\n|             \"cell\"\n|         \"a\"\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:0", "document", "", "Test", "| <html>\n|   <head>\n|   <body>\n|     \"Test\"\n",
+  ),
+  (
+    "tests1.dat:1", "document", "", "<p>One<p>Two", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"One\"\n|     <p>\n|       \"Two\"\n",
+  ),
+  (
+    "tests1.dat:2", "document", "", "Line1<br>Line2<br>Line3<br>Line4", "| <html>\n|   <head>\n|   <body>\n|     \"Line1\"\n|     <br>\n|     \"Line2\"\n|     <br>\n|     \"Line3\"\n|     <br>\n|     \"Line4\"\n",
+  ),
+  (
+    "tests1.dat:3", "document", "", "<html>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:4", "document", "", "<head>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:5", "document", "", "<body>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:6", "document", "", "<html><head>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:7", "document", "", "<html><head></head>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:8", "document", "", "<html><head></head><body>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:9", "document", "", "<html><head></head><body></body>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:10", "document", "", "<html><head><body></body></html>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:11", "document", "", "<html><head></body></html>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:12", "document", "", "<html><head><body></html>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:13", "document", "", "<html><body></html>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:14", "document", "", "<body></html>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:15", "document", "", "<head></html>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:16", "document", "", "</head>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:17", "document", "", "</body>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:18", "document", "", "</html>", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:19", "document", "", "<b><table><td><i></table>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|               <i>\n",
+  ),
+  (
+    "tests1.dat:20", "document", "", "<b><table><td></b><i></table>X", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|               <i>\n|       \"X\"\n",
+  ),
+  (
+    "tests1.dat:21", "document", "", "<h1>Hello<h2>World", "| <html>\n|   <head>\n|   <body>\n|     <h1>\n|       \"Hello\"\n|     <h2>\n|       \"World\"\n",
+  ),
+  (
+    "tests1.dat:22", "document", "", "<a><p>X<a>Y</a>Z</p></a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|     <p>\n|       <a>\n|         \"X\"\n|       <a>\n|         \"Y\"\n|       \"Z\"\n",
+  ),
+  (
+    "tests1.dat:23", "document", "", "<b><button>foo</b>bar", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|     <button>\n|       <b>\n|         \"foo\"\n|       \"bar\"\n",
+  ),
+  (
+    "tests1.dat:24", "document", "", "<!DOCTYPE html><span><button>foo</span>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <span>\n|       <button>\n|         \"foobar\"\n",
+  ),
+  (
+    "tests1.dat:25", "document", "", "<p><b><div><marquee></p></b></div>X", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <b>\n|     <div>\n|       <b>\n|         <marquee>\n|           <p>\n|           \"X\"\n",
+  ),
+  (
+    "tests1.dat:26", "document", "", "<script><div></script></div><title><p></title><p><p>",
+    "| <html>\n|   <head>\n|     <script>\n|       \"<div>\"\n|     <title>\n|       \"<p>\"\n|   <body>\n|     <p>\n|     <p>\n",
+  ),
+  (
+    "tests1.dat:27", "document", "", "<!--><div>--<!-->", "| <!--  -->\n| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"--\"\n|       <!--  -->\n",
+  ),
+  (
+    "tests1.dat:28", "document", "", "<p><hr></p>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <hr>\n|     <p>\n",
+  ),
+  (
+    "tests1.dat:29", "document", "", "<select><b><option><select><option></b></select>X",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <b>\n|         <option>\n|     <b>\n|       <option>\n|     \"X\"\n",
+  ),
+  (
+    "tests1.dat:30", "document", "", "<a><table><td><a><table></table><a></tr><a></table><b>X</b>C<a>Y",
+    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <a>\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|               <a>\n|                 <table>\n|               <a>\n|     <a>\n|       <b>\n|         \"X\"\n|       \"C\"\n|     <a>\n|       \"Y\"\n",
+  ),
+  (
+    "tests1.dat:31", "document", "", "<a X>0<b>1<a Y>2", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       x=\"\"\n|       \"0\"\n|       <b>\n|         \"1\"\n|     <b>\n|       <a>\n|         y=\"\"\n|         \"2\"\n",
+  ),
+  (
+    "tests1.dat:32", "document", "", "<!-----><font><div>hello<table>excite!<b>me!<th><i>please!</tr><!--X-->",
+    "| <!-- - -->\n| <html>\n|   <head>\n|   <body>\n|     <font>\n|       <div>\n|         \"helloexcite!\"\n|         <b>\n|           \"me!\"\n|         <table>\n|           <tbody>\n|             <tr>\n|               <th>\n|                 <i>\n|                   \"please!\"\n|             <!-- X -->\n",
+  ),
+  (
+    "tests1.dat:33", "document", "", "<!DOCTYPE html><li>hello<li>world<ul>how<li>do</ul>you</body><!--do-->",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <li>\n|       \"hello\"\n|     <li>\n|       \"world\"\n|       <ul>\n|         \"how\"\n|         <li>\n|           \"do\"\n|       \"you\"\n|   <!-- do -->\n",
+  ),
+  (
+    "tests1.dat:34", "document", "", "<!DOCTYPE html>A<option>B<optgroup>C<select>D</option>E",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"A\"\n|     <option>\n|       \"B\"\n|     <optgroup>\n|       \"C\"\n|       <select>\n|         \"DE\"\n",
+  ),
+  (
+    "tests1.dat:35", "document", "", "<", "| <html>\n|   <head>\n|   <body>\n|     \"<\"\n",
+  ),
+  (
+    "tests1.dat:36", "document", "", "<#", "| <html>\n|   <head>\n|   <body>\n|     \"<#\"\n",
+  ),
+  (
+    "tests1.dat:37", "document", "", "</", "| <html>\n|   <head>\n|   <body>\n|     \"</\"\n",
+  ),
+  (
+    "tests1.dat:38", "document", "", "</#", "| <!-- # -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:39", "document", "", "<?", "| <!-- ? -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:40", "document", "", "<?#", "| <!-- ?# -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:41", "document", "", "<!", "| <!--  -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:42", "document", "", "<!#", "| <!-- # -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:43", "document", "", "<?COMMENT?>", "| <!-- ?COMMENT? -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:44", "document", "", "<!COMMENT>", "| <!-- COMMENT -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:45", "document", "", "</ COMMENT >", "| <!--  COMMENT  -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:46", "document", "", "<?COM--MENT?>", "| <!-- ?COM--MENT? -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:47", "document", "", "<!COM--MENT>", "| <!-- COM--MENT -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:48", "document", "", "</ COM--MENT >", "| <!--  COM--MENT  -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:49", "document", "", "<!DOCTYPE html><style> EOF", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \" EOF\"\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:50", "document", "", "<!DOCTYPE html><script> <!-- </script> --> </script> EOF",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \" <!-- \"\n|     \" \"\n|   <body>\n|     \"-->  EOF\"\n",
+  ),
+  (
+    "tests1.dat:51", "document", "", "<b><p></b>TEST", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|     <p>\n|       <b>\n|       \"TEST\"\n",
+  ),
+  (
+    "tests1.dat:52", "document", "", "<p id=a><b><p id=b></b>TEST", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       id=\"a\"\n|       <b>\n|     <p>\n|       id=\"b\"\n|       \"TEST\"\n",
+  ),
+  (
+    "tests1.dat:53", "document", "", "<b id=a><p><b id=b></p></b>TEST", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       id=\"a\"\n|       <p>\n|         <b>\n|           id=\"b\"\n|       \"TEST\"\n",
+  ),
+  (
+    "tests1.dat:54", "document", "", "<!DOCTYPE html><title>U-test</title><body><div><p>Test<u></p></div></body>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"U-test\"\n|   <body>\n|     <div>\n|       <p>\n|         \"Test\"\n|         <u>\n",
+  ),
+  (
+    "tests1.dat:55", "document", "", "<!DOCTYPE html><font><table></font></table></font>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <font>\n|       <table>\n",
+  ),
+  (
+    "tests1.dat:56", "document", "", "<font><p>hello<b>cruel</font>world", "| <html>\n|   <head>\n|   <body>\n|     <font>\n|     <p>\n|       <font>\n|         \"hello\"\n|         <b>\n|           \"cruel\"\n|       <b>\n|         \"world\"\n",
+  ),
+  (
+    "tests1.dat:57", "document", "", "<b>Test</i>Test", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"TestTest\"\n",
+  ),
+  (
+    "tests1.dat:58", "document", "", "<b>A<cite>B<div>C", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"A\"\n|       <cite>\n|         \"B\"\n|         <div>\n|           \"C\"\n",
+  ),
+  (
+    "tests1.dat:59", "document", "", "<b>A<cite>B<div>C</cite>D", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"A\"\n|       <cite>\n|         \"B\"\n|         <div>\n|           \"CD\"\n",
+  ),
+  (
+    "tests1.dat:60", "document", "", "<b>A<cite>B<div>C</b>D", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"A\"\n|       <cite>\n|         \"B\"\n|     <div>\n|       <b>\n|         \"C\"\n|       \"D\"\n",
+  ),
+  ("tests1.dat:61", "document", "", "", "| <html>\n|   <head>\n|   <body>\n"),
+  (
+    "tests1.dat:62", "document", "", "<DIV>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n",
+  ),
+  (
+    "tests1.dat:63", "document", "", "<DIV> abc", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc\"\n",
+  ),
+  (
+    "tests1.dat:64", "document", "", "<DIV> abc <B>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n",
+  ),
+  (
+    "tests1.dat:65", "document", "", "<DIV> abc <B> def", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def\"\n",
+  ),
+  (
+    "tests1.dat:66", "document", "", "<DIV> abc <B> def <I>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n",
+  ),
+  (
+    "tests1.dat:67", "document", "", "<DIV> abc <B> def <I> ghi", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi\"\n",
+  ),
+  (
+    "tests1.dat:68", "document", "", "<DIV> abc <B> def <I> ghi <P>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|           <p>\n",
+  ),
+  (
+    "tests1.dat:69", "document", "", "<DIV> abc <B> def <I> ghi <P> jkl", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|           <p>\n|             \" jkl\"\n",
+  ),
+  (
+    "tests1.dat:70", "document", "", "<DIV> abc <B> def <I> ghi <P> jkl </B>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|       <i>\n|         <p>\n|           <b>\n|             \" jkl \"\n",
+  ),
+  (
+    "tests1.dat:71", "document", "", "<DIV> abc <B> def <I> ghi <P> jkl </B> mno",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|       <i>\n|         <p>\n|           <b>\n|             \" jkl \"\n|           \" mno\"\n",
+  ),
+  (
+    "tests1.dat:72", "document", "", "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I>",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|       <i>\n|       <p>\n|         <i>\n|           <b>\n|             \" jkl \"\n|           \" mno \"\n",
+  ),
+  (
+    "tests1.dat:73", "document", "", "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I> pqr",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|       <i>\n|       <p>\n|         <i>\n|           <b>\n|             \" jkl \"\n|           \" mno \"\n|         \" pqr\"\n",
+  ),
+  (
+    "tests1.dat:74", "document", "", "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I> pqr </P>",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|       <i>\n|       <p>\n|         <i>\n|           <b>\n|             \" jkl \"\n|           \" mno \"\n|         \" pqr \"\n",
+  ),
+  (
+    "tests1.dat:75", "document", "", "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I> pqr </P> stu",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \" abc \"\n|       <b>\n|         \" def \"\n|         <i>\n|           \" ghi \"\n|       <i>\n|       <p>\n|         <i>\n|           <b>\n|             \" jkl \"\n|           \" mno \"\n|         \" pqr \"\n|       \" stu\"\n",
+  ),
+  (
+    "tests1.dat:76", "document", "", "<test attribute---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->",
+    "| <html>\n|   <head>\n|   <body>\n|     <test>\n|       attribute----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------=\"\"\n",
+  ),
+  (
+    "tests1.dat:77", "document", "", "<a href=\"blah\">aba<table><a href=\"foo\">br<tr><td></td></tr>x</table>aoe",
+    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       href=\"blah\"\n|       \"aba\"\n|       <a>\n|         href=\"foo\"\n|         \"br\"\n|       <a>\n|         href=\"foo\"\n|         \"x\"\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|     <a>\n|       href=\"foo\"\n|       \"aoe\"\n",
+  ),
+  (
+    "tests1.dat:78", "document", "", "<a href=\"blah\">aba<table><tr><td><a href=\"foo\">br</td></tr>x</table>aoe",
+    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       href=\"blah\"\n|       \"abax\"\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|               <a>\n|                 href=\"foo\"\n|                 \"br\"\n|       \"aoe\"\n",
+  ),
+  (
+    "tests1.dat:79", "document", "", "<table><a href=\"blah\">aba<tr><td><a href=\"foo\">br</td></tr>x</table>aoe",
+    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       href=\"blah\"\n|       \"aba\"\n|     <a>\n|       href=\"blah\"\n|       \"x\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <a>\n|               href=\"foo\"\n|               \"br\"\n|     <a>\n|       href=\"blah\"\n|       \"aoe\"\n",
+  ),
+  (
+    "tests1.dat:80", "document", "", "<a href=a>aa<marquee>aa<a href=b>bb</marquee>aa",
+    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       href=\"a\"\n|       \"aa\"\n|       <marquee>\n|         \"aa\"\n|         <a>\n|           href=\"b\"\n|           \"bb\"\n|       \"aa\"\n",
+  ),
+  (
+    "tests1.dat:81", "document", "", "<wbr><strike><code></strike><code><strike></code>",
+    "| <html>\n|   <head>\n|   <body>\n|     <wbr>\n|     <strike>\n|       <code>\n|     <code>\n|       <code>\n|         <strike>\n",
+  ),
+  (
+    "tests1.dat:82", "document", "", "<!DOCTYPE html><spacer>foo", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <spacer>\n|       \"foo\"\n",
+  ),
+  (
+    "tests1.dat:83", "document", "", "<title><meta></title><link><title><meta></title>",
+    "| <html>\n|   <head>\n|     <title>\n|       \"<meta>\"\n|     <link>\n|     <title>\n|       \"<meta>\"\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:84", "document", "", "<style><!--</style><meta><script>--><link></script>",
+    "| <html>\n|   <head>\n|     <style>\n|       \"<!--\"\n|     <meta>\n|     <script>\n|       \"--><link>\"\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:85", "document", "", "<head><meta></head><link>", "| <html>\n|   <head>\n|     <meta>\n|     <link>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:86", "document", "", "<table><tr><tr><td><td><span><th><span>X</table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|         <tr>\n|           <td>\n|           <td>\n|             <span>\n|           <th>\n|             <span>\n|               \"X\"\n",
+  ),
+  (
+    "tests1.dat:87", "document", "", "<body><body><base><link><meta><title><p></title><body><p></body>",
+    "| <html>\n|   <head>\n|   <body>\n|     <base>\n|     <link>\n|     <meta>\n|     <title>\n|       \"<p>\"\n|     <p>\n",
+  ),
+  (
+    "tests1.dat:88", "document", "", "<textarea><p></textarea>", "| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"<p>\"\n",
+  ),
+  (
+    "tests1.dat:89", "document", "", "<p><image></p>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <img>\n",
+  ),
+  (
+    "tests1.dat:90", "document", "", "<a><table><a></table><p><a><div><a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <a>\n|       <table>\n|     <p>\n|       <a>\n|     <div>\n|       <a>\n",
+  ),
+  (
+    "tests1.dat:91", "document", "", "<head></p><meta><p>", "| <html>\n|   <head>\n|     <meta>\n|   <body>\n|     <p>\n",
+  ),
+  (
+    "tests1.dat:92", "document", "", "<head></html><meta><p>", "| <html>\n|   <head>\n|   <body>\n|     <meta>\n|     <p>\n",
+  ),
+  (
+    "tests1.dat:93", "document", "", "<b><table><td></b><i></table>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|               <i>\n",
+  ),
+  (
+    "tests1.dat:94", "document", "", "<h1><h2>", "| <html>\n|   <head>\n|   <body>\n|     <h1>\n|     <h2>\n",
+  ),
+  (
+    "tests1.dat:95", "document", "", "<a><p><a></a></p></a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|     <p>\n|       <a>\n|       <a>\n",
+  ),
+  (
+    "tests1.dat:96", "document", "", "<b><button></b></button></b>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|     <button>\n|       <b>\n",
+  ),
+  (
+    "tests1.dat:97", "document", "", "<p><b><div><marquee></p></b></div>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <b>\n|     <div>\n|       <b>\n|         <marquee>\n|           <p>\n",
+  ),
+  (
+    "tests1.dat:98", "document", "", "<script></script></div><title></title><p><p>",
+    "| <html>\n|   <head>\n|     <script>\n|     <title>\n|   <body>\n|     <p>\n|     <p>\n",
+  ),
+  (
+    "tests1.dat:99", "document", "", "<select><b><option><select><option></b></select>",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <b>\n|         <option>\n|     <b>\n|       <option>\n",
+  ),
+  (
+    "tests1.dat:100", "document", "", "<html><head><title></title><body></body></html>",
+    "| <html>\n|   <head>\n|     <title>\n|   <body>\n",
+  ),
+  (
+    "tests1.dat:101", "document", "", "<a><table><td><a><table></table><a></tr><a></table><a>",
+    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <a>\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|               <a>\n|                 <table>\n|               <a>\n|     <a>\n",
+  ),
+  (
+    "tests1.dat:102", "document", "", "<ul><li></li><div><li></div><li><li><div><li><address><li><b><em></b><li></ul>",
+    "| <html>\n|   <head>\n|   <body>\n|     <ul>\n|       <li>\n|       <div>\n|         <li>\n|       <li>\n|       <li>\n|         <div>\n|       <li>\n|         <address>\n|       <li>\n|         <b>\n|           <em>\n|       <li>\n",
+  ),
+  (
+    "tests1.dat:103", "document", "", "<ul><li><ul></li><li>a</li></ul></li></ul>",
+    "| <html>\n|   <head>\n|   <body>\n|     <ul>\n|       <li>\n|         <ul>\n|           <li>\n|             \"a\"\n",
+  ),
+  (
+    "tests1.dat:104", "document", "", "<frameset><frame><frameset><frame></frameset><noframes></noframes></frameset>",
+    "| <html>\n|   <head>\n|   <frameset>\n|     <frame>\n|     <frameset>\n|       <frame>\n|     <noframes>\n",
+  ),
+  (
+    "tests1.dat:105", "document", "", "<h1><table><td><h3></table><h3></h1>", "| <html>\n|   <head>\n|   <body>\n|     <h1>\n|       <table>\n|         <tbody>\n|           <tr>\n|             <td>\n|               <h3>\n|     <h3>\n",
+  ),
+  (
+    "tests1.dat:106", "document", "", "<table><colgroup><col><colgroup><col><col><col><colgroup><col><col><thead><tr><td></table>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n|         <col>\n|       <colgroup>\n|         <col>\n|         <col>\n|         <col>\n|       <colgroup>\n|         <col>\n|         <col>\n|       <thead>\n|         <tr>\n|           <td>\n",
+  ),
+  (
+    "tests1.dat:107", "document", "", "<table><col><tbody><col><tr><col><td><col></table><col>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n|         <col>\n|       <tbody>\n|       <colgroup>\n|         <col>\n|       <tbody>\n|         <tr>\n|       <colgroup>\n|         <col>\n|       <tbody>\n|         <tr>\n|           <td>\n|       <colgroup>\n|         <col>\n",
+  ),
+  (
+    "tests1.dat:108", "document", "", "<table><colgroup><tbody><colgroup><tr><colgroup><td><colgroup></table><colgroup>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n|       <tbody>\n|       <colgroup>\n|       <tbody>\n|         <tr>\n|       <colgroup>\n|       <tbody>\n|         <tr>\n|           <td>\n|       <colgroup>\n",
+  ),
+  (
+    "tests1.dat:109", "document", "", "</strong></b></em></i></u></strike></s></blink></tt></pre></big></small></font></select></h1></h2></h3></h4></h5></h6></body></br></a></img></title></span></style></script></table></th></td></tr></frame></area></link></param></hr></input></col></base></meta></basefont></bgsound></embed></spacer></p></dd></dt></caption></colgroup></tbody></tfoot></thead></address></blockquote></center></dir></div></dl></fieldset></listing></menu></ol></ul></li></nobr></wbr></form></button></marquee></object></html></frameset></head></iframe></image></isindex></noembed></noframes></noscript></optgroup></option></plaintext></textarea>",
+    "| <html>\n|   <head>\n|   <body>\n|     <br>\n|     <p>\n",
+  ),
+  (
+    "tests1.dat:110", "document", "", "<table><tr></strong></b></em></i></u></strike></s></blink></tt></pre></big></small></font></select></h1></h2></h3></h4></h5></h6></body></br></a></img></title></span></style></script></table></th></td></tr></frame></area></link></param></hr></input></col></base></meta></basefont></bgsound></embed></spacer></p></dd></dt></caption></colgroup></tbody></tfoot></thead></address></blockquote></center></dir></div></dl></fieldset></listing></menu></ol></ul></li></nobr></wbr></form></button></marquee></object></html></frameset></head></iframe></image></isindex></noembed></noframes></noscript></optgroup></option></plaintext></textarea>",
+    "| <html>\n|   <head>\n|   <body>\n|     <br>\n|     <table>\n|       <tbody>\n|         <tr>\n|     <p>\n",
+  ),
+  (
+    "tests1.dat:111", "document", "", "<frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests10.dat:0", "document", "", "<!DOCTYPE html><svg></svg>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n",
+  ),
+  (
+    "tests10.dat:1", "document", "", "<!DOCTYPE html><svg></svg><![CDATA[a]]>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|     <!-- [CDATA[a]] -->\n",
+  ),
+  (
+    "tests10.dat:2", "document", "", "<!DOCTYPE html><body><svg></svg>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n",
+  ),
+  (
+    "tests10.dat:3", "document", "", "<!DOCTYPE html><body><select><svg></svg></select>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <svg svg>\n",
+  ),
+  (
+    "tests10.dat:4", "document", "", "<!DOCTYPE html><body><select><option><svg></svg></option></select>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|         <svg svg>\n",
+  ),
+  (
+    "tests10.dat:5", "document", "", "<!DOCTYPE html><body><table><svg></svg></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|     <table>\n",
+  ),
+  (
+    "tests10.dat:6", "document", "", "<!DOCTYPE html><body><table><svg><g>foo</g></svg></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg g>\n|         \"foo\"\n|     <table>\n",
+  ),
+  (
+    "tests10.dat:7", "document", "", "<!DOCTYPE html><body><table><svg><g>foo</g><g>bar</g></svg></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg g>\n|         \"foo\"\n|       <svg g>\n|         \"bar\"\n|     <table>\n",
+  ),
+  (
+    "tests10.dat:8", "document", "", "<!DOCTYPE html><body><table><tbody><svg><g>foo</g><g>bar</g></svg></tbody></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg g>\n|         \"foo\"\n|       <svg g>\n|         \"bar\"\n|     <table>\n|       <tbody>\n",
+  ),
+  (
+    "tests10.dat:9", "document", "", "<!DOCTYPE html><body><table><tbody><tr><svg><g>foo</g><g>bar</g></svg></tr></tbody></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg g>\n|         \"foo\"\n|       <svg g>\n|         \"bar\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
+  ),
+  (
+    "tests10.dat:10", "document", "", "<!DOCTYPE html><body><table><tbody><tr><td><svg><g>foo</g><g>bar</g></svg></td></tr></tbody></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <svg svg>\n|               <svg g>\n|                 \"foo\"\n|               <svg g>\n|                 \"bar\"\n",
+  ),
+  (
+    "tests10.dat:11", "document", "", "<!DOCTYPE html><body><table><tbody><tr><td><svg><g>foo</g><g>bar</g></svg><p>baz</td></tr></tbody></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <svg svg>\n|               <svg g>\n|                 \"foo\"\n|               <svg g>\n|                 \"bar\"\n|             <p>\n|               \"baz\"\n",
+  ),
+  (
+    "tests10.dat:12", "document", "", "<!DOCTYPE html><body><table><caption><svg><g>foo</g><g>bar</g></svg><p>baz</caption></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <svg svg>\n|           <svg g>\n|             \"foo\"\n|           <svg g>\n|             \"bar\"\n|         <p>\n|           \"baz\"\n",
+  ),
+  (
+    "tests10.dat:13", "document", "", "<!DOCTYPE html><body><table><caption><svg><g>foo</g><g>bar</g><p>baz</table><p>quux",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <svg svg>\n|           <svg g>\n|             \"foo\"\n|           <svg g>\n|             \"bar\"\n|         <p>\n|           \"baz\"\n|     <p>\n|       \"quux\"\n",
+  ),
+  (
+    "tests10.dat:14", "document", "", "<!DOCTYPE html><body><table><caption><svg><g>foo</g><g>bar</g>baz</table><p>quux",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <svg svg>\n|           <svg g>\n|             \"foo\"\n|           <svg g>\n|             \"bar\"\n|           \"baz\"\n|     <p>\n|       \"quux\"\n",
+  ),
+  (
+    "tests10.dat:15", "document", "", "<!DOCTYPE html><body><table><colgroup><svg><g>foo</g><g>bar</g><p>baz</table><p>quux",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg g>\n|         \"foo\"\n|       <svg g>\n|         \"bar\"\n|     <p>\n|       \"baz\"\n|     <table>\n|       <colgroup>\n|     <p>\n|       \"quux\"\n",
+  ),
+  (
+    "tests10.dat:16", "document", "", "<!DOCTYPE html><body><table><tr><td><select><svg><g>foo</g><g>bar</g><p>baz</table><p>quux",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <svg svg>\n|                 <svg g>\n|                   \"foo\"\n|                 <svg g>\n|                   \"bar\"\n|               <p>\n|                 \"baz\"\n|     <p>\n|       \"quux\"\n",
+  ),
+  (
+    "tests10.dat:17", "document", "", "<!DOCTYPE html><body><table><select><svg><g>foo</g><g>bar</g><p>baz</table><p>quux",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <svg svg>\n|         <svg g>\n|           \"foo\"\n|         <svg g>\n|           \"bar\"\n|       <p>\n|         \"baz\"\n|     <table>\n|     <p>\n|       \"quux\"\n",
+  ),
+  (
+    "tests10.dat:18", "document", "", "<!DOCTYPE html><body></body></html><svg><g>foo</g><g>bar</g><p>baz",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg g>\n|         \"foo\"\n|       <svg g>\n|         \"bar\"\n|     <p>\n|       \"baz\"\n",
+  ),
+  (
+    "tests10.dat:19", "document", "", "<!DOCTYPE html><body></body><svg><g>foo</g><g>bar</g><p>baz",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg g>\n|         \"foo\"\n|       <svg g>\n|         \"bar\"\n|     <p>\n|       \"baz\"\n",
+  ),
+  (
+    "tests10.dat:20", "document", "", "<!DOCTYPE html><frameset><svg><g></g><g></g><p><span>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests10.dat:21", "document", "", "<!DOCTYPE html><frameset></frameset><svg><g></g><g></g><p><span>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests10.dat:22", "document", "", "<!DOCTYPE html><body xlink:href=foo><svg xlink:href=foo></svg>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     xlink:href=\"foo\"\n|     <svg svg>\n|       xlink href=\"foo\"\n",
+  ),
+  (
+    "tests10.dat:23", "document", "", "<!DOCTYPE html><body xlink:href=foo xml:lang=en><svg><g xml:lang=en xlink:href=foo></g></svg>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     xlink:href=\"foo\"\n|     xml:lang=\"en\"\n|     <svg svg>\n|       <svg g>\n|         xlink href=\"foo\"\n|         xml lang=\"en\"\n",
+  ),
+  (
+    "tests10.dat:24", "document", "", "<!DOCTYPE html><body xlink:href=foo xml:lang=en><svg><g xml:lang=en xlink:href=foo /></svg>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     xlink:href=\"foo\"\n|     xml:lang=\"en\"\n|     <svg svg>\n|       <svg g>\n|         xlink href=\"foo\"\n|         xml lang=\"en\"\n",
+  ),
+  (
+    "tests10.dat:25", "document", "", "<!DOCTYPE html><body xlink:href=foo xml:lang=en><svg><g xml:lang=en xlink:href=foo />bar</svg>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     xlink:href=\"foo\"\n|     xml:lang=\"en\"\n|     <svg svg>\n|       <svg g>\n|         xlink href=\"foo\"\n|         xml lang=\"en\"\n|       \"bar\"\n",
+  ),
+  (
+    "tests10.dat:26", "document", "", "<svg></path>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n",
+  ),
+  (
+    "tests10.dat:27", "document", "", "<div><svg></div>a", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <svg svg>\n|     \"a\"\n",
+  ),
+  (
+    "tests10.dat:28", "document", "", "<div><svg><path></div>a", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <svg svg>\n|         <svg path>\n|     \"a\"\n",
+  ),
+  (
+    "tests10.dat:29", "document", "", "<div><svg><path></svg><path>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <svg svg>\n|         <svg path>\n|       <path>\n",
+  ),
+  (
+    "tests10.dat:30", "document", "", "<div><svg><path><foreignObject><math></div>a",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <svg svg>\n|         <svg path>\n|           <svg foreignObject>\n|             <math math>\n|               \"a\"\n",
+  ),
+  (
+    "tests10.dat:31", "document", "", "<div><svg><path><foreignObject><p></div>a",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <svg svg>\n|         <svg path>\n|           <svg foreignObject>\n|             <p>\n|               \"a\"\n",
+  ),
+  (
+    "tests10.dat:32", "document", "", "<!DOCTYPE html><svg><desc><div><svg><ul>a",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg desc>\n|         <div>\n|           <svg svg>\n|           <ul>\n|             \"a\"\n",
+  ),
+  (
+    "tests10.dat:33", "document", "", "<!DOCTYPE html><svg><desc><svg><ul>a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg desc>\n|         <svg svg>\n|         <ul>\n|           \"a\"\n",
+  ),
+  (
+    "tests10.dat:34", "document", "", "<!DOCTYPE html><p><svg><desc><p>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <svg svg>\n|         <svg desc>\n|           <p>\n",
+  ),
+  (
+    "tests10.dat:35", "document", "", "<!DOCTYPE html><p><svg><title><p>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <svg svg>\n|         <svg title>\n|           <p>\n",
+  ),
+  (
+    "tests10.dat:36", "document", "", "<div><svg><path><foreignObject><p></foreignObject><p>",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <svg svg>\n|         <svg path>\n|           <svg foreignObject>\n|             <p>\n|             <p>\n",
+  ),
+  (
+    "tests10.dat:37", "document", "", "<math><mi><div><object><div><span></span></div></object></div></mi><mi>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mi>\n|         <div>\n|           <object>\n|             <div>\n|               <span>\n|       <math mi>\n",
+  ),
+  (
+    "tests10.dat:38", "document", "", "<math><mi><svg><foreignObject><div><div></div></div></foreignObject></svg></mi><mi>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mi>\n|         <svg svg>\n|           <svg foreignObject>\n|             <div>\n|               <div>\n|       <math mi>\n",
+  ),
+  (
+    "tests10.dat:39", "document", "", "<svg><script></script><path>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg script>\n|       <svg path>\n",
+  ),
+  (
+    "tests10.dat:40", "document", "", "<table><svg></svg><tr>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|     <table>\n|       <tbody>\n|         <tr>\n",
+  ),
+  (
+    "tests10.dat:41", "document", "", "<math><mi><mglyph>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mi>\n|         <math mglyph>\n",
+  ),
+  (
+    "tests10.dat:42", "document", "", "<math><mi><malignmark>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mi>\n|         <math malignmark>\n",
+  ),
+  (
+    "tests10.dat:43", "document", "", "<math><mo><mglyph>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mo>\n|         <math mglyph>\n",
+  ),
+  (
+    "tests10.dat:44", "document", "", "<math><mo><malignmark>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mo>\n|         <math malignmark>\n",
+  ),
+  (
+    "tests10.dat:45", "document", "", "<math><mn><mglyph>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mn>\n|         <math mglyph>\n",
+  ),
+  (
+    "tests10.dat:46", "document", "", "<math><mn><malignmark>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mn>\n|         <math malignmark>\n",
+  ),
+  (
+    "tests10.dat:47", "document", "", "<math><ms><mglyph>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math ms>\n|         <math mglyph>\n",
+  ),
+  (
+    "tests10.dat:48", "document", "", "<math><ms><malignmark>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math ms>\n|         <math malignmark>\n",
+  ),
+  (
+    "tests10.dat:49", "document", "", "<math><mtext><mglyph>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mtext>\n|         <math mglyph>\n",
+  ),
+  (
+    "tests10.dat:50", "document", "", "<math><mtext><malignmark>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mtext>\n|         <math malignmark>\n",
+  ),
+  (
+    "tests10.dat:51", "document", "", "<math><annotation-xml><svg></svg></annotation-xml><mi>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         <svg svg>\n|       <math mi>\n",
+  ),
+  (
+    "tests10.dat:52", "document", "", "<math><annotation-xml><svg><foreignObject><div><math><mi></mi></math><span></span></div></foreignObject><path></path></svg></annotation-xml><mi>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         <svg svg>\n|           <svg foreignObject>\n|             <div>\n|               <math math>\n|                 <math mi>\n|               <span>\n|           <svg path>\n|       <math mi>\n",
+  ),
+  (
+    "tests10.dat:53", "document", "", "<math><annotation-xml><svg><foreignObject><math><mi><svg></svg></mi><mo></mo></math><span></span></foreignObject><path></path></svg></annotation-xml><mi>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         <svg svg>\n|           <svg foreignObject>\n|             <math math>\n|               <math mi>\n|                 <svg svg>\n|               <math mo>\n|             <span>\n|           <svg path>\n|       <math mi>\n",
+  ),
+  (
+    "tests11.dat:0", "document", "", "<!DOCTYPE html><body><svg attributeName='' attributeType='' baseFrequency='' baseProfile='' calcMode='' clipPathUnits='' diffuseConstant='' edgeMode='' filterUnits='' glyphRef='' gradientTransform='' gradientUnits='' kernelMatrix='' kernelUnitLength='' keyPoints='' keySplines='' keyTimes='' lengthAdjust='' limitingConeAngle='' markerHeight='' markerUnits='' markerWidth='' maskContentUnits='' maskUnits='' numOctaves='' pathLength='' patternContentUnits='' patternTransform='' patternUnits='' pointsAtX='' pointsAtY='' pointsAtZ='' preserveAlpha='' preserveAspectRatio='' primitiveUnits='' refX='' refY='' repeatCount='' repeatDur='' requiredExtensions='' requiredFeatures='' specularConstant='' specularExponent='' spreadMethod='' startOffset='' stdDeviation='' stitchTiles='' surfaceScale='' systemLanguage='' tableValues='' targetX='' targetY='' textLength='' viewBox='' viewTarget='' xChannelSelector='' yChannelSelector='' zoomAndPan=''></svg>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       attributeName=\"\"\n|       attributeType=\"\"\n|       baseFrequency=\"\"\n|       baseProfile=\"\"\n|       calcMode=\"\"\n|       clipPathUnits=\"\"\n|       diffuseConstant=\"\"\n|       edgeMode=\"\"\n|       filterUnits=\"\"\n|       glyphRef=\"\"\n|       gradientTransform=\"\"\n|       gradientUnits=\"\"\n|       kernelMatrix=\"\"\n|       kernelUnitLength=\"\"\n|       keyPoints=\"\"\n|       keySplines=\"\"\n|       keyTimes=\"\"\n|       lengthAdjust=\"\"\n|       limitingConeAngle=\"\"\n|       markerHeight=\"\"\n|       markerUnits=\"\"\n|       markerWidth=\"\"\n|       maskContentUnits=\"\"\n|       maskUnits=\"\"\n|       numOctaves=\"\"\n|       pathLength=\"\"\n|       patternContentUnits=\"\"\n|       patternTransform=\"\"\n|       patternUnits=\"\"\n|       pointsAtX=\"\"\n|       pointsAtY=\"\"\n|       pointsAtZ=\"\"\n|       preserveAlpha=\"\"\n|       preserveAspectRatio=\"\"\n|       primitiveUnits=\"\"\n|       refX=\"\"\n|       refY=\"\"\n|       repeatCount=\"\"\n|       repeatDur=\"\"\n|       requiredExtensions=\"\"\n|       requiredFeatures=\"\"\n|       specularConstant=\"\"\n|       specularExponent=\"\"\n|       spreadMethod=\"\"\n|       startOffset=\"\"\n|       stdDeviation=\"\"\n|       stitchTiles=\"\"\n|       surfaceScale=\"\"\n|       systemLanguage=\"\"\n|       tableValues=\"\"\n|       targetX=\"\"\n|       targetY=\"\"\n|       textLength=\"\"\n|       viewBox=\"\"\n|       viewTarget=\"\"\n|       xChannelSelector=\"\"\n|       yChannelSelector=\"\"\n|       zoomAndPan=\"\"\n",
+  ),
+  (
+    "tests11.dat:1", "document", "", "<!DOCTYPE html><BODY><SVG ATTRIBUTENAME='' ATTRIBUTETYPE='' BASEFREQUENCY='' BASEPROFILE='' CALCMODE='' CLIPPATHUNITS='' DIFFUSECONSTANT='' EDGEMODE='' FILTERUNITS='' GLYPHREF='' GRADIENTTRANSFORM='' GRADIENTUNITS='' KERNELMATRIX='' KERNELUNITLENGTH='' KEYPOINTS='' KEYSPLINES='' KEYTIMES='' LENGTHADJUST='' LIMITINGCONEANGLE='' MARKERHEIGHT='' MARKERUNITS='' MARKERWIDTH='' MASKCONTENTUNITS='' MASKUNITS='' NUMOCTAVES='' PATHLENGTH='' PATTERNCONTENTUNITS='' PATTERNTRANSFORM='' PATTERNUNITS='' POINTSATX='' POINTSATY='' POINTSATZ='' PRESERVEALPHA='' PRESERVEASPECTRATIO='' PRIMITIVEUNITS='' REFX='' REFY='' REPEATCOUNT='' REPEATDUR='' REQUIREDEXTENSIONS='' REQUIREDFEATURES='' SPECULARCONSTANT='' SPECULAREXPONENT='' SPREADMETHOD='' STARTOFFSET='' STDDEVIATION='' STITCHTILES='' SURFACESCALE='' SYSTEMLANGUAGE='' TABLEVALUES='' TARGETX='' TARGETY='' TEXTLENGTH='' VIEWBOX='' VIEWTARGET='' XCHANNELSELECTOR='' YCHANNELSELECTOR='' ZOOMANDPAN=''></SVG>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       attributeName=\"\"\n|       attributeType=\"\"\n|       baseFrequency=\"\"\n|       baseProfile=\"\"\n|       calcMode=\"\"\n|       clipPathUnits=\"\"\n|       diffuseConstant=\"\"\n|       edgeMode=\"\"\n|       filterUnits=\"\"\n|       glyphRef=\"\"\n|       gradientTransform=\"\"\n|       gradientUnits=\"\"\n|       kernelMatrix=\"\"\n|       kernelUnitLength=\"\"\n|       keyPoints=\"\"\n|       keySplines=\"\"\n|       keyTimes=\"\"\n|       lengthAdjust=\"\"\n|       limitingConeAngle=\"\"\n|       markerHeight=\"\"\n|       markerUnits=\"\"\n|       markerWidth=\"\"\n|       maskContentUnits=\"\"\n|       maskUnits=\"\"\n|       numOctaves=\"\"\n|       pathLength=\"\"\n|       patternContentUnits=\"\"\n|       patternTransform=\"\"\n|       patternUnits=\"\"\n|       pointsAtX=\"\"\n|       pointsAtY=\"\"\n|       pointsAtZ=\"\"\n|       preserveAlpha=\"\"\n|       preserveAspectRatio=\"\"\n|       primitiveUnits=\"\"\n|       refX=\"\"\n|       refY=\"\"\n|       repeatCount=\"\"\n|       repeatDur=\"\"\n|       requiredExtensions=\"\"\n|       requiredFeatures=\"\"\n|       specularConstant=\"\"\n|       specularExponent=\"\"\n|       spreadMethod=\"\"\n|       startOffset=\"\"\n|       stdDeviation=\"\"\n|       stitchTiles=\"\"\n|       surfaceScale=\"\"\n|       systemLanguage=\"\"\n|       tableValues=\"\"\n|       targetX=\"\"\n|       targetY=\"\"\n|       textLength=\"\"\n|       viewBox=\"\"\n|       viewTarget=\"\"\n|       xChannelSelector=\"\"\n|       yChannelSelector=\"\"\n|       zoomAndPan=\"\"\n",
+  ),
+  (
+    "tests11.dat:2", "document", "", "<!DOCTYPE html><body><svg attributename='' attributetype='' basefrequency='' baseprofile='' calcmode='' clippathunits='' diffuseconstant='' edgemode='' filterunits='' filterres='' glyphref='' gradienttransform='' gradientunits='' kernelmatrix='' kernelunitlength='' keypoints='' keysplines='' keytimes='' lengthadjust='' limitingconeangle='' markerheight='' markerunits='' markerwidth='' maskcontentunits='' maskunits='' numoctaves='' pathlength='' patterncontentunits='' patterntransform='' patternunits='' pointsatx='' pointsaty='' pointsatz='' preservealpha='' preserveaspectratio='' primitiveunits='' refx='' refy='' repeatcount='' repeatdur='' requiredextensions='' requiredfeatures='' specularconstant='' specularexponent='' spreadmethod='' startoffset='' stddeviation='' stitchtiles='' surfacescale='' systemlanguage='' tablevalues='' targetx='' targety='' textlength='' viewbox='' viewtarget='' xchannelselector='' ychannelselector='' zoomandpan=''></svg>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       attributeName=\"\"\n|       attributeType=\"\"\n|       baseFrequency=\"\"\n|       baseProfile=\"\"\n|       calcMode=\"\"\n|       clipPathUnits=\"\"\n|       diffuseConstant=\"\"\n|       edgeMode=\"\"\n|       filterUnits=\"\"\n|       filterres=\"\"\n|       glyphRef=\"\"\n|       gradientTransform=\"\"\n|       gradientUnits=\"\"\n|       kernelMatrix=\"\"\n|       kernelUnitLength=\"\"\n|       keyPoints=\"\"\n|       keySplines=\"\"\n|       keyTimes=\"\"\n|       lengthAdjust=\"\"\n|       limitingConeAngle=\"\"\n|       markerHeight=\"\"\n|       markerUnits=\"\"\n|       markerWidth=\"\"\n|       maskContentUnits=\"\"\n|       maskUnits=\"\"\n|       numOctaves=\"\"\n|       pathLength=\"\"\n|       patternContentUnits=\"\"\n|       patternTransform=\"\"\n|       patternUnits=\"\"\n|       pointsAtX=\"\"\n|       pointsAtY=\"\"\n|       pointsAtZ=\"\"\n|       preserveAlpha=\"\"\n|       preserveAspectRatio=\"\"\n|       primitiveUnits=\"\"\n|       refX=\"\"\n|       refY=\"\"\n|       repeatCount=\"\"\n|       repeatDur=\"\"\n|       requiredExtensions=\"\"\n|       requiredFeatures=\"\"\n|       specularConstant=\"\"\n|       specularExponent=\"\"\n|       spreadMethod=\"\"\n|       startOffset=\"\"\n|       stdDeviation=\"\"\n|       stitchTiles=\"\"\n|       surfaceScale=\"\"\n|       systemLanguage=\"\"\n|       tableValues=\"\"\n|       targetX=\"\"\n|       targetY=\"\"\n|       textLength=\"\"\n|       viewBox=\"\"\n|       viewTarget=\"\"\n|       xChannelSelector=\"\"\n|       yChannelSelector=\"\"\n|       zoomAndPan=\"\"\n",
+  ),
+  (
+    "tests11.dat:3", "document", "", "<!DOCTYPE html><body><math attributeName='' attributeType='' baseFrequency='' baseProfile='' calcMode='' clipPathUnits='' diffuseConstant='' edgeMode='' filterUnits='' glyphRef='' gradientTransform='' gradientUnits='' kernelMatrix='' kernelUnitLength='' keyPoints='' keySplines='' keyTimes='' lengthAdjust='' limitingConeAngle='' markerHeight='' markerUnits='' markerWidth='' maskContentUnits='' maskUnits='' numOctaves='' pathLength='' patternContentUnits='' patternTransform='' patternUnits='' pointsAtX='' pointsAtY='' pointsAtZ='' preserveAlpha='' preserveAspectRatio='' primitiveUnits='' refX='' refY='' repeatCount='' repeatDur='' requiredExtensions='' requiredFeatures='' specularConstant='' specularExponent='' spreadMethod='' startOffset='' stdDeviation='' stitchTiles='' surfaceScale='' systemLanguage='' tableValues='' targetX='' targetY='' textLength='' viewBox='' viewTarget='' xChannelSelector='' yChannelSelector='' zoomAndPan=''></math>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       attributename=\"\"\n|       attributetype=\"\"\n|       basefrequency=\"\"\n|       baseprofile=\"\"\n|       calcmode=\"\"\n|       clippathunits=\"\"\n|       diffuseconstant=\"\"\n|       edgemode=\"\"\n|       filterunits=\"\"\n|       glyphref=\"\"\n|       gradienttransform=\"\"\n|       gradientunits=\"\"\n|       kernelmatrix=\"\"\n|       kernelunitlength=\"\"\n|       keypoints=\"\"\n|       keysplines=\"\"\n|       keytimes=\"\"\n|       lengthadjust=\"\"\n|       limitingconeangle=\"\"\n|       markerheight=\"\"\n|       markerunits=\"\"\n|       markerwidth=\"\"\n|       maskcontentunits=\"\"\n|       maskunits=\"\"\n|       numoctaves=\"\"\n|       pathlength=\"\"\n|       patterncontentunits=\"\"\n|       patterntransform=\"\"\n|       patternunits=\"\"\n|       pointsatx=\"\"\n|       pointsaty=\"\"\n|       pointsatz=\"\"\n|       preservealpha=\"\"\n|       preserveaspectratio=\"\"\n|       primitiveunits=\"\"\n|       refx=\"\"\n|       refy=\"\"\n|       repeatcount=\"\"\n|       repeatdur=\"\"\n|       requiredextensions=\"\"\n|       requiredfeatures=\"\"\n|       specularconstant=\"\"\n|       specularexponent=\"\"\n|       spreadmethod=\"\"\n|       startoffset=\"\"\n|       stddeviation=\"\"\n|       stitchtiles=\"\"\n|       surfacescale=\"\"\n|       systemlanguage=\"\"\n|       tablevalues=\"\"\n|       targetx=\"\"\n|       targety=\"\"\n|       textlength=\"\"\n|       viewbox=\"\"\n|       viewtarget=\"\"\n|       xchannelselector=\"\"\n|       ychannelselector=\"\"\n|       zoomandpan=\"\"\n",
+  ),
+  (
+    "tests11.dat:4", "document", "", "<!DOCTYPE html><body><svg contentScriptType='' contentStyleType='' externalResourcesRequired='' filterRes=''></svg>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       contentscripttype=\"\"\n|       contentstyletype=\"\"\n|       externalresourcesrequired=\"\"\n|       filterres=\"\"\n",
+  ),
+  (
+    "tests11.dat:5", "document", "", "<!DOCTYPE html><body><svg CONTENTSCRIPTTYPE='' CONTENTSTYLETYPE='' EXTERNALRESOURCESREQUIRED='' FILTERRES=''></svg>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       contentscripttype=\"\"\n|       contentstyletype=\"\"\n|       externalresourcesrequired=\"\"\n|       filterres=\"\"\n",
+  ),
+  (
+    "tests11.dat:6", "document", "", "<!DOCTYPE html><body><svg contentscripttype='' contentstyletype='' externalresourcesrequired='' filterres=''></svg>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       contentscripttype=\"\"\n|       contentstyletype=\"\"\n|       externalresourcesrequired=\"\"\n|       filterres=\"\"\n",
+  ),
+  (
+    "tests11.dat:7", "document", "", "<!DOCTYPE html><body><math contentScriptType='' contentStyleType='' externalResourcesRequired='' filterRes=''></math>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       contentscripttype=\"\"\n|       contentstyletype=\"\"\n|       externalresourcesrequired=\"\"\n|       filterres=\"\"\n",
+  ),
+  (
+    "tests11.dat:8", "document", "", "<!DOCTYPE html><body><svg><altGlyph /><altGlyphDef /><altGlyphItem /><animateColor /><animateMotion /><animateTransform /><clipPath /><feBlend /><feColorMatrix /><feComponentTransfer /><feComposite /><feConvolveMatrix /><feDiffuseLighting /><feDisplacementMap /><feDistantLight /><feFlood /><feFuncA /><feFuncB /><feFuncG /><feFuncR /><feGaussianBlur /><feImage /><feMerge /><feMergeNode /><feMorphology /><feOffset /><fePointLight /><feSpecularLighting /><feSpotLight /><feTile /><feTurbulence /><foreignObject /><glyphRef /><linearGradient /><radialGradient /><textPath /></svg>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg altGlyph>\n|       <svg altGlyphDef>\n|       <svg altGlyphItem>\n|       <svg animateColor>\n|       <svg animateMotion>\n|       <svg animateTransform>\n|       <svg clipPath>\n|       <svg feBlend>\n|       <svg feColorMatrix>\n|       <svg feComponentTransfer>\n|       <svg feComposite>\n|       <svg feConvolveMatrix>\n|       <svg feDiffuseLighting>\n|       <svg feDisplacementMap>\n|       <svg feDistantLight>\n|       <svg feFlood>\n|       <svg feFuncA>\n|       <svg feFuncB>\n|       <svg feFuncG>\n|       <svg feFuncR>\n|       <svg feGaussianBlur>\n|       <svg feImage>\n|       <svg feMerge>\n|       <svg feMergeNode>\n|       <svg feMorphology>\n|       <svg feOffset>\n|       <svg fePointLight>\n|       <svg feSpecularLighting>\n|       <svg feSpotLight>\n|       <svg feTile>\n|       <svg feTurbulence>\n|       <svg foreignObject>\n|       <svg glyphRef>\n|       <svg linearGradient>\n|       <svg radialGradient>\n|       <svg textPath>\n",
+  ),
+  (
+    "tests11.dat:9", "document", "", "<!DOCTYPE html><body><svg><altglyph /><altglyphdef /><altglyphitem /><animatecolor /><animatemotion /><animatetransform /><clippath /><feblend /><fecolormatrix /><fecomponenttransfer /><fecomposite /><feconvolvematrix /><fediffuselighting /><fedisplacementmap /><fedistantlight /><feflood /><fefunca /><fefuncb /><fefuncg /><fefuncr /><fegaussianblur /><feimage /><femerge /><femergenode /><femorphology /><feoffset /><fepointlight /><fespecularlighting /><fespotlight /><fetile /><feturbulence /><foreignobject /><glyphref /><lineargradient /><radialgradient /><textpath /></svg>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg altGlyph>\n|       <svg altGlyphDef>\n|       <svg altGlyphItem>\n|       <svg animateColor>\n|       <svg animateMotion>\n|       <svg animateTransform>\n|       <svg clipPath>\n|       <svg feBlend>\n|       <svg feColorMatrix>\n|       <svg feComponentTransfer>\n|       <svg feComposite>\n|       <svg feConvolveMatrix>\n|       <svg feDiffuseLighting>\n|       <svg feDisplacementMap>\n|       <svg feDistantLight>\n|       <svg feFlood>\n|       <svg feFuncA>\n|       <svg feFuncB>\n|       <svg feFuncG>\n|       <svg feFuncR>\n|       <svg feGaussianBlur>\n|       <svg feImage>\n|       <svg feMerge>\n|       <svg feMergeNode>\n|       <svg feMorphology>\n|       <svg feOffset>\n|       <svg fePointLight>\n|       <svg feSpecularLighting>\n|       <svg feSpotLight>\n|       <svg feTile>\n|       <svg feTurbulence>\n|       <svg foreignObject>\n|       <svg glyphRef>\n|       <svg linearGradient>\n|       <svg radialGradient>\n|       <svg textPath>\n",
+  ),
+  (
+    "tests11.dat:10", "document", "", "<!DOCTYPE html><BODY><SVG><ALTGLYPH /><ALTGLYPHDEF /><ALTGLYPHITEM /><ANIMATECOLOR /><ANIMATEMOTION /><ANIMATETRANSFORM /><CLIPPATH /><FEBLEND /><FECOLORMATRIX /><FECOMPONENTTRANSFER /><FECOMPOSITE /><FECONVOLVEMATRIX /><FEDIFFUSELIGHTING /><FEDISPLACEMENTMAP /><FEDISTANTLIGHT /><FEFLOOD /><FEFUNCA /><FEFUNCB /><FEFUNCG /><FEFUNCR /><FEGAUSSIANBLUR /><FEIMAGE /><FEMERGE /><FEMERGENODE /><FEMORPHOLOGY /><FEOFFSET /><FEPOINTLIGHT /><FESPECULARLIGHTING /><FESPOTLIGHT /><FETILE /><FETURBULENCE /><FOREIGNOBJECT /><GLYPHREF /><LINEARGRADIENT /><RADIALGRADIENT /><TEXTPATH /></SVG>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg altGlyph>\n|       <svg altGlyphDef>\n|       <svg altGlyphItem>\n|       <svg animateColor>\n|       <svg animateMotion>\n|       <svg animateTransform>\n|       <svg clipPath>\n|       <svg feBlend>\n|       <svg feColorMatrix>\n|       <svg feComponentTransfer>\n|       <svg feComposite>\n|       <svg feConvolveMatrix>\n|       <svg feDiffuseLighting>\n|       <svg feDisplacementMap>\n|       <svg feDistantLight>\n|       <svg feFlood>\n|       <svg feFuncA>\n|       <svg feFuncB>\n|       <svg feFuncG>\n|       <svg feFuncR>\n|       <svg feGaussianBlur>\n|       <svg feImage>\n|       <svg feMerge>\n|       <svg feMergeNode>\n|       <svg feMorphology>\n|       <svg feOffset>\n|       <svg fePointLight>\n|       <svg feSpecularLighting>\n|       <svg feSpotLight>\n|       <svg feTile>\n|       <svg feTurbulence>\n|       <svg foreignObject>\n|       <svg glyphRef>\n|       <svg linearGradient>\n|       <svg radialGradient>\n|       <svg textPath>\n",
+  ),
+  (
+    "tests11.dat:11", "document", "", "<!DOCTYPE html><body><math><altGlyph /><altGlyphDef /><altGlyphItem /><animateColor /><animateMotion /><animateTransform /><clipPath /><feBlend /><feColorMatrix /><feComponentTransfer /><feComposite /><feConvolveMatrix /><feDiffuseLighting /><feDisplacementMap /><feDistantLight /><feFlood /><feFuncA /><feFuncB /><feFuncG /><feFuncR /><feGaussianBlur /><feImage /><feMerge /><feMergeNode /><feMorphology /><feOffset /><fePointLight /><feSpecularLighting /><feSpotLight /><feTile /><feTurbulence /><foreignObject /><glyphRef /><linearGradient /><radialGradient /><textPath /></math>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math altglyph>\n|       <math altglyphdef>\n|       <math altglyphitem>\n|       <math animatecolor>\n|       <math animatemotion>\n|       <math animatetransform>\n|       <math clippath>\n|       <math feblend>\n|       <math fecolormatrix>\n|       <math fecomponenttransfer>\n|       <math fecomposite>\n|       <math feconvolvematrix>\n|       <math fediffuselighting>\n|       <math fedisplacementmap>\n|       <math fedistantlight>\n|       <math feflood>\n|       <math fefunca>\n|       <math fefuncb>\n|       <math fefuncg>\n|       <math fefuncr>\n|       <math fegaussianblur>\n|       <math feimage>\n|       <math femerge>\n|       <math femergenode>\n|       <math femorphology>\n|       <math feoffset>\n|       <math fepointlight>\n|       <math fespecularlighting>\n|       <math fespotlight>\n|       <math fetile>\n|       <math feturbulence>\n|       <math foreignobject>\n|       <math glyphref>\n|       <math lineargradient>\n|       <math radialgradient>\n|       <math textpath>\n",
+  ),
+  (
+    "tests11.dat:12", "document", "", "<!DOCTYPE html><body><svg><solidColor /></svg>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg solidcolor>\n",
+  ),
+  (
+    "tests12.dat:0", "document", "", "<!DOCTYPE html><body><p>foo<math><mtext><i>baz</i></mtext><annotation-xml><svg><desc><b>eggs</b></desc><g><foreignObject><P>spam<TABLE><tr><td><img></td></table></foreignObject></g><g>quux</g></svg></annotation-xml></math>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n|       <math math>\n|         <math mtext>\n|           <i>\n|             \"baz\"\n|         <math annotation-xml>\n|           <svg svg>\n|             <svg desc>\n|               <b>\n|                 \"eggs\"\n|             <svg g>\n|               <svg foreignObject>\n|                 <p>\n|                   \"spam\"\n|                 <table>\n|                   <tbody>\n|                     <tr>\n|                       <td>\n|                         <img>\n|             <svg g>\n|               \"quux\"\n|       \"bar\"\n",
+  ),
+  (
+    "tests12.dat:1", "document", "", "<!DOCTYPE html><body>foo<math><mtext><i>baz</i></mtext><annotation-xml><svg><desc><b>eggs</b></desc><g><foreignObject><P>spam<TABLE><tr><td><img></td></table></foreignObject></g><g>quux</g></svg></annotation-xml></math>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"foo\"\n|     <math math>\n|       <math mtext>\n|         <i>\n|           \"baz\"\n|       <math annotation-xml>\n|         <svg svg>\n|           <svg desc>\n|             <b>\n|               \"eggs\"\n|           <svg g>\n|             <svg foreignObject>\n|               <p>\n|                 \"spam\"\n|               <table>\n|                 <tbody>\n|                   <tr>\n|                     <td>\n|                       <img>\n|           <svg g>\n|             \"quux\"\n|     \"bar\"\n",
+  ),
+  (
+    "tests14.dat:0", "document", "", "<!DOCTYPE html><html><body><xyz:abc></xyz:abc>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <xyz:abc>\n",
+  ),
+  (
+    "tests14.dat:1", "document", "", "<!DOCTYPE html><html><body><xyz:abc></xyz:abc><span></span>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <xyz:abc>\n|     <span>\n",
+  ),
+  (
+    "tests14.dat:2", "document", "", "<!DOCTYPE html><html><html abc:def=gh><xyz:abc></xyz:abc>",
+    "| <!DOCTYPE html>\n| <html>\n|   abc:def=\"gh\"\n|   <head>\n|   <body>\n|     <xyz:abc>\n",
+  ),
+  (
+    "tests14.dat:3", "document", "", "<!DOCTYPE html><html xml:lang=bar><html xml:lang=foo>",
+    "| <!DOCTYPE html>\n| <html>\n|   xml:lang=\"bar\"\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests14.dat:4", "document", "", "<!DOCTYPE html><html 123=456>", "| <!DOCTYPE html>\n| <html>\n|   123=\"456\"\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests14.dat:5", "document", "", "<!DOCTYPE html><html 123=456><html 789=012>",
+    "| <!DOCTYPE html>\n| <html>\n|   123=\"456\"\n|   789=\"012\"\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests14.dat:6", "document", "", "<!DOCTYPE html><html><body 789=012>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     789=\"012\"\n",
+  ),
+  (
+    "tests15.dat:0", "document", "", "<!DOCTYPE html><p><b><i><u></p> <p>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <b>\n|         <i>\n|           <u>\n|     <b>\n|       <i>\n|         <u>\n|           \" \"\n|           <p>\n|             \"X\"\n",
+  ),
+  (
+    "tests15.dat:1", "document", "", "<p><b><i><u></p>\n<p>X", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <b>\n|         <i>\n|           <u>\n|     <b>\n|       <i>\n|         <u>\n|           \"\n\"\n|           <p>\n|             \"X\"\n",
+  ),
+  (
+    "tests15.dat:2", "document", "", "<!doctype html></html> <head>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \" \"\n",
+  ),
+  (
+    "tests15.dat:3", "document", "", "<!doctype html></body><meta>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <meta>\n",
+  ),
+  (
+    "tests15.dat:4", "document", "", "<html></html><!-- foo -->", "| <html>\n|   <head>\n|   <body>\n| <!--  foo  -->\n",
+  ),
+  (
+    "tests15.dat:5", "document", "", "<!doctype html></body><title>X</title>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <title>\n|       \"X\"\n",
+  ),
+  (
+    "tests15.dat:6", "document", "", "<!doctype html><table> X<meta></table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \" X\"\n|     <meta>\n|     <table>\n",
+  ),
+  (
+    "tests15.dat:7", "document", "", "<!doctype html><table> x</table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \" x\"\n|     <table>\n",
+  ),
+  (
+    "tests15.dat:8", "document", "", "<!doctype html><table> x </table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \" x \"\n|     <table>\n",
+  ),
+  (
+    "tests15.dat:9", "document", "", "<!doctype html><table><tr> x</table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \" x\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
+  ),
+  (
+    "tests15.dat:10", "document", "", "<!doctype html><table>X<style> <tr>x </style> </table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"X\"\n|     <table>\n|       <style>\n|         \" <tr>x \"\n|       \" \"\n",
+  ),
+  (
+    "tests15.dat:11", "document", "", "<!doctype html><div><table><a>foo</a> <tr><td>bar</td> </tr></table></div>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <a>\n|         \"foo\"\n|       <table>\n|         \" \"\n|         <tbody>\n|           <tr>\n|             <td>\n|               \"bar\"\n|             \" \"\n",
+  ),
+  (
+    "tests15.dat:12", "document", "", "<frame></frame></frame><frameset><frame><frameset><frame></frameset><noframes></frameset><noframes>",
+    "| <html>\n|   <head>\n|   <frameset>\n|     <frame>\n|     <frameset>\n|       <frame>\n|     <noframes>\n|       \"</frameset><noframes>\"\n",
+  ),
+  (
+    "tests15.dat:13", "document", "", "<!DOCTYPE html><object></html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <object>\n",
+  ),
+  (
+    "tests16.dat:0", "document", "", "<!doctype html><script>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:1", "document", "", "<!doctype html><script>a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:2", "document", "", "<!doctype html><script><", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:3", "document", "", "<!doctype html><script></", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:4", "document", "", "<!doctype html><script></S", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</S\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:5", "document", "", "<!doctype html><script></SC", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</SC\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:6", "document", "", "<!doctype html><script></SCR", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</SCR\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:7", "document", "", "<!doctype html><script></SCRI", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</SCRI\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:8", "document", "", "<!doctype html><script></SCRIP", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</SCRIP\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:9", "document", "", "<!doctype html><script></SCRIPT", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</SCRIPT\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:10", "document", "", "<!doctype html><script></SCRIPT ", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:11", "document", "", "<!doctype html><script></s", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</s\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:12", "document", "", "<!doctype html><script></sc", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</sc\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:13", "document", "", "<!doctype html><script></scr", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</scr\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:14", "document", "", "<!doctype html><script></scri", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</scri\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:15", "document", "", "<!doctype html><script></scrip", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</scrip\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:16", "document", "", "<!doctype html><script></script", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"</script\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:17", "document", "", "<!doctype html><script></script ", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:18", "document", "", "<!doctype html><script><!", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:19", "document", "", "<!doctype html><script><!a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:20", "document", "", "<!doctype html><script><!-", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!-\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:21", "document", "", "<!doctype html><script><!-a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!-a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:22", "document", "", "<!doctype html><script><!--", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:23", "document", "", "<!doctype html><script><!--a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:24", "document", "", "<!doctype html><script><!--<", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:25", "document", "", "<!doctype html><script><!--<a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:26", "document", "", "<!doctype html><script><!--</", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--</\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:27", "document", "", "<!doctype html><script><!--</script", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--</script\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:28", "document", "", "<!doctype html><script><!--</script ", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:29", "document", "", "<!doctype html><script><!--<s", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<s\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:30", "document", "", "<!doctype html><script><!--<script", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:31", "document", "", "<!doctype html><script><!--<script ", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script \"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:32", "document", "", "<!doctype html><script><!--<script <", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script <\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:33", "document", "", "<!doctype html><script><!--<script <a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script <a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:34", "document", "", "<!doctype html><script><!--<script </", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:35", "document", "", "<!doctype html><script><!--<script </s", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </s\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:36", "document", "", "<!doctype html><script><!--<script </script",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:37", "document", "", "<!doctype html><script><!--<script </scripta",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </scripta\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:38", "document", "", "<!doctype html><script><!--<script </script ",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:39", "document", "", "<!doctype html><script><!--<script </script>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script>\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:40", "document", "", "<!doctype html><script><!--<script </script/",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script/\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:41", "document", "", "<!doctype html><script><!--<script </script <",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script <\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:42", "document", "", "<!doctype html><script><!--<script </script <a",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script <a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:43", "document", "", "<!doctype html><script><!--<script </script </",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script </\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:44", "document", "", "<!doctype html><script><!--<script </script </script",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script </script\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:45", "document", "", "<!doctype html><script><!--<script </script </script ",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:46", "document", "", "<!doctype html><script><!--<script </script </script/",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:47", "document", "", "<!doctype html><script><!--<script </script </script>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:48", "document", "", "<!doctype html><script><!--<script -", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:49", "document", "", "<!doctype html><script><!--<script -a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:50", "document", "", "<!doctype html><script><!--<script -<", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -<\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:51", "document", "", "<!doctype html><script><!--<script --", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:52", "document", "", "<!doctype html><script><!--<script --a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:53", "document", "", "<!doctype html><script><!--<script --<", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --<\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:54", "document", "", "<!doctype html><script><!--<script -->", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:55", "document", "", "<!doctype html><script><!--<script --><",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --><\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:56", "document", "", "<!doctype html><script><!--<script --></",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --></\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:57", "document", "", "<!doctype html><script><!--<script --></script",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --></script\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:58", "document", "", "<!doctype html><script><!--<script --></script ",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:59", "document", "", "<!doctype html><script><!--<script --></script/",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:60", "document", "", "<!doctype html><script><!--<script --></script>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:61", "document", "", "<!doctype html><script><!--<script><\\/script>--></script>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script><\\/script>-->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:62", "document", "", "<!doctype html><script><!--<script></scr'+'ipt>--></script>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></scr'+'ipt>-->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:63", "document", "", "<!doctype html><script><!--<script></script><script></script></script>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:64", "document", "", "<!doctype html><script><!--<script></script><script></script>--><!--</script>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>--><!--\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:65", "document", "", "<!doctype html><script><!--<script></script><script></script>-- ></script>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>-- >\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:66", "document", "", "<!doctype html><script><!--<script></script><script></script>- -></script>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>- ->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:67", "document", "", "<!doctype html><script><!--<script></script><script></script>- - ></script>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>- - >\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:68", "document", "", "<!doctype html><script><!--<script></script><script></script>-></script>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:69", "document", "", "<!doctype html><script><!--<script>--!></script>X",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script>--!></script>X\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:70", "document", "", "<!doctype html><script><!--<scr'+'ipt></script>--></script>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<scr'+'ipt>\"\n|   <body>\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:71", "document", "", "<!doctype html><script><!--<script></scr'+'ipt></script>X",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></scr'+'ipt></script>X\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:72", "document", "", "<!doctype html><style><!--<style></style>--></style>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"<!--<style>\"\n|   <body>\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:73", "document", "", "<!doctype html><style><!--</style>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"<!--\"\n|   <body>\n|     \"X\"\n",
+  ),
+  (
+    "tests16.dat:74", "document", "", "<!doctype html><style><!--...</style>...--></style>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"<!--...\"\n|   <body>\n|     \"...-->\"\n",
+  ),
+  (
+    "tests16.dat:75", "document", "", "<!doctype html><style><!--<br><html xmlns:v=\"urn:schemas-microsoft-com:vml\"><!--[if !mso]><style></style>X",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"<!--<br><html xmlns:v=\"urn:schemas-microsoft-com:vml\"><!--[if !mso]><style>\"\n|   <body>\n|     \"X\"\n",
+  ),
+  (
+    "tests16.dat:76", "document", "", "<!doctype html><style><!--...<style><!--...--!></style>--></style>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"<!--...<style><!--...--!>\"\n|   <body>\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:77", "document", "", "<!doctype html><style><!--...</style><!-- --><style>@import ...</style>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"<!--...\"\n|     <!--   -->\n|     <style>\n|       \"@import ...\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:78", "document", "", "<!doctype html><style>...<style><!--...</style><!-- --></style>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"...<style><!--...\"\n|     <!--   -->\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:79", "document", "", "<!doctype html><style>...<!--[if IE]><style>...</style>X",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <style>\n|       \"...<!--[if IE]><style>...\"\n|   <body>\n|     \"X\"\n",
+  ),
+  (
+    "tests16.dat:80", "document", "", "<!doctype html><title><!--<title></title>--></title>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"<!--<title>\"\n|   <body>\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:81", "document", "", "<!doctype html><title>&lt;/title></title>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"</title>\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:82", "document", "", "<!doctype html><title>foo/title><link></head><body>X",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"foo/title><link></head><body>X\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:83", "document", "", "<!doctype html><noscript><!--<noscript></noscript>--></noscript>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noscript>\n|       <!-- <noscript></noscript> -->\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:84", "document", "", "<!doctype html><noscript><!--</noscript>X<noscript>--></noscript>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noscript>\n|       <!-- </noscript>X<noscript> -->\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:85", "document", "", "<!doctype html><noscript><iframe></noscript>X",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noscript>\n|   <body>\n|     <iframe>\n|       \"</noscript>X\"\n",
+  ),
+  (
+    "tests16.dat:86", "document", "", "<!doctype html><noframes><!--<noframes></noframes>--></noframes>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noframes>\n|       \"<!--<noframes>\"\n|   <body>\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:87", "document", "", "<!doctype html><noframes><body><script><!--...</script></body></noframes></html>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noframes>\n|       \"<body><script><!--...</script></body>\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:88", "document", "", "<!doctype html><textarea><!--<textarea></textarea>--></textarea>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"<!--<textarea>\"\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:89", "document", "", "<!doctype html><textarea>&lt;/textarea></textarea>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"</textarea>\"\n",
+  ),
+  (
+    "tests16.dat:90", "document", "", "<!doctype html><textarea>&lt;</textarea>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"<\"\n",
+  ),
+  (
+    "tests16.dat:91", "document", "", "<!doctype html><textarea>a&lt;b</textarea>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"a<b\"\n",
+  ),
+  (
+    "tests16.dat:92", "document", "", "<!doctype html><iframe><!--<iframe></iframe>--></iframe>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <iframe>\n|       \"<!--<iframe>\"\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:93", "document", "", "<!doctype html><iframe>...<!--X->...<!--/X->...</iframe>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <iframe>\n|       \"...<!--X->...<!--/X->...\"\n",
+  ),
+  (
+    "tests16.dat:94", "document", "", "<!doctype html><xmp><!--<xmp></xmp>--></xmp>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <xmp>\n|       \"<!--<xmp>\"\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:95", "document", "", "<!doctype html><noembed><!--<noembed></noembed>--></noembed>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <noembed>\n|       \"<!--<noembed>\"\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:96", "document", "", "<script>", "| <html>\n|   <head>\n|     <script>\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:97", "document", "", "<script>a", "| <html>\n|   <head>\n|     <script>\n|       \"a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:98", "document", "", "<script><", "| <html>\n|   <head>\n|     <script>\n|       \"<\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:99", "document", "", "<script></", "| <html>\n|   <head>\n|     <script>\n|       \"</\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:100", "document", "", "<script></S", "| <html>\n|   <head>\n|     <script>\n|       \"</S\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:101", "document", "", "<script></SC", "| <html>\n|   <head>\n|     <script>\n|       \"</SC\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:102", "document", "", "<script></SCR", "| <html>\n|   <head>\n|     <script>\n|       \"</SCR\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:103", "document", "", "<script></SCRI", "| <html>\n|   <head>\n|     <script>\n|       \"</SCRI\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:104", "document", "", "<script></SCRIP", "| <html>\n|   <head>\n|     <script>\n|       \"</SCRIP\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:105", "document", "", "<script></SCRIPT", "| <html>\n|   <head>\n|     <script>\n|       \"</SCRIPT\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:106", "document", "", "<script></SCRIPT ", "| <html>\n|   <head>\n|     <script>\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:107", "document", "", "<script></s", "| <html>\n|   <head>\n|     <script>\n|       \"</s\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:108", "document", "", "<script></sc", "| <html>\n|   <head>\n|     <script>\n|       \"</sc\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:109", "document", "", "<script></scr", "| <html>\n|   <head>\n|     <script>\n|       \"</scr\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:110", "document", "", "<script></scri", "| <html>\n|   <head>\n|     <script>\n|       \"</scri\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:111", "document", "", "<script></scrip", "| <html>\n|   <head>\n|     <script>\n|       \"</scrip\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:112", "document", "", "<script></script", "| <html>\n|   <head>\n|     <script>\n|       \"</script\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:113", "document", "", "<script></script ", "| <html>\n|   <head>\n|     <script>\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:114", "document", "", "<script><!", "| <html>\n|   <head>\n|     <script>\n|       \"<!\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:115", "document", "", "<script><!a", "| <html>\n|   <head>\n|     <script>\n|       \"<!a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:116", "document", "", "<script><!-", "| <html>\n|   <head>\n|     <script>\n|       \"<!-\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:117", "document", "", "<script><!-a", "| <html>\n|   <head>\n|     <script>\n|       \"<!-a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:118", "document", "", "<script><!--", "| <html>\n|   <head>\n|     <script>\n|       \"<!--\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:119", "document", "", "<script><!--a", "| <html>\n|   <head>\n|     <script>\n|       \"<!--a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:120", "document", "", "<script><!--<", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:121", "document", "", "<script><!--<a", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:122", "document", "", "<script><!--</", "| <html>\n|   <head>\n|     <script>\n|       \"<!--</\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:123", "document", "", "<script><!--</script", "| <html>\n|   <head>\n|     <script>\n|       \"<!--</script\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:124", "document", "", "<script><!--</script ", "| <html>\n|   <head>\n|     <script>\n|       \"<!--\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:125", "document", "", "<script><!--<s", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<s\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:126", "document", "", "<script><!--<script", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:127", "document", "", "<script><!--<script ", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script \"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:128", "document", "", "<script><!--<script <", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script <\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:129", "document", "", "<script><!--<script <a", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script <a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:130", "document", "", "<script><!--<script </", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:131", "document", "", "<script><!--<script </s", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </s\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:132", "document", "", "<script><!--<script </script", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:133", "document", "", "<script><!--<script </scripta", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </scripta\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:134", "document", "", "<script><!--<script </script ", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:135", "document", "", "<script><!--<script </script>", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script>\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:136", "document", "", "<script><!--<script </script/", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script/\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:137", "document", "", "<script><!--<script </script <", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script <\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:138", "document", "", "<script><!--<script </script <a", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script <a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:139", "document", "", "<script><!--<script </script </", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script </\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:140", "document", "", "<script><!--<script </script </script", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script </script\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:141", "document", "", "<script><!--<script </script </script ",
+    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:142", "document", "", "<script><!--<script </script </script/",
+    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:143", "document", "", "<script><!--<script </script </script>",
+    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script </script \"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:144", "document", "", "<script><!--<script -", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:145", "document", "", "<script><!--<script -a", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:146", "document", "", "<script><!--<script --", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:147", "document", "", "<script><!--<script --a", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --a\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:148", "document", "", "<script><!--<script -->", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:149", "document", "", "<script><!--<script --><", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --><\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:150", "document", "", "<script><!--<script --></", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --></\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:151", "document", "", "<script><!--<script --></script", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script --></script\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:152", "document", "", "<script><!--<script --></script ", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:153", "document", "", "<script><!--<script --></script/", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:154", "document", "", "<script><!--<script --></script>", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script -->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:155", "document", "", "<script><!--<script><\\/script>--></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script><\\/script>-->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:156", "document", "", "<script><!--<script></scr'+'ipt>--></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></scr'+'ipt>-->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:157", "document", "", "<script><!--<script></script><script></script></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:158", "document", "", "<script><!--<script></script><script></script>--><!--</script>",
+    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>--><!--\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:159", "document", "", "<script><!--<script></script><script></script>-- ></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>-- >\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:160", "document", "", "<script><!--<script></script><script></script>- -></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>- ->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:161", "document", "", "<script><!--<script></script><script></script>- - ></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>- - >\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:162", "document", "", "<script><!--<script></script><script></script>-></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></script><script></script>->\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:163", "document", "", "<script><!--<script>--!></script>X", "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script>--!></script>X\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:164", "document", "", "<script><!--<scr'+'ipt></script>--></script>",
+    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<scr'+'ipt>\"\n|   <body>\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:165", "document", "", "<script><!--<script></scr'+'ipt></script>X",
+    "| <html>\n|   <head>\n|     <script>\n|       \"<!--<script></scr'+'ipt></script>X\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:166", "document", "", "<style><!--<style></style>--></style>", "| <html>\n|   <head>\n|     <style>\n|       \"<!--<style>\"\n|   <body>\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:167", "document", "", "<style><!--</style>X", "| <html>\n|   <head>\n|     <style>\n|       \"<!--\"\n|   <body>\n|     \"X\"\n",
+  ),
+  (
+    "tests16.dat:168", "document", "", "<style><!--...</style>...--></style>", "| <html>\n|   <head>\n|     <style>\n|       \"<!--...\"\n|   <body>\n|     \"...-->\"\n",
+  ),
+  (
+    "tests16.dat:169", "document", "", "<style><!--<br><html xmlns:v=\"urn:schemas-microsoft-com:vml\"><!--[if !mso]><style></style>X",
+    "| <html>\n|   <head>\n|     <style>\n|       \"<!--<br><html xmlns:v=\"urn:schemas-microsoft-com:vml\"><!--[if !mso]><style>\"\n|   <body>\n|     \"X\"\n",
+  ),
+  (
+    "tests16.dat:170", "document", "", "<style><!--...<style><!--...--!></style>--></style>",
+    "| <html>\n|   <head>\n|     <style>\n|       \"<!--...<style><!--...--!>\"\n|   <body>\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:171", "document", "", "<style><!--...</style><!-- --><style>@import ...</style>",
+    "| <html>\n|   <head>\n|     <style>\n|       \"<!--...\"\n|     <!--   -->\n|     <style>\n|       \"@import ...\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:172", "document", "", "<style>...<style><!--...</style><!-- --></style>",
+    "| <html>\n|   <head>\n|     <style>\n|       \"...<style><!--...\"\n|     <!--   -->\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:173", "document", "", "<style>...<!--[if IE]><style>...</style>X",
+    "| <html>\n|   <head>\n|     <style>\n|       \"...<!--[if IE]><style>...\"\n|   <body>\n|     \"X\"\n",
+  ),
+  (
+    "tests16.dat:174", "document", "", "<title><!--<title></title>--></title>", "| <html>\n|   <head>\n|     <title>\n|       \"<!--<title>\"\n|   <body>\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:175", "document", "", "<title>&lt;/title></title>", "| <html>\n|   <head>\n|     <title>\n|       \"</title>\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:176", "document", "", "<title>foo/title><link></head><body>X", "| <html>\n|   <head>\n|     <title>\n|       \"foo/title><link></head><body>X\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:177", "document", "", "<noscript><!--<noscript></noscript>--></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|       <!-- <noscript></noscript> -->\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:178", "document", "", "<noscript><!--</noscript>X<noscript>--></noscript>",
+    "| <html>\n|   <head>\n|     <noscript>\n|       <!-- </noscript>X<noscript> -->\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:179", "document", "", "<noscript><iframe></noscript>X", "| <html>\n|   <head>\n|     <noscript>\n|   <body>\n|     <iframe>\n|       \"</noscript>X\"\n",
+  ),
+  (
+    "tests16.dat:180", "document", "", "<noframes><!--<noframes></noframes>--></noframes>",
+    "| <html>\n|   <head>\n|     <noframes>\n|       \"<!--<noframes>\"\n|   <body>\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:181", "document", "", "<noframes><body><script><!--...</script></body></noframes></html>",
+    "| <html>\n|   <head>\n|     <noframes>\n|       \"<body><script><!--...</script></body>\"\n|   <body>\n",
+  ),
+  (
+    "tests16.dat:182", "document", "", "<textarea><!--<textarea></textarea>--></textarea>",
+    "| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"<!--<textarea>\"\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:183", "document", "", "<textarea>&lt;/textarea></textarea>", "| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"</textarea>\"\n",
+  ),
+  (
+    "tests16.dat:184", "document", "", "<iframe><!--<iframe></iframe>--></iframe>",
+    "| <html>\n|   <head>\n|   <body>\n|     <iframe>\n|       \"<!--<iframe>\"\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:185", "document", "", "<iframe>...<!--X->...<!--/X->...</iframe>",
+    "| <html>\n|   <head>\n|   <body>\n|     <iframe>\n|       \"...<!--X->...<!--/X->...\"\n",
+  ),
+  (
+    "tests16.dat:186", "document", "", "<xmp><!--<xmp></xmp>--></xmp>", "| <html>\n|   <head>\n|   <body>\n|     <xmp>\n|       \"<!--<xmp>\"\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:187", "document", "", "<noembed><!--<noembed></noembed>--></noembed>",
+    "| <html>\n|   <head>\n|   <body>\n|     <noembed>\n|       \"<!--<noembed>\"\n|     \"-->\"\n",
+  ),
+  (
+    "tests16.dat:188", "document", "", "<!doctype html><table>\n", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       \"\n\"\n",
+  ),
+  (
+    "tests16.dat:189", "document", "", "<!doctype html><table><td><span><font></span><span>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <span>\n|               <font>\n|             <font>\n|               <span>\n",
+  ),
+  (
+    "tests16.dat:190", "document", "", "<!doctype html><form><table></form><form></table></form>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <form>\n|       <table>\n|         <form>\n",
+  ),
+  (
+    "tests17.dat:0", "document", "", "<!doctype html><table><tbody><select><tr>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|     <table>\n|       <tbody>\n|         <tr>\n",
+  ),
+  (
+    "tests17.dat:1", "document", "", "<!doctype html><table><tr><select><td>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
+  ),
+  (
+    "tests17.dat:2", "document", "", "<!doctype html><table><tr><td><select><td>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|           <td>\n",
+  ),
+  (
+    "tests17.dat:3", "document", "", "<!doctype html><table><tr><th><select><td>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <th>\n|             <select>\n|           <td>\n",
+  ),
+  (
+    "tests17.dat:4", "document", "", "<!doctype html><table><caption><select><tr>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <select>\n|       <tbody>\n|         <tr>\n",
+  ),
+  (
+    "tests17.dat:5", "document", "", "<!doctype html><select><tr>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
+  ),
+  (
+    "tests17.dat:6", "document", "", "<!doctype html><select><td>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
+  ),
+  (
+    "tests17.dat:7", "document", "", "<!doctype html><select><th>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
+  ),
+  (
+    "tests17.dat:8", "document", "", "<!doctype html><select><tbody>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
+  ),
+  (
+    "tests17.dat:9", "document", "", "<!doctype html><select><thead>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
+  ),
+  (
+    "tests17.dat:10", "document", "", "<!doctype html><select><tfoot>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
+  ),
+  (
+    "tests17.dat:11", "document", "", "<!doctype html><select><caption>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
+  ),
+  (
+    "tests17.dat:12", "document", "", "<!doctype html><table><tr></table>a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|     \"a\"\n",
+  ),
+  (
+    "tests18.dat:0", "document", "", "<plaintext></plaintext>", "| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
+  ),
+  (
+    "tests18.dat:1", "document", "", "<!doctype html><plaintext></plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
+  ),
+  (
+    "tests18.dat:2", "document", "", "<!doctype html><html><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
+  ),
+  (
+    "tests18.dat:3", "document", "", "<!doctype html><head><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
+  ),
+  (
+    "tests18.dat:4", "document", "", "<!doctype html><html><noscript><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <noscript>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
+  ),
+  (
+    "tests18.dat:5", "document", "", "<!doctype html></head><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
+  ),
+  (
+    "tests18.dat:6", "document", "", "<!doctype html><body><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
+  ),
+  (
+    "tests18.dat:7", "document", "", "<!doctype html><table><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n|     <table>\n",
+  ),
+  (
+    "tests18.dat:8", "document", "", "<!doctype html><table><tbody><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n|     <table>\n|       <tbody>\n",
+  ),
+  (
+    "tests18.dat:9", "document", "", "<!doctype html><table><tbody><tr><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
+  ),
+  (
+    "tests18.dat:10", "document", "", "<!doctype html><table><td><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <plaintext>\n|               \"</plaintext>\"\n",
+  ),
+  (
+    "tests18.dat:11", "document", "", "<!doctype html><table><caption><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <plaintext>\n|           \"</plaintext>\"\n",
+  ),
+  (
+    "tests18.dat:12", "document", "", "<!doctype html><table><colgroup><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n|     <table>\n|       <colgroup>\n",
+  ),
+  (
+    "tests18.dat:13", "document", "", "<!doctype html><select><plaintext></plaintext>X",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <plaintext>\n|         \"</plaintext>X\"\n",
+  ),
+  (
+    "tests18.dat:14", "document", "", "<!doctype html><table><select><plaintext>a<caption>b",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <plaintext>\n|         \"a<caption>b\"\n|     <table>\n",
+  ),
+  (
+    "tests18.dat:15", "document", "", "<!doctype html><template><plaintext>a</template>b",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <template>\n|       content\n|         <plaintext>\n|           \"a</template>b\"\n|   <body>\n",
+  ),
+  (
+    "tests18.dat:16", "document", "", "<!doctype html><body></body><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
+  ),
+  (
+    "tests18.dat:17", "document", "", "<!doctype html><frameset><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests18.dat:18", "document", "", "<!doctype html><frameset></frameset><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests18.dat:19", "document", "", "<!doctype html><body></body></html><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
+  ),
+  (
+    "tests18.dat:20", "document", "", "<!doctype html><frameset></frameset></html><plaintext></plaintext>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests18.dat:21", "document", "", "<!doctype html><svg><plaintext>a</plaintext>b",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg plaintext>\n|         \"a\"\n|       \"b\"\n",
+  ),
+  (
+    "tests18.dat:22", "document", "", "<!doctype html><svg><title><plaintext>a</plaintext>b",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg title>\n|         <plaintext>\n|           \"a</plaintext>b\"\n",
+  ),
+  (
+    "tests18.dat:23", "document", "", "<!doctype html><table><tr><style></script></style>abc",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"abc\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <style>\n|             \"</script>\"\n",
+  ),
+  (
+    "tests18.dat:24", "document", "", "<!doctype html><table><tr><script></style></script>abc",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"abc\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <script>\n|             \"</style>\"\n",
+  ),
+  (
+    "tests18.dat:25", "document", "", "<!doctype html><table><caption><style></script></style>abc",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <style>\n|           \"</script>\"\n|         \"abc\"\n",
+  ),
+  (
+    "tests18.dat:26", "document", "", "<!doctype html><table><td><style></script></style>abc",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <style>\n|               \"</script>\"\n|             \"abc\"\n",
+  ),
+  (
+    "tests18.dat:27", "document", "", "<!doctype html><select><script></style></script>abc",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <script>\n|         \"</style>\"\n|       \"abc\"\n",
+  ),
+  (
+    "tests18.dat:28", "document", "", "<!doctype html><table><select><script></style></script>abc",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <script>\n|         \"</style>\"\n|       \"abc\"\n|     <table>\n",
+  ),
+  (
+    "tests18.dat:29", "document", "", "<!doctype html><table><tr><select><script></style></script>abc",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <script>\n|         \"</style>\"\n|       \"abc\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
+  ),
+  (
+    "tests18.dat:30", "document", "", "<!doctype html><frameset></frameset><noframes>abc",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|   <noframes>\n|     \"abc\"\n",
+  ),
+  (
+    "tests18.dat:31", "document", "", "<!doctype html><frameset></frameset><noframes>abc</noframes><!--abc-->",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|   <noframes>\n|     \"abc\"\n|   <!-- abc -->\n",
+  ),
+  (
+    "tests18.dat:32", "document", "", "<!doctype html><frameset></frameset></html><noframes>abc",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|   <noframes>\n|     \"abc\"\n",
+  ),
+  (
+    "tests18.dat:33", "document", "", "<!doctype html><frameset></frameset></html><noframes>abc</noframes><!--abc-->",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|   <noframes>\n|     \"abc\"\n| <!-- abc -->\n",
+  ),
+  (
+    "tests18.dat:34", "document", "", "<!doctype html><table><tr></tbody><tfoot>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|       <tfoot>\n",
+  ),
+  (
+    "tests18.dat:35", "document", "", "<!doctype html><table><td><svg></svg>abc<td>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <svg svg>\n|             \"abc\"\n|           <td>\n",
+  ),
+  (
+    "tests19.dat:0", "document", "", "<!doctype html><math><mn DefinitionUrl=\"foo\">",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mn>\n|         definitionURL=\"foo\"\n",
+  ),
+  (
+    "tests19.dat:1", "document", "", "<!doctype html><html></p><!--foo-->", "| <!DOCTYPE html>\n| <html>\n|   <!-- foo -->\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests19.dat:2", "document", "", "<!doctype html><head></head></p><!--foo-->",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <!-- foo -->\n|   <body>\n",
+  ),
+  (
+    "tests19.dat:3", "document", "", "<!doctype html><body><p><pre>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <pre>\n",
+  ),
+  (
+    "tests19.dat:4", "document", "", "<!doctype html><body><p><listing>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <listing>\n",
+  ),
+  (
+    "tests19.dat:5", "document", "", "<!doctype html><p><plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <plaintext>\n",
+  ),
+  (
+    "tests19.dat:6", "document", "", "<!doctype html><p><h1>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <h1>\n",
+  ),
+  (
+    "tests19.dat:7", "document", "", "<!doctype html><isindex type=\"hidden\">",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <isindex>\n|       type=\"hidden\"\n",
+  ),
+  (
+    "tests19.dat:8", "document", "", "<!doctype html><ruby><p><rp>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       <p>\n|       <rp>\n",
+  ),
+  (
+    "tests19.dat:9", "document", "", "<!doctype html><ruby><div><span><rp>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       <div>\n|         <span>\n|           <rp>\n",
+  ),
+  (
+    "tests19.dat:10", "document", "", "<!doctype html><ruby><div><p><rp>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       <div>\n|         <p>\n|         <rp>\n",
+  ),
+  (
+    "tests19.dat:11", "document", "", "<!doctype html><ruby><p><rt>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       <p>\n|       <rt>\n",
+  ),
+  (
+    "tests19.dat:12", "document", "", "<!doctype html><ruby><div><span><rt>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       <div>\n|         <span>\n|           <rt>\n",
+  ),
+  (
+    "tests19.dat:13", "document", "", "<!doctype html><ruby><div><p><rt>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       <div>\n|         <p>\n|         <rt>\n",
+  ),
+  (
+    "tests19.dat:14", "document", "", "<html><ruby>a<rb>b<rt></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rb>\n|         \"b\"\n|       <rt>\n",
+  ),
+  (
+    "tests19.dat:15", "document", "", "<html><ruby>a<rp>b<rt></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rp>\n|         \"b\"\n|       <rt>\n",
+  ),
+  (
+    "tests19.dat:16", "document", "", "<html><ruby>a<rt>b<rt></ruby></html>", "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rt>\n|         \"b\"\n|       <rt>\n",
+  ),
+  (
+    "tests19.dat:17", "document", "", "<html><ruby>a<rtc>b<rt>c<rb>d</ruby></html>",
+    "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       \"a\"\n|       <rtc>\n|         \"b\"\n|         <rt>\n|           \"c\"\n|       <rb>\n|         \"d\"\n",
+  ),
+  (
+    "tests19.dat:18", "document", "", "<!doctype html><math/><foo>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|     <foo>\n",
+  ),
+  (
+    "tests19.dat:19", "document", "", "<!doctype html><svg/><foo>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|     <foo>\n",
+  ),
+  (
+    "tests19.dat:20", "document", "", "<!doctype html><div></body><!--foo-->", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <div>\n|   <!-- foo -->\n",
+  ),
+  (
+    "tests19.dat:21", "document", "", "<!doctype html><h1><div><h3><span></h1>foo",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <h1>\n|       <div>\n|         <h3>\n|           <span>\n|         \"foo\"\n",
+  ),
+  (
+    "tests19.dat:22", "document", "", "<!doctype html><p></h3>foo", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"foo\"\n",
+  ),
+  (
+    "tests19.dat:23", "document", "", "<!doctype html><h3><li>abc</h2>foo", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <h3>\n|       <li>\n|         \"abc\"\n|     \"foo\"\n",
+  ),
+  (
+    "tests19.dat:24", "document", "", "<!doctype html><table>abc<!--foo-->", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"abc\"\n|     <table>\n|       <!-- foo -->\n",
+  ),
+  (
+    "tests19.dat:25", "document", "", "<!doctype html><table>  <!--foo-->", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       \"  \"\n|       <!-- foo -->\n",
+  ),
+  (
+    "tests19.dat:26", "document", "", "<!doctype html><table> b <!--foo-->", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \" b \"\n|     <table>\n|       <!-- foo -->\n",
+  ),
+  (
+    "tests19.dat:27", "document", "", "<!doctype html><select><option><option>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|       <option>\n",
+  ),
+  (
+    "tests19.dat:28", "document", "", "<!doctype html><select><option></optgroup>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n",
+  ),
+  (
+    "tests19.dat:29", "document", "", "<!doctype html><dd><optgroup><dd>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <dd>\n|       <optgroup>\n|     <dd>\n",
+  ),
+  (
+    "tests19.dat:30", "document", "", "<!doctype html><p><math><mi><p><h1>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <math math>\n|         <math mi>\n|           <p>\n|           <h1>\n",
+  ),
+  (
+    "tests19.dat:31", "document", "", "<!doctype html><p><math><mo><p><h1>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <math math>\n|         <math mo>\n|           <p>\n|           <h1>\n",
+  ),
+  (
+    "tests19.dat:32", "document", "", "<!doctype html><p><math><mn><p><h1>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <math math>\n|         <math mn>\n|           <p>\n|           <h1>\n",
+  ),
+  (
+    "tests19.dat:33", "document", "", "<!doctype html><p><math><ms><p><h1>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <math math>\n|         <math ms>\n|           <p>\n|           <h1>\n",
+  ),
+  (
+    "tests19.dat:34", "document", "", "<!doctype html><p><math><mtext><p><h1>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <math math>\n|         <math mtext>\n|           <p>\n|           <h1>\n",
+  ),
+  (
+    "tests19.dat:35", "document", "", "<!doctype html><frameset></noframes>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests19.dat:36", "document", "", "<!doctype html><html c=d><body></html><html a=b>",
+    "| <!DOCTYPE html>\n| <html>\n|   a=\"b\"\n|   c=\"d\"\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests19.dat:37", "document", "", "<!doctype html><html c=d><frameset></frameset></html><html a=b>",
+    "| <!DOCTYPE html>\n| <html>\n|   a=\"b\"\n|   c=\"d\"\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests19.dat:38", "document", "", "<!doctype html><html><frameset></frameset></html><!--foo-->",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n| <!-- foo -->\n",
+  ),
+  (
+    "tests19.dat:39", "document", "", "<!doctype html><html><frameset></frameset></html>  ",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|   \"  \"\n",
+  ),
+  (
+    "tests19.dat:40", "document", "", "<!doctype html><html><frameset></frameset></html>abc",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests19.dat:41", "document", "", "<!doctype html><html><frameset></frameset></html><p>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests19.dat:42", "document", "", "<!doctype html><html><frameset></frameset></html></p>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests19.dat:43", "document", "", "<html><frameset></frameset></html><!doctype html>",
+    "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests19.dat:44", "document", "", "<!doctype html><body><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests19.dat:45", "document", "", "<!doctype html><p><frameset><frame>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|     <frame>\n",
+  ),
+  (
+    "tests19.dat:46", "document", "", "<!doctype html><p>a<frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"a\"\n",
+  ),
+  (
+    "tests19.dat:47", "document", "", "<!doctype html><p> <frameset><frame>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|     <frame>\n",
+  ),
+  (
+    "tests19.dat:48", "document", "", "<!doctype html><pre><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n",
+  ),
+  (
+    "tests19.dat:49", "document", "", "<!doctype html><listing><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <listing>\n",
+  ),
+  (
+    "tests19.dat:50", "document", "", "<!doctype html><li><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <li>\n",
+  ),
+  (
+    "tests19.dat:51", "document", "", "<!doctype html><dd><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <dd>\n",
+  ),
+  (
+    "tests19.dat:52", "document", "", "<!doctype html><dt><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <dt>\n",
+  ),
+  (
+    "tests19.dat:53", "document", "", "<!doctype html><button><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <button>\n",
+  ),
+  (
+    "tests19.dat:54", "document", "", "<!doctype html><applet><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <applet>\n",
+  ),
+  (
+    "tests19.dat:55", "document", "", "<!doctype html><marquee><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <marquee>\n",
+  ),
+  (
+    "tests19.dat:56", "document", "", "<!doctype html><object><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <object>\n",
+  ),
+  (
+    "tests19.dat:57", "document", "", "<!doctype html><table><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n",
+  ),
+  (
+    "tests19.dat:58", "document", "", "<!doctype html><area><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <area>\n",
+  ),
+  (
+    "tests19.dat:59", "document", "", "<!doctype html><basefont><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <basefont>\n|   <frameset>\n",
+  ),
+  (
+    "tests19.dat:60", "document", "", "<!doctype html><bgsound><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <bgsound>\n|   <frameset>\n",
+  ),
+  (
+    "tests19.dat:61", "document", "", "<!doctype html><br><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <br>\n",
+  ),
+  (
+    "tests19.dat:62", "document", "", "<!doctype html><embed><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <embed>\n",
+  ),
+  (
+    "tests19.dat:63", "document", "", "<!doctype html><img><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <img>\n",
+  ),
+  (
+    "tests19.dat:64", "document", "", "<!doctype html><input><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <input>\n",
+  ),
+  (
+    "tests19.dat:65", "document", "", "<!doctype html><keygen><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <keygen>\n",
+  ),
+  (
+    "tests19.dat:66", "document", "", "<!doctype html><wbr><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <wbr>\n",
+  ),
+  (
+    "tests19.dat:67", "document", "", "<!doctype html><hr><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <hr>\n",
+  ),
+  (
+    "tests19.dat:68", "document", "", "<!doctype html><textarea></textarea><frameset>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n",
+  ),
+  (
+    "tests19.dat:69", "document", "", "<!doctype html><xmp></xmp><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <xmp>\n",
+  ),
+  (
+    "tests19.dat:70", "document", "", "<!doctype html><iframe></iframe><frameset>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <iframe>\n",
+  ),
+  (
+    "tests19.dat:71", "document", "", "<!doctype html><select></select><frameset>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n",
+  ),
+  (
+    "tests19.dat:72", "document", "", "<!doctype html><svg></svg><frameset><frame>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|     <frame>\n",
+  ),
+  (
+    "tests19.dat:73", "document", "", "<!doctype html><math></math><frameset><frame>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|     <frame>\n",
+  ),
+  (
+    "tests19.dat:74", "document", "", "<!doctype html><svg><foreignObject><div> <frameset><frame>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|     <frame>\n",
+  ),
+  (
+    "tests19.dat:75", "document", "", "<!doctype html><svg>a</svg><frameset><frame>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"a\"\n",
+  ),
+  (
+    "tests19.dat:76", "document", "", "<!doctype html><svg> </svg><frameset><frame>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|     <frame>\n",
+  ),
+  (
+    "tests19.dat:77", "document", "", "<html>aaa<frameset></frameset>", "| <html>\n|   <head>\n|   <body>\n|     \"aaa\"\n",
+  ),
+  (
+    "tests19.dat:78", "document", "", "<html> a <frameset></frameset>", "| <html>\n|   <head>\n|   <body>\n|     \"a \"\n",
+  ),
+  (
+    "tests19.dat:79", "document", "", "<!doctype html><div><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests19.dat:80", "document", "", "<!doctype html><div><body><frameset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <div>\n",
+  ),
+  (
+    "tests19.dat:81", "document", "", "<!doctype html><p><math></p>a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <math math>\n|     \"a\"\n",
+  ),
+  (
+    "tests19.dat:82", "document", "", "<!doctype html><p><math><mn><span></p>a",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <math math>\n|         <math mn>\n|           <span>\n|             <p>\n|             \"a\"\n",
+  ),
+  (
+    "tests19.dat:83", "document", "", "<!doctype html><math></html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n",
+  ),
+  (
+    "tests19.dat:84", "document", "", "<!doctype html><meta charset=\"ascii\">",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <meta>\n|       charset=\"ascii\"\n|   <body>\n",
+  ),
+  (
+    "tests19.dat:85", "document", "", "<!doctype html><meta http-equiv=\"content-type\" content=\"text/html;charset=ascii\">",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <meta>\n|       content=\"text/html;charset=ascii\"\n|       http-equiv=\"content-type\"\n|   <body>\n",
+  ),
+  (
+    "tests19.dat:86", "document", "", "<!doctype html><head><!--aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa--><meta charset=\"utf8\">",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <!-- aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->\n|     <meta>\n|       charset=\"utf8\"\n|   <body>\n",
+  ),
+  (
+    "tests19.dat:87", "document", "", "<!doctype html><html a=b><head></head><html c=d>",
+    "| <!DOCTYPE html>\n| <html>\n|   a=\"b\"\n|   c=\"d\"\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests19.dat:88", "document", "", "<!doctype html><image/>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <img>\n",
+  ),
+  (
+    "tests19.dat:89", "document", "", "<!doctype html>a<i>b<table>c<b>d</i>e</b>f",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"a\"\n|     <i>\n|       \"bc\"\n|       <b>\n|         \"de\"\n|       \"f\"\n|       <table>\n",
+  ),
+  (
+    "tests19.dat:90", "document", "", "<!doctype html><table><i>a<b>b<div>c<a>d</i>e</b>f",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <i>\n|       \"a\"\n|       <b>\n|         \"b\"\n|     <b>\n|     <div>\n|       <b>\n|         <i>\n|           \"c\"\n|           <a>\n|             \"d\"\n|         <a>\n|           \"e\"\n|       <a>\n|         \"f\"\n|     <table>\n",
+  ),
+  (
+    "tests19.dat:91", "document", "", "<!doctype html><i>a<b>b<div>c<a>d</i>e</b>f",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <i>\n|       \"a\"\n|       <b>\n|         \"b\"\n|     <b>\n|     <div>\n|       <b>\n|         <i>\n|           \"c\"\n|           <a>\n|             \"d\"\n|         <a>\n|           \"e\"\n|       <a>\n|         \"f\"\n",
+  ),
+  (
+    "tests19.dat:92", "document", "", "<!doctype html><table><i>a<b>b<div>c</i>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <i>\n|       \"a\"\n|       <b>\n|         \"b\"\n|     <b>\n|       <div>\n|         <i>\n|           \"c\"\n|     <table>\n",
+  ),
+  (
+    "tests19.dat:93", "document", "", "<!doctype html><table><i>a<div>b<tr>c<b>d</i>e",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <i>\n|       \"a\"\n|       <div>\n|         \"b\"\n|     <i>\n|       \"c\"\n|       <b>\n|         \"d\"\n|     <b>\n|       \"e\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
+  ),
+  (
+    "tests19.dat:94", "document", "", "<!doctype html><table><td><table><i>a<div>b<b>c</i>d",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <i>\n|               \"a\"\n|             <div>\n|               <i>\n|                 \"b\"\n|                 <b>\n|                   \"c\"\n|               <b>\n|                 \"d\"\n|             <table>\n",
+  ),
+  (
+    "tests19.dat:95", "document", "", "<!doctype html><body><bgsound>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <bgsound>\n",
+  ),
+  (
+    "tests19.dat:96", "document", "", "<!doctype html><body><basefont>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <basefont>\n",
+  ),
+  (
+    "tests19.dat:97", "document", "", "<!doctype html><a><b></a><basefont>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <b>\n|     <basefont>\n",
+  ),
+  (
+    "tests19.dat:98", "document", "", "<!doctype html><a><b></a><bgsound>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <b>\n|     <bgsound>\n",
+  ),
+  (
+    "tests19.dat:99", "document", "", "<!doctype html><figcaption><article></figcaption>a",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <figcaption>\n|       <article>\n|     \"a\"\n",
+  ),
+  (
+    "tests19.dat:100", "document", "", "<!doctype html><summary><article></summary>a",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <summary>\n|       <article>\n|     \"a\"\n",
+  ),
+  (
+    "tests19.dat:101", "document", "", "<!doctype html><p><a><plaintext>b", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <a>\n|     <plaintext>\n|       <a>\n|         \"b\"\n",
+  ),
+  (
+    "tests19.dat:102", "document", "", "<!DOCTYPE html><div>a<a></div>b<p>c</p>d",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"a\"\n|       <a>\n|     <a>\n|       \"b\"\n|       <p>\n|         \"c\"\n|       \"d\"\n",
+  ),
+  (
+    "tests2.dat:0", "document", "", "<!DOCTYPE html>Test", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"Test\"\n",
+  ),
+  (
+    "tests2.dat:1", "document", "", "<textarea>test</div>test", "| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"test</div>test\"\n",
+  ),
+  (
+    "tests2.dat:2", "document", "", "<table><td>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
+  ),
+  (
+    "tests2.dat:3", "document", "", "<table><td>test</tbody></table>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"test\"\n",
+  ),
+  (
+    "tests2.dat:4", "document", "", "<frame>test", "| <html>\n|   <head>\n|   <body>\n|     \"test\"\n",
+  ),
+  (
+    "tests2.dat:5", "document", "", "<!DOCTYPE html><frameset>test", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests2.dat:6", "document", "", "<!DOCTYPE html><frameset> te st", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|     \"  \"\n",
+  ),
+  (
+    "tests2.dat:7", "document", "", "<!DOCTYPE html><frameset></frameset> te st",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n|   \"  \"\n",
+  ),
+  (
+    "tests2.dat:8", "document", "", "<!DOCTYPE html><frameset><!DOCTYPE html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests2.dat:9", "document", "", "<!DOCTYPE html><font><p><b>test</font>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <font>\n|     <p>\n|       <font>\n|         <b>\n|           \"test\"\n",
+  ),
+  (
+    "tests2.dat:10", "document", "", "<!DOCTYPE html><dt><div><dd>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <dt>\n|       <div>\n|     <dd>\n",
+  ),
+  (
+    "tests2.dat:11", "document", "", "<script></x", "| <html>\n|   <head>\n|     <script>\n|       \"</x\"\n|   <body>\n",
+  ),
+  (
+    "tests2.dat:12", "document", "", "<table><plaintext><td>", "| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"<td>\"\n|     <table>\n",
+  ),
+  (
+    "tests2.dat:13", "document", "", "<plaintext></plaintext>", "| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"</plaintext>\"\n",
+  ),
+  (
+    "tests2.dat:14", "document", "", "<!DOCTYPE html><table><tr>TEST", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"TEST\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
+  ),
+  (
+    "tests2.dat:15", "document", "", "<!DOCTYPE html><body t1=1><body t2=2><body t3=3 t4=4>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     t1=\"1\"\n|     t2=\"2\"\n|     t3=\"3\"\n|     t4=\"4\"\n",
+  ),
+  (
+    "tests2.dat:16", "document", "", "</b test", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests2.dat:17", "document", "", "<!DOCTYPE html></b test<b &=&amp>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"X\"\n",
+  ),
+  (
+    "tests2.dat:18", "document", "", "<!doctypehtml><scrIPt type=text/x-foobar;baz>X</SCRipt",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       type=\"text/x-foobar;baz\"\n|       \"X</SCRipt\"\n|   <body>\n",
+  ),
+  (
+    "tests2.dat:19", "document", "", "&", "| <html>\n|   <head>\n|   <body>\n|     \"&\"\n",
+  ),
+  (
+    "tests2.dat:20", "document", "", "&#", "| <html>\n|   <head>\n|   <body>\n|     \"&#\"\n",
+  ),
+  (
+    "tests2.dat:21", "document", "", "&#X", "| <html>\n|   <head>\n|   <body>\n|     \"&#X\"\n",
+  ),
+  (
+    "tests2.dat:22", "document", "", "&#x", "| <html>\n|   <head>\n|   <body>\n|     \"&#x\"\n",
+  ),
+  (
+    "tests2.dat:23", "document", "", "&#45", "| <html>\n|   <head>\n|   <body>\n|     \"-\"\n",
+  ),
+  (
+    "tests2.dat:24", "document", "", "&x-test", "| <html>\n|   <head>\n|   <body>\n|     \"&x-test\"\n",
+  ),
+  (
+    "tests2.dat:25", "document", "", "<!doctypehtml><p><li>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <li>\n",
+  ),
+  (
+    "tests2.dat:26", "document", "", "<!doctypehtml><p><dt>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <dt>\n",
+  ),
+  (
+    "tests2.dat:27", "document", "", "<!doctypehtml><p><dd>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <dd>\n",
+  ),
+  (
+    "tests2.dat:28", "document", "", "<!doctypehtml><p><form>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <form>\n",
+  ),
+  (
+    "tests2.dat:29", "document", "", "<!DOCTYPE html><p></P>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     \"X\"\n",
+  ),
+  (
+    "tests2.dat:30", "document", "", "&AMP", "| <html>\n|   <head>\n|   <body>\n|     \"&\"\n",
+  ),
+  (
+    "tests2.dat:31", "document", "", "&AMp;", "| <html>\n|   <head>\n|   <body>\n|     \"&AMp;\"\n",
+  ),
+  (
+    "tests2.dat:32", "document", "", "<!DOCTYPE html><html><head></head><body><thisISasillyTESTelementNameToMakeSureCrazyTagNamesArePARSEDcorrectLY>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <thisisasillytestelementnametomakesurecrazytagnamesareparsedcorrectly>\n",
+  ),
+  (
+    "tests2.dat:33", "document", "", "<!DOCTYPE html>X</body>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"XX\"\n",
+  ),
+  (
+    "tests2.dat:34", "document", "", "<!DOCTYPE html><!-- X", "| <!DOCTYPE html>\n| <!--  X -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests2.dat:35", "document", "", "<!DOCTYPE html><table><caption>test TEST</caption><td>test",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         \"test TEST\"\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"test\"\n",
+  ),
+  (
+    "tests2.dat:36", "document", "", "<!DOCTYPE html><select><option><optgroup>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|       <optgroup>\n",
+  ),
+  (
+    "tests2.dat:37", "document", "", "<!DOCTYPE html><select><optgroup><option></optgroup><option><select><option>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <optgroup>\n|         <option>\n|       <option>\n|     <option>\n",
+  ),
+  (
+    "tests2.dat:38", "document", "", "<!DOCTYPE html><select><optgroup><option><optgroup>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <optgroup>\n|         <option>\n|       <optgroup>\n",
+  ),
+  (
+    "tests2.dat:39", "document", "", "<!DOCTYPE html><datalist><option>foo</datalist>bar",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <datalist>\n|       <option>\n|         \"foo\"\n|     \"bar\"\n",
+  ),
+  (
+    "tests2.dat:40", "document", "", "<!DOCTYPE html><font><input><input></font>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <font>\n|       <input>\n|       <input>\n",
+  ),
+  (
+    "tests2.dat:41", "document", "", "<!DOCTYPE html><!-- XXX - XXX -->", "| <!DOCTYPE html>\n| <!--  XXX - XXX  -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests2.dat:42", "document", "", "<!DOCTYPE html><!-- XXX - XXX", "| <!DOCTYPE html>\n| <!--  XXX - XXX -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests2.dat:43", "document", "", "<!DOCTYPE html><!-- XXX - XXX - XXX -->", "| <!DOCTYPE html>\n| <!--  XXX - XXX - XXX  -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests2.dat:44", "document", "", "<!DOCTYPE html> <!DOCTYPE html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests2.dat:45", "document", "", "test\ntest", "| <html>\n|   <head>\n|   <body>\n|     \"test\ntest\"\n",
+  ),
+  (
+    "tests2.dat:46", "document", "", "<!DOCTYPE html><body><title>test</body></title>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <title>\n|       \"test</body>\"\n",
+  ),
+  (
+    "tests2.dat:47", "document", "", "<!DOCTYPE html><body><title>X</title><meta name=z><link rel=foo><style>\nx { content:\"</style\" } </style>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <title>\n|       \"X\"\n|     <meta>\n|       name=\"z\"\n|     <link>\n|       rel=\"foo\"\n|     <style>\n|       \"\nx { content:\"</style\" } \"\n",
+  ),
+  (
+    "tests2.dat:48", "document", "", "<!DOCTYPE html><select><optgroup></optgroup></select>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <optgroup>\n",
+  ),
+  (
+    "tests2.dat:49", "document", "", " \n ", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests2.dat:50", "document", "", "<!DOCTYPE html>  <html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests2.dat:51", "document", "", "<!DOCTYPE html><script>\n</script>  <title>x</title>  </head>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <script>\n|       \"\n\"\n|     \"  \"\n|     <title>\n|       \"x\"\n|     \"  \"\n|   <body>\n",
+  ),
+  (
+    "tests2.dat:52", "document", "", "<!DOCTYPE html><html><body><html id=x>", "| <!DOCTYPE html>\n| <html>\n|   id=\"x\"\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests2.dat:53", "document", "", "<!DOCTYPE html>X</body><html id=\"x\">", "| <!DOCTYPE html>\n| <html>\n|   id=\"x\"\n|   <head>\n|   <body>\n|     \"X\"\n",
+  ),
+  (
+    "tests2.dat:54", "document", "", "<!DOCTYPE html><head><html id=x>", "| <!DOCTYPE html>\n| <html>\n|   id=\"x\"\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests2.dat:55", "document", "", "<!DOCTYPE html>X</html>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"XX\"\n",
+  ),
+  (
+    "tests2.dat:56", "document", "", "<!DOCTYPE html>X</html> ", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"X \"\n",
+  ),
+  (
+    "tests2.dat:57", "document", "", "<!DOCTYPE html>X</html><p>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"X\"\n|     <p>\n|       \"X\"\n",
+  ),
+  (
+    "tests2.dat:58", "document", "", "<!DOCTYPE html>X<p/x/y/z>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"X\"\n|     <p>\n|       x=\"\"\n|       y=\"\"\n|       z=\"\"\n",
+  ),
+  (
+    "tests2.dat:59", "document", "", "<!DOCTYPE html><!--x--", "| <!DOCTYPE html>\n| <!-- x -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests2.dat:60", "document", "", "<!DOCTYPE html><table><tr><td></p></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <p>\n",
+  ),
+  (
+    "tests2.dat:61", "document", "", "<!DOCTYPE <!DOCTYPE HTML>><!--<!--x-->-->",
+    "| <!DOCTYPE <!doctype>\n| <html>\n|   <head>\n|   <body>\n|     \">\"\n|     <!-- <!--x -->\n|     \"-->\"\n",
+  ),
+  (
+    "tests2.dat:62", "document", "", "<!doctype html><div><form></form><div></div></div>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <form>\n|       <div>\n",
+  ),
+  (
+    "tests20.dat:0", "document", "", "<!doctype html><p><button><button>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|       <button>\n",
+  ),
+  (
+    "tests20.dat:1", "document", "", "<!doctype html><p><button><address>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <address>\n",
+  ),
+  (
+    "tests20.dat:2", "document", "", "<!doctype html><p><button><article>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <article>\n",
+  ),
+  (
+    "tests20.dat:3", "document", "", "<!doctype html><p><button><aside>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <aside>\n",
+  ),
+  (
+    "tests20.dat:4", "document", "", "<!doctype html><p><button><blockquote>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <blockquote>\n",
+  ),
+  (
+    "tests20.dat:5", "document", "", "<!doctype html><p><button><center>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <center>\n",
+  ),
+  (
+    "tests20.dat:6", "document", "", "<!doctype html><p><button><details>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <details>\n",
+  ),
+  (
+    "tests20.dat:7", "document", "", "<!doctype html><p><button><dialog>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <dialog>\n",
+  ),
+  (
+    "tests20.dat:8", "document", "", "<!doctype html><p><button><dir>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <dir>\n",
+  ),
+  (
+    "tests20.dat:9", "document", "", "<!doctype html><p><button><div>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <div>\n",
+  ),
+  (
+    "tests20.dat:10", "document", "", "<!doctype html><p><button><dl>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <dl>\n",
+  ),
+  (
+    "tests20.dat:11", "document", "", "<!doctype html><p><button><fieldset>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <fieldset>\n",
+  ),
+  (
+    "tests20.dat:12", "document", "", "<!doctype html><p><button><figcaption>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <figcaption>\n",
+  ),
+  (
+    "tests20.dat:13", "document", "", "<!doctype html><p><button><figure>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <figure>\n",
+  ),
+  (
+    "tests20.dat:14", "document", "", "<!doctype html><p><button><footer>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <footer>\n",
+  ),
+  (
+    "tests20.dat:15", "document", "", "<!doctype html><p><button><header>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <header>\n",
+  ),
+  (
+    "tests20.dat:16", "document", "", "<!doctype html><p><button><hgroup>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <hgroup>\n",
+  ),
+  (
+    "tests20.dat:17", "document", "", "<!doctype html><p><button><main>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <main>\n",
+  ),
+  (
+    "tests20.dat:18", "document", "", "<!doctype html><p><button><menu>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <menu>\n",
+  ),
+  (
+    "tests20.dat:19", "document", "", "<!doctype html><p><button><nav>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <nav>\n",
+  ),
+  (
+    "tests20.dat:20", "document", "", "<!doctype html><p><button><ol>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <ol>\n",
+  ),
+  (
+    "tests20.dat:21", "document", "", "<!doctype html><p><button><p>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <p>\n",
+  ),
+  (
+    "tests20.dat:22", "document", "", "<!doctype html><p><button><search>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <search>\n",
+  ),
+  (
+    "tests20.dat:23", "document", "", "<!doctype html><p><button><section>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <section>\n",
+  ),
+  (
+    "tests20.dat:24", "document", "", "<!doctype html><p><button><summary>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <summary>\n",
+  ),
+  (
+    "tests20.dat:25", "document", "", "<!doctype html><p><button><ul>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <ul>\n",
+  ),
+  (
+    "tests20.dat:26", "document", "", "<!doctype html><p><button><h1>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <h1>\n",
+  ),
+  (
+    "tests20.dat:27", "document", "", "<!doctype html><p><button><h6>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <h6>\n",
+  ),
+  (
+    "tests20.dat:28", "document", "", "<!doctype html><p><button><listing>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <listing>\n",
+  ),
+  (
+    "tests20.dat:29", "document", "", "<!doctype html><p><button><pre>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <pre>\n",
+  ),
+  (
+    "tests20.dat:30", "document", "", "<!doctype html><p><button><form>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <form>\n",
+  ),
+  (
+    "tests20.dat:31", "document", "", "<!doctype html><p><button><li>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <li>\n",
+  ),
+  (
+    "tests20.dat:32", "document", "", "<!doctype html><p><button><dd>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <dd>\n",
+  ),
+  (
+    "tests20.dat:33", "document", "", "<!doctype html><p><button><dt>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <dt>\n",
+  ),
+  (
+    "tests20.dat:34", "document", "", "<!doctype html><p><button><plaintext>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <plaintext>\n",
+  ),
+  (
+    "tests20.dat:35", "document", "", "<!doctype html><p><button><table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <table>\n",
+  ),
+  (
+    "tests20.dat:36", "document", "", "<!doctype html><p><button><hr>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <hr>\n",
+  ),
+  (
+    "tests20.dat:37", "document", "", "<!doctype html><p><button><xmp>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <xmp>\n",
+  ),
+  (
+    "tests20.dat:38", "document", "", "<!doctype html><p><button></p>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <button>\n|         <p>\n",
+  ),
+  (
+    "tests20.dat:39", "document", "", "<!doctype html><button><p></button>x", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <button>\n|       <p>\n|     \"x\"\n",
+  ),
+  (
+    "tests20.dat:40", "document", "", "<!doctype html><address><button></address>a",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <address>\n|       <button>\n|     \"a\"\n",
+  ),
+  (
+    "tests20.dat:41", "document", "", "<p><table></p>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <p>\n|       <table>\n",
+  ),
+  (
+    "tests20.dat:42", "document", "", "<!doctype html><svg>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n",
+  ),
+  (
+    "tests20.dat:43", "document", "", "<!doctype html><p><figcaption>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <figcaption>\n",
+  ),
+  (
+    "tests20.dat:44", "document", "", "<!doctype html><p><summary>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <summary>\n",
+  ),
+  (
+    "tests20.dat:45", "document", "", "<!doctype html><form><table><form>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <form>\n|       <table>\n",
+  ),
+  (
+    "tests20.dat:46", "document", "", "<!doctype html><table><form><form>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <form>\n",
+  ),
+  (
+    "tests20.dat:47", "document", "", "<!doctype html><table><form></table><form>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <form>\n",
+  ),
+  (
+    "tests20.dat:48", "document", "", "<!doctype html><svg><foreignObject><p>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg foreignObject>\n|         <p>\n",
+  ),
+  (
+    "tests20.dat:49", "document", "", "<!doctype html><svg><title>abc", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg title>\n|         \"abc\"\n",
+  ),
+  (
+    "tests20.dat:50", "document", "", "<option><span><option>", "| <html>\n|   <head>\n|   <body>\n|     <option>\n|       <span>\n|         <option>\n",
+  ),
+  (
+    "tests20.dat:51", "document", "", "<option><option>", "| <html>\n|   <head>\n|   <body>\n|     <option>\n|     <option>\n",
+  ),
+  (
+    "tests20.dat:52", "document", "", "<math><annotation-xml><div>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|     <div>\n",
+  ),
+  (
+    "tests20.dat:53", "document", "", "<math><annotation-xml encoding=\"application/svg+xml\"><div>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         encoding=\"application/svg+xml\"\n|     <div>\n",
+  ),
+  (
+    "tests20.dat:54", "document", "", "<math><annotation-xml encoding=\"application/xhtml+xml\"><div>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         encoding=\"application/xhtml+xml\"\n|         <div>\n",
+  ),
+  (
+    "tests20.dat:55", "document", "", "<math><annotation-xml encoding=\"aPPlication/xhtmL+xMl\"><div>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         encoding=\"aPPlication/xhtmL+xMl\"\n|         <div>\n",
+  ),
+  (
+    "tests20.dat:56", "document", "", "<math><annotation-xml encoding=\"text/html\"><div>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         encoding=\"text/html\"\n|         <div>\n",
+  ),
+  (
+    "tests20.dat:57", "document", "", "<math><annotation-xml encoding=\"Text/htmL\"><div>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         encoding=\"Text/htmL\"\n|         <div>\n",
+  ),
+  (
+    "tests20.dat:58", "document", "", "<math><annotation-xml encoding=\" text/html \"><div>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         encoding=\" text/html \"\n|     <div>\n",
+  ),
+  (
+    "tests20.dat:59", "document", "", "<math><annotation-xml> </annotation-xml>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         \" \"\n",
+  ),
+  (
+    "tests20.dat:60", "document", "", "<math><annotation-xml>c</annotation-xml>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         \"c\"\n",
+  ),
+  (
+    "tests20.dat:61", "document", "", "<math><annotation-xml><!--foo-->", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         <!-- foo -->\n",
+  ),
+  (
+    "tests20.dat:62", "document", "", "<math><annotation-xml></svg>x", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         \"x\"\n",
+  ),
+  (
+    "tests20.dat:63", "document", "", "<math><annotation-xml><svg>x", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         <svg svg>\n|           \"x\"\n",
+  ),
+  (
+    "tests21.dat:0", "document", "", "<svg><![CDATA[foo]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"foo\"\n",
+  ),
+  (
+    "tests21.dat:1", "document", "", "<math><![CDATA[foo]]>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       \"foo\"\n",
+  ),
+  (
+    "tests21.dat:2", "document", "", "<div><![CDATA[foo]]>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <!-- [CDATA[foo]] -->\n",
+  ),
+  (
+    "tests21.dat:3", "document", "", "<svg><![CDATA[foo", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"foo\"\n",
+  ),
+  (
+    "tests21.dat:4", "document", "", "<svg><![CDATA[", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n",
+  ),
+  (
+    "tests21.dat:5", "document", "", "<svg><![CDATA[]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n",
+  ),
+  (
+    "tests21.dat:6", "document", "", "<svg><![CDATA[]] >]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"]] >\"\n",
+  ),
+  (
+    "tests21.dat:7", "document", "", "<svg><![CDATA[]]", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"]]\"\n",
+  ),
+  (
+    "tests21.dat:8", "document", "", "<svg><![CDATA[]", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"]\"\n",
+  ),
+  (
+    "tests21.dat:9", "document", "", "<svg><![CDATA[]>a", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"]>a\"\n",
+  ),
+  (
+    "tests21.dat:10", "document", "", "<!DOCTYPE html><svg><![CDATA[foo]]]>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"foo]\"\n",
+  ),
+  (
+    "tests21.dat:11", "document", "", "<!DOCTYPE html><svg><![CDATA[foo]]]]>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"foo]]\"\n",
+  ),
+  (
+    "tests21.dat:12", "document", "", "<!DOCTYPE html><svg><![CDATA[foo]]]]]>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"foo]]]\"\n",
+  ),
+  (
+    "tests21.dat:13", "document", "", "<svg><foreignObject><div><![CDATA[foo]]>",
+    "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg foreignObject>\n|         <div>\n|           <!-- [CDATA[foo]] -->\n",
+  ),
+  (
+    "tests21.dat:14", "document", "", "<svg><![CDATA[<svg>]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"<svg>\"\n",
+  ),
+  (
+    "tests21.dat:15", "document", "", "<svg><![CDATA[</svg>a]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"</svg>a\"\n",
+  ),
+  (
+    "tests21.dat:16", "document", "", "<svg><![CDATA[<svg>a", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"<svg>a\"\n",
+  ),
+  (
+    "tests21.dat:17", "document", "", "<svg><![CDATA[</svg>a", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"</svg>a\"\n",
+  ),
+  (
+    "tests21.dat:18", "document", "", "<svg><![CDATA[<svg>]]><path>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"<svg>\"\n|       <svg path>\n",
+  ),
+  (
+    "tests21.dat:19", "document", "", "<svg><![CDATA[<svg>]]></path>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"<svg>\"\n",
+  ),
+  (
+    "tests21.dat:20", "document", "", "<svg><![CDATA[<svg>]]><!--path-->", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"<svg>\"\n|       <!-- path -->\n",
+  ),
+  (
+    "tests21.dat:21", "document", "", "<svg><![CDATA[<svg>]]>path", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"<svg>path\"\n",
+  ),
+  (
+    "tests21.dat:22", "document", "", "<svg><![CDATA[<!--svg-->]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"<!--svg-->\"\n",
+  ),
+  (
+    "tests22.dat:0", "document", "", "<a><b><big><em><strong><div>X</a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <b>\n|         <big>\n|           <em>\n|             <strong>\n|     <big>\n|       <em>\n|         <strong>\n|           <div>\n|             <a>\n|               \"X\"\n",
+  ),
+  (
+    "tests22.dat:1", "document", "", "<a><b><div id=1><div id=2><div id=3><div id=4><div id=5><div id=6><div id=7><div id=8>A</a>",
+    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <b>\n|     <b>\n|       <div>\n|         id=\"1\"\n|         <a>\n|         <div>\n|           id=\"2\"\n|           <a>\n|           <div>\n|             id=\"3\"\n|             <a>\n|             <div>\n|               id=\"4\"\n|               <a>\n|               <div>\n|                 id=\"5\"\n|                 <a>\n|                 <div>\n|                   id=\"6\"\n|                   <a>\n|                   <div>\n|                     id=\"7\"\n|                     <a>\n|                     <div>\n|                       id=\"8\"\n|                       <a>\n|                         \"A\"\n",
+  ),
+  (
+    "tests22.dat:2", "document", "", "<a><b><div id=1><div id=2><div id=3><div id=4><div id=5><div id=6><div id=7><div id=8><div id=9>A</a>",
+    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <b>\n|     <b>\n|       <div>\n|         id=\"1\"\n|         <a>\n|         <div>\n|           id=\"2\"\n|           <a>\n|           <div>\n|             id=\"3\"\n|             <a>\n|             <div>\n|               id=\"4\"\n|               <a>\n|               <div>\n|                 id=\"5\"\n|                 <a>\n|                 <div>\n|                   id=\"6\"\n|                   <a>\n|                   <div>\n|                     id=\"7\"\n|                     <a>\n|                     <div>\n|                       id=\"8\"\n|                       <a>\n|                         <div>\n|                           id=\"9\"\n|                           \"A\"\n",
+  ),
+  (
+    "tests22.dat:3", "document", "", "<a><b><div id=1><div id=2><div id=3><div id=4><div id=5><div id=6><div id=7><div id=8><div id=9><div id=10>A</a>",
+    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       <b>\n|     <b>\n|       <div>\n|         id=\"1\"\n|         <a>\n|         <div>\n|           id=\"2\"\n|           <a>\n|           <div>\n|             id=\"3\"\n|             <a>\n|             <div>\n|               id=\"4\"\n|               <a>\n|               <div>\n|                 id=\"5\"\n|                 <a>\n|                 <div>\n|                   id=\"6\"\n|                   <a>\n|                   <div>\n|                     id=\"7\"\n|                     <a>\n|                     <div>\n|                       id=\"8\"\n|                       <a>\n|                         <div>\n|                           id=\"9\"\n|                           <div>\n|                             id=\"10\"\n|                             \"A\"\n",
+  ),
+  (
+    "tests22.dat:4", "document", "", "<cite><b><cite><i><cite><i><cite><i><div>X</b>TEST",
+    "| <html>\n|   <head>\n|   <body>\n|     <cite>\n|       <b>\n|         <cite>\n|           <i>\n|             <cite>\n|               <i>\n|                 <cite>\n|                   <i>\n|       <i>\n|         <i>\n|           <div>\n|             <b>\n|               \"X\"\n|             \"TEST\"\n",
+  ),
+  (
+    "tests23.dat:0", "document", "", "<p><font size=4><font color=red><font size=4><font size=4><font size=4><font size=4><font size=4><font color=red><p>X",
+    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <font>\n|         size=\"4\"\n|         <font>\n|           color=\"red\"\n|           <font>\n|             size=\"4\"\n|             <font>\n|               size=\"4\"\n|               <font>\n|                 size=\"4\"\n|                 <font>\n|                   size=\"4\"\n|                   <font>\n|                     size=\"4\"\n|                     <font>\n|                       color=\"red\"\n|     <p>\n|       <font>\n|         color=\"red\"\n|         <font>\n|           size=\"4\"\n|           <font>\n|             size=\"4\"\n|             <font>\n|               size=\"4\"\n|               <font>\n|                 color=\"red\"\n|                 \"X\"\n",
+  ),
+  (
+    "tests23.dat:1", "document", "", "<p><font size=4><font size=4><font size=4><font size=4><p>X",
+    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <font>\n|         size=\"4\"\n|         <font>\n|           size=\"4\"\n|           <font>\n|             size=\"4\"\n|             <font>\n|               size=\"4\"\n|     <p>\n|       <font>\n|         size=\"4\"\n|         <font>\n|           size=\"4\"\n|           <font>\n|             size=\"4\"\n|             \"X\"\n",
+  ),
+  (
+    "tests23.dat:2", "document", "", "<p><font size=4><font size=4><font size=4><font size=\"5\"><font size=4><p>X",
+    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <font>\n|         size=\"4\"\n|         <font>\n|           size=\"4\"\n|           <font>\n|             size=\"4\"\n|             <font>\n|               size=\"5\"\n|               <font>\n|                 size=\"4\"\n|     <p>\n|       <font>\n|         size=\"4\"\n|         <font>\n|           size=\"4\"\n|           <font>\n|             size=\"5\"\n|             <font>\n|               size=\"4\"\n|               \"X\"\n",
+  ),
+  (
+    "tests23.dat:3", "document", "", "<p><font size=4 id=a><font size=4 id=b><font size=4><font size=4><p>X",
+    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <font>\n|         id=\"a\"\n|         size=\"4\"\n|         <font>\n|           id=\"b\"\n|           size=\"4\"\n|           <font>\n|             size=\"4\"\n|             <font>\n|               size=\"4\"\n|     <p>\n|       <font>\n|         id=\"a\"\n|         size=\"4\"\n|         <font>\n|           id=\"b\"\n|           size=\"4\"\n|           <font>\n|             size=\"4\"\n|             <font>\n|               size=\"4\"\n|               \"X\"\n",
+  ),
+  (
+    "tests23.dat:4", "document", "", "<p><b id=a><b id=a><b id=a><b><object><b id=a><b id=a>X</object><p>Y",
+    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <b>\n|         id=\"a\"\n|         <b>\n|           id=\"a\"\n|           <b>\n|             id=\"a\"\n|             <b>\n|               <object>\n|                 <b>\n|                   id=\"a\"\n|                   <b>\n|                     id=\"a\"\n|                     \"X\"\n|     <p>\n|       <b>\n|         id=\"a\"\n|         <b>\n|           id=\"a\"\n|           <b>\n|             id=\"a\"\n|             <b>\n|               \"Y\"\n",
+  ),
+  (
+    "tests24.dat:0", "document", "", "<!DOCTYPE html>&NotEqualTilde;", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"≂̸\"\n",
+  ),
+  (
+    "tests24.dat:1", "document", "", "<!DOCTYPE html>&NotEqualTilde;A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"≂̸A\"\n",
+  ),
+  (
+    "tests24.dat:2", "document", "", "<!DOCTYPE html>&ThickSpace;", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"  \"\n",
+  ),
+  (
+    "tests24.dat:3", "document", "", "<!DOCTYPE html>&ThickSpace;A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"  A\"\n",
+  ),
+  (
+    "tests24.dat:4", "document", "", "<!DOCTYPE html>&NotSubset;", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"⊂⃒\"\n",
+  ),
+  (
+    "tests24.dat:5", "document", "", "<!DOCTYPE html>&NotSubset;A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"⊂⃒A\"\n",
+  ),
+  (
+    "tests24.dat:6", "document", "", "<!DOCTYPE html>&Gopf;", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"𝔾\"\n",
+  ),
+  (
+    "tests24.dat:7", "document", "", "<!DOCTYPE html>&Gopf;A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"𝔾A\"\n",
+  ),
+  (
+    "tests25.dat:0", "document", "", "<!DOCTYPE html><body><foo>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <foo>\n|       \"A\"\n",
+  ),
+  (
+    "tests25.dat:1", "document", "", "<!DOCTYPE html><body><area>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <area>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:2", "document", "", "<!DOCTYPE html><body><base>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <base>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:3", "document", "", "<!DOCTYPE html><body><basefont>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <basefont>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:4", "document", "", "<!DOCTYPE html><body><bgsound>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <bgsound>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:5", "document", "", "<!DOCTYPE html><body><br>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <br>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:6", "document", "", "<!DOCTYPE html><body><col>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:7", "document", "", "<!DOCTYPE html><body><command>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <command>\n|       \"A\"\n",
+  ),
+  (
+    "tests25.dat:8", "document", "", "<!DOCTYPE html><body><embed>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <embed>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:9", "document", "", "<!DOCTYPE html><body><frame>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:10", "document", "", "<!DOCTYPE html><body><hr>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <hr>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:11", "document", "", "<!DOCTYPE html><body><img>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <img>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:12", "document", "", "<!DOCTYPE html><body><input>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <input>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:13", "document", "", "<!DOCTYPE html><body><keygen>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <keygen>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:14", "document", "", "<!DOCTYPE html><keygen>A</keygen>B", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <keygen>\n|     \"AB\"\n",
+  ),
+  (
+    "tests25.dat:15", "document", "", "</keygen>A", "| <html>\n|   <head>\n|   <body>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:16", "document", "", "<!DOCTYPE html></keygen>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:17", "document", "", "<!DOCTYPE html><head></keygen>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:18", "document", "", "<!DOCTYPE html><head></head></keygen>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:19", "document", "", "<!DOCTYPE html><body></keygen>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:20", "document", "", "<!DOCTYPE html><body><link>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <link>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:21", "document", "", "<!DOCTYPE html><body><meta>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <meta>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:22", "document", "", "<!DOCTYPE html><body><param>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <param>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:23", "document", "", "<!DOCTYPE html><body><source>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <source>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:24", "document", "", "<!DOCTYPE html><body><track>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <track>\n|     \"A\"\n",
+  ),
+  (
+    "tests25.dat:25", "document", "", "<!DOCTYPE html><body><wbr>A", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <wbr>\n|     \"A\"\n",
+  ),
+  (
+    "tests26.dat:0", "document", "", "<!DOCTYPE html><body><a href='#1'><nobr>1<nobr></a><br><a href='#2'><nobr>2<nobr></a><br><a href='#3'><nobr>3<nobr></a>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <a>\n|       href=\"#1\"\n|       <nobr>\n|         \"1\"\n|       <nobr>\n|     <nobr>\n|       <br>\n|       <a>\n|         href=\"#2\"\n|     <a>\n|       href=\"#2\"\n|       <nobr>\n|         \"2\"\n|       <nobr>\n|     <nobr>\n|       <br>\n|       <a>\n|         href=\"#3\"\n|     <a>\n|       href=\"#3\"\n|       <nobr>\n|         \"3\"\n|       <nobr>\n",
+  ),
+  (
+    "tests26.dat:1", "document", "", "<!DOCTYPE html><body><b><nobr>1<nobr></b><i><nobr>2<nobr></i>3",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <nobr>\n|         \"1\"\n|       <nobr>\n|     <nobr>\n|       <i>\n|     <i>\n|       <nobr>\n|         \"2\"\n|       <nobr>\n|     <nobr>\n|       \"3\"\n",
+  ),
+  (
+    "tests26.dat:2", "document", "", "<!DOCTYPE html><body><b><nobr>1<table><nobr></b><i><nobr>2<nobr></i>3",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <nobr>\n|         \"1\"\n|         <nobr>\n|           <i>\n|         <i>\n|           <nobr>\n|             \"2\"\n|           <nobr>\n|         <nobr>\n|           \"3\"\n|         <table>\n",
+  ),
+  (
+    "tests26.dat:3", "document", "", "<!DOCTYPE html><body><b><nobr>1<table><tr><td><nobr></b><i><nobr>2<nobr></i>3",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <nobr>\n|         \"1\"\n|         <table>\n|           <tbody>\n|             <tr>\n|               <td>\n|                 <nobr>\n|                   <i>\n|                 <i>\n|                   <nobr>\n|                     \"2\"\n|                   <nobr>\n|                 <nobr>\n|                   \"3\"\n",
+  ),
+  (
+    "tests26.dat:4", "document", "", "<!DOCTYPE html><body><b><nobr>1<div><nobr></b><i><nobr>2<nobr></i>3",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <nobr>\n|         \"1\"\n|     <div>\n|       <b>\n|         <nobr>\n|         <nobr>\n|       <nobr>\n|         <i>\n|       <i>\n|         <nobr>\n|           \"2\"\n|         <nobr>\n|       <nobr>\n|         \"3\"\n",
+  ),
+  (
+    "tests26.dat:5", "document", "", "<!DOCTYPE html><body><b><nobr>1<nobr></b><div><i><nobr>2<nobr></i>3",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <nobr>\n|         \"1\"\n|       <nobr>\n|     <div>\n|       <nobr>\n|         <i>\n|       <i>\n|         <nobr>\n|           \"2\"\n|         <nobr>\n|       <nobr>\n|         \"3\"\n",
+  ),
+  (
+    "tests26.dat:6", "document", "", "<!DOCTYPE html><body><b><nobr>1<nobr><ins></b><i><nobr>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <nobr>\n|         \"1\"\n|       <nobr>\n|         <ins>\n|     <nobr>\n|       <i>\n|     <i>\n|       <nobr>\n",
+  ),
+  (
+    "tests26.dat:7", "document", "", "<!DOCTYPE html><body><b><nobr>1<ins><nobr></b><i>2",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <nobr>\n|         \"1\"\n|         <ins>\n|       <nobr>\n|     <nobr>\n|       <i>\n|         \"2\"\n",
+  ),
+  (
+    "tests26.dat:8", "document", "", "<!DOCTYPE html><body><b>1<nobr></b><i><nobr>2</i>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"1\"\n|       <nobr>\n|     <nobr>\n|       <i>\n|     <i>\n|       <nobr>\n|         \"2\"\n",
+  ),
+  (
+    "tests26.dat:9", "document", "", "<p><code x</code></p>\n", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <code>\n|         code=\"\"\n|         x<=\"\"\n|     <code>\n|       code=\"\"\n|       x<=\"\"\n|       \"\n\"\n",
+  ),
+  (
+    "tests26.dat:10", "document", "", "<!DOCTYPE html><svg><foreignObject><p><i></p>a",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg foreignObject>\n|         <p>\n|           <i>\n|         <i>\n|           \"a\"\n",
+  ),
+  (
+    "tests26.dat:11", "document", "", "<!DOCTYPE html><table><tr><td><svg><foreignObject><p><i></p>a",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <svg svg>\n|               <svg foreignObject>\n|                 <p>\n|                   <i>\n|                 <i>\n|                   \"a\"\n",
+  ),
+  (
+    "tests26.dat:12", "document", "", "<!DOCTYPE html><math><mtext><p><i></p>a",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mtext>\n|         <p>\n|           <i>\n|         <i>\n|           \"a\"\n",
+  ),
+  (
+    "tests26.dat:13", "document", "", "<!DOCTYPE html><table><tr><td><math><mtext><p><i></p>a",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <math math>\n|               <math mtext>\n|                 <p>\n|                   <i>\n|                 <i>\n|                   \"a\"\n",
+  ),
+  (
+    "tests26.dat:14", "document", "", "<!DOCTYPE html><body><div><!/div>a", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <!-- /div -->\n|       \"a\"\n",
+  ),
+  (
+    "tests26.dat:15", "document", "", "<button><p><button>", "| <html>\n|   <head>\n|   <body>\n|     <button>\n|       <p>\n|     <button>\n",
+  ),
+  (
+    "tests26.dat:16", "document", "", "<svg></p><foo>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|     <p>\n|     <foo>\n",
+  ),
+  (
+    "tests26.dat:17", "document", "", "<svg></br><foo>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|     <br>\n|     <foo>\n",
+  ),
+  (
+    "tests26.dat:18", "document", "", "<math></p><foo>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|     <p>\n|     <foo>\n",
+  ),
+  (
+    "tests26.dat:19", "document", "", "<math></br><foo>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|     <br>\n|     <foo>\n",
+  ),
+  (
+    "tests3.dat:0", "document", "", "<head></head><style></style>", "| <html>\n|   <head>\n|     <style>\n|   <body>\n",
+  ),
+  (
+    "tests3.dat:1", "document", "", "<head></head><script></script>", "| <html>\n|   <head>\n|     <script>\n|   <body>\n",
+  ),
+  (
+    "tests3.dat:2", "document", "", "<head></head><!-- --><style></style><!-- --><script></script>",
+    "| <html>\n|   <head>\n|     <style>\n|     <script>\n|   <!--   -->\n|   <!--   -->\n|   <body>\n",
+  ),
+  (
+    "tests3.dat:3", "document", "", "<head></head><!-- -->x<style></style><!-- --><script></script>",
+    "| <html>\n|   <head>\n|   <!--   -->\n|   <body>\n|     \"x\"\n|     <style>\n|     <!--   -->\n|     <script>\n",
+  ),
+  (
+    "tests3.dat:4", "document", "", "<!DOCTYPE html><html><head></head><body><pre>\n</pre></body></html>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n",
+  ),
+  (
+    "tests3.dat:5", "document", "", "<!DOCTYPE html><html><head></head><body><pre>\nfoo</pre></body></html>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"foo\"\n",
+  ),
+  (
+    "tests3.dat:6", "document", "", "<!DOCTYPE html><html><head></head><body><pre>\n\nfoo</pre></body></html>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"\nfoo\"\n",
+  ),
+  (
+    "tests3.dat:7", "document", "", "<!DOCTYPE html><html><head></head><body><pre>\nfoo\n</pre></body></html>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"foo\n\"\n",
+  ),
+  (
+    "tests3.dat:8", "document", "", "<!DOCTYPE html><html><head></head><body><pre>x</pre><span>\n</span></body></html>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"x\"\n|     <span>\n|       \"\n\"\n",
+  ),
+  (
+    "tests3.dat:9", "document", "", "<!DOCTYPE html><html><head></head><body><pre>x\ny</pre></body></html>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"x\ny\"\n",
+  ),
+  (
+    "tests3.dat:10", "document", "", "<!DOCTYPE html><html><head></head><body><pre>x<div>\ny</pre></body></html>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"x\"\n|       <div>\n|         \"\ny\"\n",
+  ),
+  (
+    "tests3.dat:11", "document", "", "<!DOCTYPE html><pre>&#x0a;&#x0a;A</pre>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"\nA\"\n",
+  ),
+  (
+    "tests3.dat:12", "document", "", "<!DOCTYPE html><HTML><META><HEAD></HEAD></HTML>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <meta>\n|   <body>\n",
+  ),
+  (
+    "tests3.dat:13", "document", "", "<!DOCTYPE html><HTML><HEAD><head></HEAD></HTML>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests3.dat:14", "document", "", "<textarea>foo<span>bar</span><i>baz", "| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"foo<span>bar</span><i>baz\"\n",
+  ),
+  (
+    "tests3.dat:15", "document", "", "<title>foo<span>bar</em><i>baz", "| <html>\n|   <head>\n|     <title>\n|       \"foo<span>bar</em><i>baz\"\n|   <body>\n",
+  ),
+  (
+    "tests3.dat:16", "document", "", "<!DOCTYPE html><textarea>\n</textarea>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n",
+  ),
+  (
+    "tests3.dat:17", "document", "", "<!DOCTYPE html><textarea>\nfoo</textarea>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"foo\"\n",
+  ),
+  (
+    "tests3.dat:18", "document", "", "<!DOCTYPE html><textarea>\n\nfoo</textarea>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \"\nfoo\"\n",
+  ),
+  (
+    "tests3.dat:19", "document", "", "<!DOCTYPE html><html><head></head><body><ul><li><div><p><li></ul></body></html>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <ul>\n|       <li>\n|         <div>\n|           <p>\n|       <li>\n",
+  ),
+  (
+    "tests3.dat:20", "document", "", "<!doctype html><nobr><nobr><nobr>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <nobr>\n|     <nobr>\n|     <nobr>\n",
+  ),
+  (
+    "tests3.dat:21", "document", "", "<!doctype html><nobr><nobr></nobr><nobr>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <nobr>\n|     <nobr>\n|     <nobr>\n",
+  ),
+  (
+    "tests3.dat:22", "document", "", "<!doctype html><html><body><p><table></table></body></html>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <table>\n",
+  ),
+  (
+    "tests3.dat:23", "document", "", "<p><table></table>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <table>\n",
+  ),
+  (
+    "tests4.dat:0", "fragment", "div", "direct div content", "| \"direct div content\"\n",
+  ),
+  (
+    "tests4.dat:1", "fragment", "textarea", "direct textarea content", "| \"direct textarea content\"\n",
+  ),
+  (
+    "tests4.dat:2", "fragment", "textarea", "textarea content with <em>pseudo</em> <foo>markup",
+    "| \"textarea content with <em>pseudo</em> <foo>markup\"\n",
+  ),
+  (
+    "tests4.dat:3", "fragment", "style", "this is &#x0043;DATA inside a <style> element",
+    "| \"this is &#x0043;DATA inside a <style> element\"\n",
+  ),
+  (
+    "tests4.dat:4", "fragment", "plaintext", "</plaintext>", "| \"</plaintext>\"\n",
+  ),
+  (
+    "tests4.dat:5", "fragment", "html", "setting html's innerHTML", "| <head>\n| <body>\n|   \"setting html's innerHTML\"\n",
+  ),
+  (
+    "tests4.dat:6", "fragment", "head", "<title>setting head's innerHTML</title>",
+    "| <title>\n|   \"setting head's innerHTML\"\n",
+  ),
+  (
+    "tests4.dat:7", "fragment", "title", "direct <title> content", "| \"direct <title> content\"\n",
+  ),
+  (
+    "tests4.dat:8", "fragment", "script", "<!-- inside </script> -->", "| \"<!-- inside </script> -->\"\n",
+  ),
+  (
+    "tests5.dat:0", "document", "", "<style> <!-- </style>x", "| <html>\n|   <head>\n|     <style>\n|       \" <!-- \"\n|   <body>\n|     \"x\"\n",
+  ),
+  (
+    "tests5.dat:1", "document", "", "<style> <!-- </style> --> </style>x", "| <html>\n|   <head>\n|     <style>\n|       \" <!-- \"\n|     \" \"\n|   <body>\n|     \"--> x\"\n",
+  ),
+  (
+    "tests5.dat:2", "document", "", "<style> <!--> </style>x", "| <html>\n|   <head>\n|     <style>\n|       \" <!--> \"\n|   <body>\n|     \"x\"\n",
+  ),
+  (
+    "tests5.dat:3", "document", "", "<style> <!---> </style>x", "| <html>\n|   <head>\n|     <style>\n|       \" <!---> \"\n|   <body>\n|     \"x\"\n",
+  ),
+  (
+    "tests5.dat:4", "document", "", "<iframe> <!---> </iframe>x", "| <html>\n|   <head>\n|   <body>\n|     <iframe>\n|       \" <!---> \"\n|     \"x\"\n",
+  ),
+  (
+    "tests5.dat:5", "document", "", "<iframe> <!--- </iframe>->x</iframe> --> </iframe>x",
+    "| <html>\n|   <head>\n|   <body>\n|     <iframe>\n|       \" <!--- \"\n|     \"->x --> x\"\n",
+  ),
+  (
+    "tests5.dat:6", "document", "", "<script> <!-- </script> --> </script>x", "| <html>\n|   <head>\n|     <script>\n|       \" <!-- \"\n|     \" \"\n|   <body>\n|     \"--> x\"\n",
+  ),
+  (
+    "tests5.dat:7", "document", "", "<title> <!-- </title> --> </title>x", "| <html>\n|   <head>\n|     <title>\n|       \" <!-- \"\n|     \" \"\n|   <body>\n|     \"--> x\"\n",
+  ),
+  (
+    "tests5.dat:8", "document", "", "<textarea> <!--- </textarea>->x</textarea> --> </textarea>x",
+    "| <html>\n|   <head>\n|   <body>\n|     <textarea>\n|       \" <!--- \"\n|     \"->x --> x\"\n",
+  ),
+  (
+    "tests5.dat:9", "document", "", "<style> <!</-- </style>x", "| <html>\n|   <head>\n|     <style>\n|       \" <!</-- \"\n|   <body>\n|     \"x\"\n",
+  ),
+  (
+    "tests5.dat:10", "document", "", "<p><xmp></xmp>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|     <xmp>\n",
+  ),
+  (
+    "tests5.dat:11", "document", "", "<xmp> <!-- > --> </xmp>", "| <html>\n|   <head>\n|   <body>\n|     <xmp>\n|       \" <!-- > --> \"\n",
+  ),
+  (
+    "tests5.dat:12", "document", "", "<title>&amp;</title>", "| <html>\n|   <head>\n|     <title>\n|       \"&\"\n|   <body>\n",
+  ),
+  (
+    "tests5.dat:13", "document", "", "<title><!--&amp;--></title>", "| <html>\n|   <head>\n|     <title>\n|       \"<!--&-->\"\n|   <body>\n",
+  ),
+  (
+    "tests5.dat:14", "document", "", "<title><!--</title>", "| <html>\n|   <head>\n|     <title>\n|       \"<!--\"\n|   <body>\n",
+  ),
+  (
+    "tests5.dat:15", "document", "", "<noscript><!--</noscript>--></noscript>", "| <html>\n|   <head>\n|     <noscript>\n|       <!-- </noscript> -->\n|   <body>\n",
+  ),
+  (
+    "tests6.dat:0", "document", "", "<!doctype html></head> <head>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   \" \"\n|   <body>\n",
+  ),
+  (
+    "tests6.dat:1", "document", "", "<!doctype html><form><div></form><div>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <form>\n|       <div>\n|         <div>\n",
+  ),
+  (
+    "tests6.dat:2", "document", "", "<!doctype html><title>&amp;</title>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"&\"\n|   <body>\n",
+  ),
+  (
+    "tests6.dat:3", "document", "", "<!doctype html><title><!--&amp;--></title>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"<!--&-->\"\n|   <body>\n",
+  ),
+  (
+    "tests6.dat:4", "document", "", "<!doctype>", "| <!DOCTYPE >\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests6.dat:5", "document", "", "<!---x", "| <!-- -x -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  ("tests6.dat:6", "fragment", "div", "<body>\n<div>", "| \"\n\"\n| <div>\n"),
+  (
+    "tests6.dat:7", "document", "", "<frameset></frameset>\nfoo", "| <html>\n|   <head>\n|   <frameset>\n|   \"\n\"\n",
+  ),
+  (
+    "tests6.dat:8", "document", "", "<frameset></frameset>\n<noframes>", "| <html>\n|   <head>\n|   <frameset>\n|   \"\n\"\n|   <noframes>\n",
+  ),
+  (
+    "tests6.dat:9", "document", "", "<frameset></frameset>\n<div>", "| <html>\n|   <head>\n|   <frameset>\n|   \"\n\"\n",
+  ),
+  (
+    "tests6.dat:10", "document", "", "<frameset></frameset>\n</html>", "| <html>\n|   <head>\n|   <frameset>\n|   \"\n\"\n",
+  ),
+  (
+    "tests6.dat:11", "document", "", "<frameset></frameset>\n</div>", "| <html>\n|   <head>\n|   <frameset>\n|   \"\n\"\n",
+  ),
+  (
+    "tests6.dat:12", "document", "", "<form><form>", "| <html>\n|   <head>\n|   <body>\n|     <form>\n",
+  ),
+  (
+    "tests6.dat:13", "document", "", "<button><button>", "| <html>\n|   <head>\n|   <body>\n|     <button>\n|     <button>\n",
+  ),
+  (
+    "tests6.dat:14", "document", "", "<table><tr><td></th>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
+  ),
+  (
+    "tests6.dat:15", "document", "", "<table><caption><td>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|       <tbody>\n|         <tr>\n|           <td>\n",
+  ),
+  (
+    "tests6.dat:16", "document", "", "<table><caption><div>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <div>\n",
+  ),
+  ("tests6.dat:17", "fragment", "caption", "</caption><div>", "| <div>\n"),
+  (
+    "tests6.dat:18", "document", "", "<table><caption><div></caption>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <div>\n",
+  ),
+  (
+    "tests6.dat:19", "document", "", "<table><caption></table>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n",
+  ),
+  ("tests6.dat:20", "fragment", "caption", "</table><div>", "| <div>\n"),
+  (
+    "tests6.dat:21", "document", "", "<table><caption></body></col></colgroup></html></tbody></td></tfoot></th></thead></tr>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n",
+  ),
+  (
+    "tests6.dat:22", "document", "", "<table><caption><div></div>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <div>\n",
+  ),
+  (
+    "tests6.dat:23", "document", "", "<table><tr><td></body></caption></col></colgroup></html>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
+  ),
+  (
+    "tests6.dat:24", "fragment", "td", "</table></tbody></tfoot></thead></tr><div>",
+    "| <div>\n",
+  ),
+  (
+    "tests6.dat:25", "document", "", "<table><colgroup>foo", "| <html>\n|   <head>\n|   <body>\n|     \"foo\"\n|     <table>\n|       <colgroup>\n",
+  ),
+  ("tests6.dat:26", "fragment", "colgroup", "foo<col>", "| <col>\n"),
+  (
+    "tests6.dat:27", "document", "", "<table><colgroup></col>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <colgroup>\n",
+  ),
+  (
+    "tests6.dat:28", "document", "", "<frameset><div>", "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  ("tests6.dat:29", "fragment", "frameset", "</frameset><frame>", "| <frame>\n"),
+  (
+    "tests6.dat:30", "document", "", "<frameset></div>", "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  ("tests6.dat:31", "fragment", "body", "</body><div>", "| <div>\n"),
+  (
+    "tests6.dat:32", "document", "", "<table><tr><div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|     <table>\n|       <tbody>\n|         <tr>\n",
+  ),
+  ("tests6.dat:33", "fragment", "tr", "</tr><td>", "| <td>\n"),
+  (
+    "tests6.dat:34", "fragment", "tr", "</tbody></tfoot></thead><td>", "| <td>\n",
+  ),
+  (
+    "tests6.dat:35", "document", "", "<table><tr><div><td>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
+  ),
+  (
+    "tests6.dat:36", "fragment", "tbody", "<caption><col><colgroup><tbody><tfoot><thead><tr>",
+    "| <tr>\n",
+  ),
+  (
+    "tests6.dat:37", "document", "", "<table><tbody></thead>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n",
+  ),
+  ("tests6.dat:38", "fragment", "tbody", "</table><tr>", "| <tr>\n"),
+  (
+    "tests6.dat:39", "document", "", "<table><tbody></body></caption></col></colgroup></html></td></th></tr>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n",
+  ),
+  (
+    "tests6.dat:40", "document", "", "<table><tbody></div>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n",
+  ),
+  (
+    "tests6.dat:41", "document", "", "<table><table>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|     <table>\n",
+  ),
+  (
+    "tests6.dat:42", "document", "", "<table></body></caption></col></colgroup></html></tbody></td></tfoot></th></thead></tr>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n",
+  ),
+  (
+    "tests6.dat:43", "fragment", "table", "</table><tr>", "| <tbody>\n|   <tr>\n",
+  ),
+  (
+    "tests6.dat:44", "fragment", "html", "<body></body></html>", "| <head>\n| <body>\n",
+  ),
+  (
+    "tests6.dat:45", "document", "", "<html><frameset></frameset></html> ", "| <html>\n|   <head>\n|   <frameset>\n|   \" \"\n",
+  ),
+  (
+    "tests6.dat:46", "document", "", "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01//EN\"><html></html>",
+    "| <!DOCTYPE html \"-//W3C//DTD HTML 4.01//EN\" \"\">\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests6.dat:47", "document", "", "<param><frameset></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests6.dat:48", "document", "", "<source><frameset></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests6.dat:49", "document", "", "<track><frameset></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests6.dat:50", "document", "", "</html><frameset></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests6.dat:51", "document", "", "</body><frameset></frameset>", "| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests7.dat:0", "document", "", "<!doctype html><body><title>X</title>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <title>\n|       \"X\"\n",
+  ),
+  (
+    "tests7.dat:1", "document", "", "<!doctype html><table><title>X</title></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <title>\n|       \"X\"\n|     <table>\n",
+  ),
+  (
+    "tests7.dat:2", "document", "", "<!doctype html><head></head><title>X</title>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"X\"\n|   <body>\n",
+  ),
+  (
+    "tests7.dat:3", "document", "", "<!doctype html></head><title>X</title>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <title>\n|       \"X\"\n|   <body>\n",
+  ),
+  (
+    "tests7.dat:4", "document", "", "<!doctype html></head><base>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <base>\n|   <body>\n|     \"X\"\n",
+  ),
+  (
+    "tests7.dat:5", "document", "", "<!doctype html></head><basefont>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <basefont>\n|   <body>\n|     \"X\"\n",
+  ),
+  (
+    "tests7.dat:6", "document", "", "<!doctype html></head><bgsound>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|     <bgsound>\n|   <body>\n|     \"X\"\n",
+  ),
+  (
+    "tests7.dat:7", "document", "", "<!doctype html><table><meta></table>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <meta>\n|     <table>\n",
+  ),
+  (
+    "tests7.dat:8", "document", "", "<!doctype html><table>X<tr><td><table> <meta></table></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"X\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <meta>\n|             <table>\n|               \" \"\n",
+  ),
+  (
+    "tests7.dat:9", "document", "", "<!doctype html><html> <head>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests7.dat:10", "document", "", "<!doctype html> <head>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests7.dat:11", "document", "", "<!doctype html><table><style> <tr>x </style> </table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <style>\n|         \" <tr>x \"\n|       \" \"\n",
+  ),
+  (
+    "tests7.dat:12", "document", "", "<!doctype html><table><TBODY><script> <tr>x </script> </table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <script>\n|           \" <tr>x \"\n|         \" \"\n",
+  ),
+  (
+    "tests7.dat:13", "document", "", "<!doctype html><p><applet><p>X</p></applet>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <applet>\n|         <p>\n|           \"X\"\n",
+  ),
+  (
+    "tests7.dat:14", "document", "", "<!doctype html><p><object type=\"application/x-non-existant-plugin\"><p>X</p></object>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <object>\n|         type=\"application/x-non-existant-plugin\"\n|         <p>\n|           \"X\"\n",
+  ),
+  (
+    "tests7.dat:15", "document", "", "<!doctype html><listing>\nX</listing>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <listing>\n|       \"X\"\n",
+  ),
+  (
+    "tests7.dat:16", "document", "", "<!doctype html><select><input>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|     <input>\n|     \"X\"\n",
+  ),
+  (
+    "tests7.dat:17", "document", "", "<!doctype html><select><select>X", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|     \"X\"\n",
+  ),
+  (
+    "tests7.dat:18", "document", "", "<!doctype html><table><input type=hidDEN></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <input>\n|         type=\"hidDEN\"\n",
+  ),
+  (
+    "tests7.dat:19", "document", "", "<!doctype html><table>X<input type=hidDEN></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"X\"\n|     <table>\n|       <input>\n|         type=\"hidDEN\"\n",
+  ),
+  (
+    "tests7.dat:20", "document", "", "<!doctype html><table>  <input type=hidDEN></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       \"  \"\n|       <input>\n|         type=\"hidDEN\"\n",
+  ),
+  (
+    "tests7.dat:21", "document", "", "<!doctype html><table>  <input type='hidDEN'></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       \"  \"\n|       <input>\n|         type=\"hidDEN\"\n",
+  ),
+  (
+    "tests7.dat:22", "document", "", "<!doctype html><table><input type=\" hidden\"><input type=hidDEN></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <input>\n|       type=\" hidden\"\n|     <table>\n|       <input>\n|         type=\"hidDEN\"\n",
+  ),
+  (
+    "tests7.dat:23", "document", "", "<!doctype html><table><select>X<tr>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       \"X\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
+  ),
+  (
+    "tests7.dat:24", "document", "", "<!doctype html><select>X</select>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       \"X\"\n",
+  ),
+  (
+    "tests7.dat:25", "document", "", "<!DOCTYPE hTmL><html></html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests7.dat:26", "document", "", "<!DOCTYPE HTML><html></html>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "tests7.dat:27", "fragment", "html", "<body>X</body></body>", "| <head>\n| <body>\n|   \"X\"\n",
+  ),
+  (
+    "tests7.dat:28", "document", "", "<div><p>a</x> b", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <p>\n|         \"a b\"\n",
+  ),
+  (
+    "tests7.dat:29", "document", "", "<table><tr><td><code></code> </table>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <code>\n|             \" \"\n",
+  ),
+  (
+    "tests7.dat:30", "document", "", "<table><b><tr><td>aaa</td></tr>bbb</table>ccc",
+    "| <html>\n|   <head>\n|   <body>\n|     <b>\n|     <b>\n|       \"bbb\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"aaa\"\n|     <b>\n|       \"ccc\"\n",
+  ),
+  (
+    "tests7.dat:31", "document", "", "A<table><tr> B</tr> B</table>", "| <html>\n|   <head>\n|   <body>\n|     \"A B B\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
+  ),
+  (
+    "tests7.dat:32", "document", "", "A<table><tr> B</tr> </em>C</table>", "| <html>\n|   <head>\n|   <body>\n|     \"A BC\"\n|     <table>\n|       <tbody>\n|         <tr>\n|         \" \"\n",
+  ),
+  (
+    "tests7.dat:33", "document", "", "<select><keygen>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <keygen>\n",
+  ),
+  (
+    "tests8.dat:0", "document", "", "<div>\n<div></div>\n</span>x", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"\n\"\n|       <div>\n|       \"\nx\"\n",
+  ),
+  (
+    "tests8.dat:1", "document", "", "<div>x<div></div>\n</span>x", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"x\"\n|       <div>\n|       \"\nx\"\n",
+  ),
+  (
+    "tests8.dat:2", "document", "", "<div>x<div></div>x</span>x", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"x\"\n|       <div>\n|       \"xx\"\n",
+  ),
+  (
+    "tests8.dat:3", "document", "", "<div>x<div></div>y</span>z", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"x\"\n|       <div>\n|       \"yz\"\n",
+  ),
+  (
+    "tests8.dat:4", "document", "", "<table><div>x<div></div>x</span>x", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"x\"\n|       <div>\n|       \"xx\"\n|     <table>\n",
+  ),
+  (
+    "tests8.dat:5", "document", "", "<table><li><li></table>", "| <html>\n|   <head>\n|   <body>\n|     <li>\n|     <li>\n|     <table>\n",
+  ),
+  (
+    "tests8.dat:6", "document", "", "x<table>x", "| <html>\n|   <head>\n|   <body>\n|     \"xx\"\n|     <table>\n",
+  ),
+  (
+    "tests8.dat:7", "document", "", "x<table><table>x", "| <html>\n|   <head>\n|   <body>\n|     \"x\"\n|     <table>\n|     \"x\"\n|     <table>\n",
+  ),
+  (
+    "tests8.dat:8", "document", "", "<b>a<div></div><div></b>y", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       \"a\"\n|       <div>\n|     <div>\n|       <b>\n|       \"y\"\n",
+  ),
+  (
+    "tests8.dat:9", "document", "", "<a><div><p></a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|     <div>\n|       <a>\n|       <p>\n|         <a>\n",
+  ),
+  (
+    "tests9.dat:0", "document", "", "<!DOCTYPE html><math></math>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n",
+  ),
+  (
+    "tests9.dat:1", "document", "", "<!DOCTYPE html><body><math></math>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n",
+  ),
+  (
+    "tests9.dat:2", "document", "", "<!DOCTYPE html><math><mi>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mi>\n",
+  ),
+  (
+    "tests9.dat:3", "document", "", "<!DOCTYPE html><math><annotation-xml><svg><u>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math annotation-xml>\n|         <svg svg>\n|     <u>\n",
+  ),
+  (
+    "tests9.dat:4", "document", "", "<!DOCTYPE html><body><select><math></math></select>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <math math>\n",
+  ),
+  (
+    "tests9.dat:5", "document", "", "<!DOCTYPE html><body><select><option><math></math></option></select>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|         <math math>\n",
+  ),
+  (
+    "tests9.dat:6", "document", "", "<!DOCTYPE html><body><table><math></math></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|     <table>\n",
+  ),
+  (
+    "tests9.dat:7", "document", "", "<!DOCTYPE html><body><table><math><mi>foo</mi></math></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mi>\n|         \"foo\"\n|     <table>\n",
+  ),
+  (
+    "tests9.dat:8", "document", "", "<!DOCTYPE html><body><table><math><mi>foo</mi><mi>bar</mi></math></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mi>\n|         \"foo\"\n|       <math mi>\n|         \"bar\"\n|     <table>\n",
+  ),
+  (
+    "tests9.dat:9", "document", "", "<!DOCTYPE html><body><table><tbody><math><mi>foo</mi><mi>bar</mi></math></tbody></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mi>\n|         \"foo\"\n|       <math mi>\n|         \"bar\"\n|     <table>\n|       <tbody>\n",
+  ),
+  (
+    "tests9.dat:10", "document", "", "<!DOCTYPE html><body><table><tbody><tr><math><mi>foo</mi><mi>bar</mi></math></tr></tbody></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mi>\n|         \"foo\"\n|       <math mi>\n|         \"bar\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
+  ),
+  (
+    "tests9.dat:11", "document", "", "<!DOCTYPE html><body><table><tbody><tr><td><math><mi>foo</mi><mi>bar</mi></math></td></tr></tbody></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <math math>\n|               <math mi>\n|                 \"foo\"\n|               <math mi>\n|                 \"bar\"\n",
+  ),
+  (
+    "tests9.dat:12", "document", "", "<!DOCTYPE html><body><table><tbody><tr><td><math><mi>foo</mi><mi>bar</mi></math><p>baz</td></tr></tbody></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <math math>\n|               <math mi>\n|                 \"foo\"\n|               <math mi>\n|                 \"bar\"\n|             <p>\n|               \"baz\"\n",
+  ),
+  (
+    "tests9.dat:13", "document", "", "<!DOCTYPE html><body><table><caption><math><mi>foo</mi><mi>bar</mi></math><p>baz</caption></table>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <math math>\n|           <math mi>\n|             \"foo\"\n|           <math mi>\n|             \"bar\"\n|         <p>\n|           \"baz\"\n",
+  ),
+  (
+    "tests9.dat:14", "document", "", "<!DOCTYPE html><body><table><caption><math><mi>foo</mi><mi>bar</mi><p>baz</table><p>quux",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <math math>\n|           <math mi>\n|             \"foo\"\n|           <math mi>\n|             \"bar\"\n|         <p>\n|           \"baz\"\n|     <p>\n|       \"quux\"\n",
+  ),
+  (
+    "tests9.dat:15", "document", "", "<!DOCTYPE html><body><table><caption><math><mi>foo</mi><mi>bar</mi>baz</table><p>quux",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <caption>\n|         <math math>\n|           <math mi>\n|             \"foo\"\n|           <math mi>\n|             \"bar\"\n|           \"baz\"\n|     <p>\n|       \"quux\"\n",
+  ),
+  (
+    "tests9.dat:16", "document", "", "<!DOCTYPE html><body><table><colgroup><math><mi>foo</mi><mi>bar</mi><p>baz</table><p>quux",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mi>\n|         \"foo\"\n|       <math mi>\n|         \"bar\"\n|     <p>\n|       \"baz\"\n|     <table>\n|       <colgroup>\n|     <p>\n|       \"quux\"\n",
+  ),
+  (
+    "tests9.dat:17", "document", "", "<!DOCTYPE html><body><table><tr><td><select><math><mi>foo</mi><mi>bar</mi><p>baz</table><p>quux",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <math math>\n|                 <math mi>\n|                   \"foo\"\n|                 <math mi>\n|                   \"bar\"\n|               <p>\n|                 \"baz\"\n|     <p>\n|       \"quux\"\n",
+  ),
+  (
+    "tests9.dat:18", "document", "", "<!DOCTYPE html><body><table><select><math><mi>foo</mi><mi>bar</mi><p>baz</table><p>quux",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <math math>\n|         <math mi>\n|           \"foo\"\n|         <math mi>\n|           \"bar\"\n|       <p>\n|         \"baz\"\n|     <table>\n|     <p>\n|       \"quux\"\n",
+  ),
+  (
+    "tests9.dat:19", "document", "", "<!DOCTYPE html><body></body></html><math><mi>foo</mi><mi>bar</mi><p>baz",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mi>\n|         \"foo\"\n|       <math mi>\n|         \"bar\"\n|     <p>\n|       \"baz\"\n",
+  ),
+  (
+    "tests9.dat:20", "document", "", "<!DOCTYPE html><body></body><math><mi>foo</mi><mi>bar</mi><p>baz",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mi>\n|         \"foo\"\n|       <math mi>\n|         \"bar\"\n|     <p>\n|       \"baz\"\n",
+  ),
+  (
+    "tests9.dat:21", "document", "", "<!DOCTYPE html><frameset><math><mi></mi><mi></mi><p><span>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests9.dat:22", "document", "", "<!DOCTYPE html><frameset></frameset><math><mi></mi><mi></mi><p><span>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "tests9.dat:23", "document", "", "<!DOCTYPE html><body xlink:href=foo><math xlink:href=foo></math>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     xlink:href=\"foo\"\n|     <math math>\n|       xlink href=\"foo\"\n",
+  ),
+  (
+    "tests9.dat:24", "document", "", "<!DOCTYPE html><body xlink:href=foo xml:lang=en><math><mi xml:lang=en xlink:href=foo></mi></math>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     xlink:href=\"foo\"\n|     xml:lang=\"en\"\n|     <math math>\n|       <math mi>\n|         xlink href=\"foo\"\n|         xml lang=\"en\"\n",
+  ),
+  (
+    "tests9.dat:25", "document", "", "<!DOCTYPE html><body xlink:href=foo xml:lang=en><math><mi xml:lang=en xlink:href=foo /></math>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     xlink:href=\"foo\"\n|     xml:lang=\"en\"\n|     <math math>\n|       <math mi>\n|         xlink href=\"foo\"\n|         xml lang=\"en\"\n",
+  ),
+  (
+    "tests9.dat:26", "document", "", "<!DOCTYPE html><body xlink:href=foo xml:lang=en><math><mi xml:lang=en xlink:href=foo />bar</math>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     xlink:href=\"foo\"\n|     xml:lang=\"en\"\n|     <math math>\n|       <math mi>\n|         xlink href=\"foo\"\n|         xml lang=\"en\"\n|       \"bar\"\n",
+  ),
+  ("tests_innerHTML_1.dat:0", "fragment", "body", "<body><span>", "| <span>\n"),
+  ("tests_innerHTML_1.dat:1", "fragment", "body", "<span><body>", "| <span>\n"),
+  ("tests_innerHTML_1.dat:2", "fragment", "div", "<span><body>", "| <span>\n"),
+  (
+    "tests_innerHTML_1.dat:3", "fragment", "html", "<body><span>", "| <head>\n| <body>\n|   <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:4", "fragment", "body", "<frameset><span>", "| <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:5", "fragment", "body", "<span><frameset>", "| <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:6", "fragment", "div", "<span><frameset>", "| <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:7", "fragment", "html", "<frameset><span>", "| <head>\n| <frameset>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:8", "fragment", "table", "<table><tr>", "| <tbody>\n|   <tr>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:9", "fragment", "table", "</table><tr>", "| <tbody>\n|   <tr>\n",
+  ),
+  ("tests_innerHTML_1.dat:10", "fragment", "table", "<a>", "| <a>\n"),
+  (
+    "tests_innerHTML_1.dat:11", "fragment", "table", "<a><caption>a", "| <a>\n| <caption>\n|   \"a\"\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:12", "fragment", "table", "<a><colgroup><col>", "| <a>\n| <colgroup>\n|   <col>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:13", "fragment", "table", "<a><tbody><tr>", "| <a>\n| <tbody>\n|   <tr>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:14", "fragment", "table", "<a><tfoot><tr>", "| <a>\n| <tfoot>\n|   <tr>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:15", "fragment", "table", "<a><thead><tr>", "| <a>\n| <thead>\n|   <tr>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:16", "fragment", "table", "<a><tr>", "| <a>\n| <tbody>\n|   <tr>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:17", "fragment", "table", "<a><th>", "| <a>\n| <tbody>\n|   <tr>\n|     <th>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:18", "fragment", "table", "<a><td>", "| <a>\n| <tbody>\n|   <tr>\n|     <td>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:19", "fragment", "caption", "<table></table><tbody>",
+    "| <table>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:20", "fragment", "caption", "</table><span>", "| <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:21", "fragment", "caption", "<span></table>", "| <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:22", "fragment", "caption", "</caption><span>", "| <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:23", "fragment", "caption", "<span></caption><span>",
+    "| <span>\n|   <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:24", "fragment", "caption", "<span><caption><span>", "| <span>\n|   <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:25", "fragment", "caption", "<span><col><span>", "| <span>\n|   <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:26", "fragment", "caption", "<span><colgroup><span>",
+    "| <span>\n|   <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:27", "fragment", "caption", "<span><html><span>", "| <span>\n|   <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:28", "fragment", "caption", "<span><tbody><span>", "| <span>\n|   <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:29", "fragment", "caption", "<span><td><span>", "| <span>\n|   <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:30", "fragment", "caption", "<span><tfoot><span>", "| <span>\n|   <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:31", "fragment", "caption", "<span><thead><span>", "| <span>\n|   <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:32", "fragment", "caption", "<span><th><span>", "| <span>\n|   <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:33", "fragment", "caption", "<span><tr><span>", "| <span>\n|   <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:34", "fragment", "caption", "<span></table><span>", "| <span>\n|   <span>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:35", "fragment", "colgroup", "</colgroup><col>", "| <col>\n",
+  ),
+  ("tests_innerHTML_1.dat:36", "fragment", "colgroup", "<a><col>", "| <col>\n"),
+  ("tests_innerHTML_1.dat:37", "fragment", "tbody", "<caption><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:38", "fragment", "tbody", "<col><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:39", "fragment", "tbody", "<colgroup><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:40", "fragment", "tbody", "<tbody><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:41", "fragment", "tbody", "<tfoot><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:42", "fragment", "tbody", "<thead><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:43", "fragment", "tbody", "</table><a>", "| <a>\n"),
+  (
+    "tests_innerHTML_1.dat:44", "fragment", "tbody", "<a><tr>", "| <a>\n| <tr>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:45", "fragment", "tbody", "<a><td>", "| <a>\n| <tr>\n|   <td>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:46", "fragment", "tbody", "<td><table><tbody><a><tr>",
+    "| <tr>\n|   <td>\n|     <a>\n|     <table>\n|       <tbody>\n|         <tr>\n",
+  ),
+  ("tests_innerHTML_1.dat:47", "fragment", "tr", "</tr><td>", "| <td>\n"),
+  (
+    "tests_innerHTML_1.dat:48", "fragment", "tr", "<td><table><a><tr></tr><tr>",
+    "| <td>\n|   <a>\n|   <table>\n|     <tbody>\n|       <tr>\n|       <tr>\n",
+  ),
+  ("tests_innerHTML_1.dat:49", "fragment", "tr", "<caption><td>", "| <td>\n"),
+  ("tests_innerHTML_1.dat:50", "fragment", "tr", "<col><td>", "| <td>\n"),
+  ("tests_innerHTML_1.dat:51", "fragment", "tr", "<colgroup><td>", "| <td>\n"),
+  ("tests_innerHTML_1.dat:52", "fragment", "tr", "<tbody><td>", "| <td>\n"),
+  ("tests_innerHTML_1.dat:53", "fragment", "tr", "<tfoot><td>", "| <td>\n"),
+  ("tests_innerHTML_1.dat:54", "fragment", "tr", "<thead><td>", "| <td>\n"),
+  ("tests_innerHTML_1.dat:55", "fragment", "tr", "<tr><td>", "| <td>\n"),
+  ("tests_innerHTML_1.dat:56", "fragment", "tr", "</table><td>", "| <td>\n"),
+  (
+    "tests_innerHTML_1.dat:57", "fragment", "tr", "<td><table></table><td>", "| <td>\n|   <table>\n| <td>\n",
+  ),
+  ("tests_innerHTML_1.dat:58", "fragment", "td", "<caption><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:59", "fragment", "td", "<col><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:60", "fragment", "td", "<colgroup><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:61", "fragment", "td", "<tbody><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:62", "fragment", "td", "<tfoot><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:63", "fragment", "td", "<th><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:64", "fragment", "td", "<thead><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:65", "fragment", "td", "<tr><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:66", "fragment", "td", "</table><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:67", "fragment", "td", "</tbody><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:68", "fragment", "td", "</td><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:69", "fragment", "td", "</tfoot><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:70", "fragment", "td", "</thead><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:71", "fragment", "td", "</th><a>", "| <a>\n"),
+  ("tests_innerHTML_1.dat:72", "fragment", "td", "</tr><a>", "| <a>\n"),
+  (
+    "tests_innerHTML_1.dat:73", "fragment", "td", "<table><td><td>", "| <table>\n|   <tbody>\n|     <tr>\n|       <td>\n|       <td>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:74", "fragment", "select", "</select><option>", "| <option>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:75", "fragment", "select", "<input><option>", "| <option>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:76", "fragment", "select", "<keygen><option>", "| <keygen>\n| <option>\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:77", "fragment", "select", "<textarea><option>", "| <textarea>\n|   \"<option>\"\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:78", "fragment", "html", "</html><!--abc-->", "| <head>\n| <body>\n| <!-- abc -->\n",
+  ),
+  (
+    "tests_innerHTML_1.dat:79", "fragment", "frameset", "</frameset><frame>", "| <frame>\n",
+  ),
+  (
+    "tricky01.dat:0", "document", "", "<b><p>Bold </b> Not bold</p>\nAlso not bold.",
+    "| <html>\n|   <head>\n|   <body>\n|     <b>\n|     <p>\n|       <b>\n|         \"Bold \"\n|       \" Not bold\"\n|     \"\nAlso not bold.\"\n",
+  ),
+  (
+    "tricky01.dat:1", "document", "", "<html>\n<font color=red><i>Italic and Red<p>Italic and Red </font> Just italic.</p> Italic only.</i> Plain\n<p>I should not be red. <font color=red>Red. <i>Italic and red.</p>\n<p>Italic and red. </i> Red.</font> I should not be red.</p>\n<b>Bold <i>Bold and italic</b> Only Italic </i> Plain",
     "| <html>\n|   <head>\n|   <body>\n|     <font>\n|       color=\"red\"\n|       <i>\n|         \"Italic and Red\"\n|     <i>\n|       <p>\n|         <font>\n|           color=\"red\"\n|           \"Italic and Red \"\n|         \" Just italic.\"\n|       \" Italic only.\"\n|     \" Plain\n\"\n|     <p>\n|       \"I should not be red. \"\n|       <font>\n|         color=\"red\"\n|         \"Red. \"\n|         <i>\n|           \"Italic and red.\"\n|     <font>\n|       color=\"red\"\n|       <i>\n|         \"\n\"\n|     <p>\n|       <font>\n|         color=\"red\"\n|         <i>\n|           \"Italic and red. \"\n|         \" Red.\"\n|       \" I should not be red.\"\n|     \"\n\"\n|     <b>\n|       \"Bold \"\n|       <i>\n|         \"Bold and italic\"\n|     <i>\n|       \" Only Italic \"\n|     \" Plain\"\n",
   ),
   (
-    "tricky01.dat:2", "<html><body>\n<p><font size=\"7\">First paragraph.</p>\n<p>Second paragraph.</p></font>\n<b><p><i>Bold and Italic</b> Italic</p>",
+    "tricky01.dat:2", "document", "", "<html><body>\n<p><font size=\"7\">First paragraph.</p>\n<p>Second paragraph.</p></font>\n<b><p><i>Bold and Italic</b> Italic</p>",
     "| <html>\n|   <head>\n|   <body>\n|     \"\n\"\n|     <p>\n|       <font>\n|         size=\"7\"\n|         \"First paragraph.\"\n|     <font>\n|       size=\"7\"\n|       \"\n\"\n|       <p>\n|         \"Second paragraph.\"\n|     \"\n\"\n|     <b>\n|     <p>\n|       <b>\n|         <i>\n|           \"Bold and Italic\"\n|       <i>\n|         \" Italic\"\n",
   ),
   (
-    "tricky01.dat:3", "<html>\n<dl>\n<dt><b>Boo\n<dd>Goo?\n</dl>\n</html>", "| <html>\n|   <head>\n|   <body>\n|     <dl>\n|       \"\n\"\n|       <dt>\n|         <b>\n|           \"Boo\n\"\n|       <dd>\n|         <b>\n|           \"Goo?\n\"\n|     <b>\n|       \"\n\"\n",
+    "tricky01.dat:3", "document", "", "<html>\n<dl>\n<dt><b>Boo\n<dd>Goo?\n</dl>\n</html>",
+    "| <html>\n|   <head>\n|   <body>\n|     <dl>\n|       \"\n\"\n|       <dt>\n|         <b>\n|           \"Boo\n\"\n|       <dd>\n|         <b>\n|           \"Goo?\n\"\n|     <b>\n|       \"\n\"\n",
   ),
   (
-    "tricky01.dat:4", "<html><body>\n<label><a><div>Hello<div>World</div></a></label>  \n</body></html>",
+    "tricky01.dat:4", "document", "", "<html><body>\n<label><a><div>Hello<div>World</div></a></label>  \n</body></html>",
     "| <html>\n|   <head>\n|   <body>\n|     \"\n\"\n|     <label>\n|       <a>\n|       <div>\n|         <a>\n|           \"Hello\"\n|           <div>\n|             \"World\"\n|         \"  \n\"\n",
   ),
   (
-    "tricky01.dat:5", "<table><center> <font>a</center> <img> <tr><td> </td> </tr> </table>",
+    "tricky01.dat:5", "document", "", "<table><center> <font>a</center> <img> <tr><td> </td> </tr> </table>",
     "| <html>\n|   <head>\n|   <body>\n|     <center>\n|       \" \"\n|       <font>\n|         \"a\"\n|     <font>\n|       <img>\n|       \" \"\n|     <table>\n|       \" \"\n|       <tbody>\n|         <tr>\n|           <td>\n|             \" \"\n|           \" \"\n|         \" \"\n",
   ),
   (
-    "tricky01.dat:6", "<table><tr><p><a><p>You should see this text.", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <a>\n|     <p>\n|       <a>\n|         \"You should see this text.\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
+    "tricky01.dat:6", "document", "", "<table><tr><p><a><p>You should see this text.",
+    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <a>\n|     <p>\n|       <a>\n|         \"You should see this text.\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
   ),
   (
-    "tricky01.dat:7", "<TABLE>\n<TR>\n<CENTER><CENTER><TD></TD></TR><TR>\n<FONT>\n<TABLE><tr></tr></TABLE>\n</P>\n<a></font><font></a>\nThis page contains an insanely badly-nested tag sequence.",
+    "tricky01.dat:7", "document", "", "<TABLE>\n<TR>\n<CENTER><CENTER><TD></TD></TR><TR>\n<FONT>\n<TABLE><tr></tr></TABLE>\n</P>\n<a></font><font></a>\nThis page contains an insanely badly-nested tag sequence.",
     "| <html>\n|   <head>\n|   <body>\n|     <center>\n|       <center>\n|     <font>\n|       \"\n\"\n|     <table>\n|       \"\n\"\n|       <tbody>\n|         <tr>\n|           \"\n\"\n|           <td>\n|         <tr>\n|           \"\n\"\n|     <table>\n|       <tbody>\n|         <tr>\n|     <font>\n|       \"\n\"\n|       <p>\n|       \"\n\"\n|       <a>\n|     <a>\n|       <font>\n|     <font>\n|       \"\nThis page contains an insanely badly-nested tag sequence.\"\n",
   ),
   (
-    "tricky01.dat:8", "<html>\n<body>\n<b><nobr><div>This text is in a div inside a nobr</nobr>More text that should not be in the nobr, i.e., the\nnobr should have closed the div inside it implicitly. </b><pre>A pre tag outside everything else.</pre>\n</body>\n</html>",
+    "tricky01.dat:8", "document", "", "<html>\n<body>\n<b><nobr><div>This text is in a div inside a nobr</nobr>More text that should not be in the nobr, i.e., the\nnobr should have closed the div inside it implicitly. </b><pre>A pre tag outside everything else.</pre>\n</body>\n</html>",
     "| <html>\n|   <head>\n|   <body>\n|     \"\n\"\n|     <b>\n|       <nobr>\n|     <div>\n|       <b>\n|         <nobr>\n|           \"This text is in a div inside a nobr\"\n|         \"More text that should not be in the nobr, i.e., the\nnobr should have closed the div inside it implicitly. \"\n|       <pre>\n|         \"A pre tag outside everything else.\"\n|       \"\n\n\"\n",
   ),
+  (
+    "void-in-phrasing.dat:0", "document", "", "<!DOCTYPE html><body><p><br></p>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <br>\n",
+  ),
+  (
+    "void-in-phrasing.dat:1", "document", "", "<!DOCTYPE html><body><p><br>text</p>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <br>\n|       \"text\"\n",
+  ),
+  (
+    "void-in-phrasing.dat:2", "document", "", "<!DOCTYPE html><body><p>before<br>after</p>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"before\"\n|       <br>\n|       \"after\"\n",
+  ),
+  (
+    "void-in-phrasing.dat:3", "document", "", "<!DOCTYPE html><body><p><br><br></p>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <br>\n|       <br>\n",
+  ),
+  (
+    "void-in-phrasing.dat:4", "document", "", "<!DOCTYPE html><body><p>a<br>b<br>c</p>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"a\"\n|       <br>\n|       \"b\"\n|       <br>\n|       \"c\"\n",
+  ),
+  (
+    "void-in-phrasing.dat:5", "document", "", "<!DOCTYPE html><body><h1><br></h1>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <h1>\n|       <br>\n",
+  ),
+  (
+    "void-in-phrasing.dat:6", "document", "", "<!DOCTYPE html><body><p><input></p>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <input>\n",
+  ),
+  (
+    "void-in-phrasing.dat:7", "document", "", "<!DOCTYPE html><body><p><img></p>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <img>\n",
+  ),
+  (
+    "void-in-phrasing.dat:8", "document", "", "<!DOCTYPE html><body><p><wbr></p>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <wbr>\n",
+  ),
+  (
+    "void-in-phrasing.dat:9", "document", "", "<!DOCTYPE html><body><p><embed></p>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <embed>\n",
+  ),
+  (
+    "void-in-phrasing.dat:10", "document", "", "<!DOCTYPE html><body><h2><input></h2>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <h2>\n|       <input>\n",
+  ),
+  (
+    "void-in-phrasing.dat:11", "document", "", "<!DOCTYPE html><body><em><br></em>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <em>\n|       <br>\n",
+  ),
+  (
+    "void-in-phrasing.dat:12", "document", "", "<!DOCTYPE html><body><strong><br>text</strong>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <strong>\n|       <br>\n|       \"text\"\n",
+  ),
+  (
+    "webkit01.dat:0", "document", "", "Test", "| <html>\n|   <head>\n|   <body>\n|     \"Test\"\n",
+  ),
+  (
+    "webkit01.dat:1", "document", "", "<div></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n",
+  ),
+  (
+    "webkit01.dat:2", "document", "", "<div>Test</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"Test\"\n",
+  ),
+  (
+    "webkit01.dat:3", "document", "", "<di", "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "webkit01.dat:4", "document", "", "<div>Hello</div>\n<script>\nconsole.log(\"PASS\");\n</script>\n<div>Bye</div>",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"Hello\"\n|     \"\n\"\n|     <script>\n|       \"\nconsole.log(\"PASS\");\n\"\n|     \"\n\"\n|     <div>\n|       \"Bye\"\n",
+  ),
+  (
+    "webkit01.dat:5", "document", "", "<div foo=\"bar\">Hello</div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       foo=\"bar\"\n|       \"Hello\"\n",
+  ),
+  (
+    "webkit01.dat:6", "document", "", "<div>Hello</div>\n<script>\nconsole.log(\"FOO<span>BAR</span>BAZ\");\n</script>\n<div>Bye</div>",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       \"Hello\"\n|     \"\n\"\n|     <script>\n|       \"\nconsole.log(\"FOO<span>BAR</span>BAZ\");\n\"\n|     \"\n\"\n|     <div>\n|       \"Bye\"\n",
+  ),
+  (
+    "webkit01.dat:7", "document", "", "<foo bar=\"baz\"></foo><potato quack=\"duck\"></potato>",
+    "| <html>\n|   <head>\n|   <body>\n|     <foo>\n|       bar=\"baz\"\n|     <potato>\n|       quack=\"duck\"\n",
+  ),
+  (
+    "webkit01.dat:8", "document", "", "<foo bar=\"baz\"><potato quack=\"duck\"></potato></foo>",
+    "| <html>\n|   <head>\n|   <body>\n|     <foo>\n|       bar=\"baz\"\n|       <potato>\n|         quack=\"duck\"\n",
+  ),
+  (
+    "webkit01.dat:9", "document", "", "<foo></foo bar=\"baz\"><potato></potato quack=\"duck\">",
+    "| <html>\n|   <head>\n|   <body>\n|     <foo>\n|     <potato>\n",
+  ),
+  (
+    "webkit01.dat:10", "document", "", "</ tttt>", "| <!--  tttt -->\n| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "webkit01.dat:11", "document", "", "<div FOO ><img><img></div>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       foo=\"\"\n|       <img>\n|       <img>\n",
+  ),
+  (
+    "webkit01.dat:12", "document", "", "<p>Test</p<p>Test2</p>", "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       \"TestTest2\"\n",
+  ),
+  (
+    "webkit01.dat:13", "document", "", "<rdar://problem/6869687>", "| <html>\n|   <head>\n|   <body>\n|     <rdar:>\n|       6869687=\"\"\n|       problem=\"\"\n",
+  ),
+  (
+    "webkit01.dat:14", "document", "", "<A>test< /A>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"test< /A>\"\n",
+  ),
+  (
+    "webkit01.dat:15", "document", "", "&lt;", "| <html>\n|   <head>\n|   <body>\n|     \"<\"\n",
+  ),
+  (
+    "webkit01.dat:16", "document", "", "<body foo='bar'><body foo='baz' yo='mama'>",
+    "| <html>\n|   <head>\n|   <body>\n|     foo=\"bar\"\n|     yo=\"mama\"\n",
+  ),
+  (
+    "webkit01.dat:17", "document", "", "<body></br foo=\"bar\"></body>", "| <html>\n|   <head>\n|   <body>\n|     <br>\n",
+  ),
+  (
+    "webkit01.dat:18", "document", "", "<bdy><br foo=\"bar\"></body>", "| <html>\n|   <head>\n|   <body>\n|     <bdy>\n|       <br>\n|         foo=\"bar\"\n",
+  ),
+  (
+    "webkit01.dat:19", "document", "", "<body></body></br foo=\"bar\">", "| <html>\n|   <head>\n|   <body>\n|     <br>\n",
+  ),
+  (
+    "webkit01.dat:20", "document", "", "<bdy></body><br foo=\"bar\">", "| <html>\n|   <head>\n|   <body>\n|     <bdy>\n|       <br>\n|         foo=\"bar\"\n",
+  ),
+  (
+    "webkit01.dat:21", "document", "", "<html><body></body></html><!-- Hi there -->",
+    "| <html>\n|   <head>\n|   <body>\n| <!--  Hi there  -->\n",
+  ),
+  (
+    "webkit01.dat:22", "document", "", "<html><body></body></html><!-- Comment A --><!-- Comment B --><!-- Comment C --><!-- Comment D --><!-- Comment E -->",
+    "| <html>\n|   <head>\n|   <body>\n| <!--  Comment A  -->\n| <!--  Comment B  -->\n| <!--  Comment C  -->\n| <!--  Comment D  -->\n| <!--  Comment E  -->\n",
+  ),
+  (
+    "webkit01.dat:23", "document", "", "<html><body></body></html>x<!-- Hi there -->",
+    "| <html>\n|   <head>\n|   <body>\n|     \"x\"\n|     <!--  Hi there  -->\n",
+  ),
+  (
+    "webkit01.dat:24", "document", "", "<html><body></body></html>x<!-- Hi there --></html><!-- Again -->",
+    "| <html>\n|   <head>\n|   <body>\n|     \"x\"\n|     <!--  Hi there  -->\n| <!--  Again  -->\n",
+  ),
+  (
+    "webkit01.dat:25", "document", "", "<html><body></body></html>x<!-- Hi there --></body></html><!-- Again -->",
+    "| <html>\n|   <head>\n|   <body>\n|     \"x\"\n|     <!--  Hi there  -->\n| <!--  Again  -->\n",
+  ),
+  (
+    "webkit01.dat:26", "document", "", "<html><body></body>\n   <!-- Hi there --></html>",
+    "| <html>\n|   <head>\n|   <body>\n|     \"\n   \"\n|   <!--  Hi there  -->\n",
+  ),
+  (
+    "webkit01.dat:27", "document", "", "<html><body></body></html>\n   <!-- Hi there -->",
+    "| <html>\n|   <head>\n|   <body>\n|     \"\n   \"\n| <!--  Hi there  -->\n",
+  ),
+  (
+    "webkit01.dat:28", "document", "", "<html><body><ruby><div><rp>xx</rp></div></ruby></body></html>",
+    "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       <div>\n|         <rp>\n|           \"xx\"\n",
+  ),
+  (
+    "webkit01.dat:29", "document", "", "<html><body><ruby><div><rt>xx</rt></div></ruby></body></html>",
+    "| <html>\n|   <head>\n|   <body>\n|     <ruby>\n|       <div>\n|         <rt>\n|           \"xx\"\n",
+  ),
+  (
+    "webkit01.dat:30", "document", "", "<html><frameset><!--1--><noframes>A</noframes><!--2--></frameset><!--3--><noframes>B</noframes><!--4--></html><!--5--><noframes>C</noframes><!--6-->",
+    "| <html>\n|   <head>\n|   <frameset>\n|     <!-- 1 -->\n|     <noframes>\n|       \"A\"\n|     <!-- 2 -->\n|   <!-- 3 -->\n|   <noframes>\n|     \"B\"\n|   <!-- 4 -->\n|   <noframes>\n|     \"C\"\n| <!-- 5 -->\n| <!-- 6 -->\n",
+  ),
+  (
+    "webkit01.dat:31", "document", "", "<select><option>A<select><option>B<select><option>C<select><option>D<select><option>E<select><option>F<select><option>G<select>",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|         \"A\"\n|     <option>\n|       \"B\"\n|       <select>\n|         <option>\n|           \"C\"\n|     <option>\n|       \"D\"\n|       <select>\n|         <option>\n|           \"E\"\n|     <option>\n|       \"F\"\n|       <select>\n|         <option>\n|           \"G\"\n",
+  ),
+  (
+    "webkit01.dat:32", "document", "", "<dd><dd><dt><dt><dd><li><li>", "| <html>\n|   <head>\n|   <body>\n|     <dd>\n|     <dd>\n|     <dt>\n|     <dt>\n|     <dd>\n|       <li>\n|       <li>\n",
+  ),
+  (
+    "webkit01.dat:33", "document", "", "<div><b></div><div><nobr>a<nobr>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <b>\n|     <div>\n|       <b>\n|         <nobr>\n|           \"a\"\n|         <nobr>\n",
+  ),
+  (
+    "webkit01.dat:34", "document", "", "<head></head>\n<body></body>", "| <html>\n|   <head>\n|   \"\n\"\n|   <body>\n",
+  ),
+  (
+    "webkit01.dat:35", "document", "", "<head></head> <style></style>ddd", "| <html>\n|   <head>\n|     <style>\n|   \" \"\n|   <body>\n|     \"ddd\"\n",
+  ),
+  (
+    "webkit01.dat:36", "document", "", "<kbd><table></kbd><col><select><tr>", "| <html>\n|   <head>\n|   <body>\n|     <kbd>\n|       <select>\n|       <table>\n|         <colgroup>\n|           <col>\n|         <tbody>\n|           <tr>\n",
+  ),
+  (
+    "webkit01.dat:37", "document", "", "<kbd><table></kbd><col><select><tr></table><div>",
+    "| <html>\n|   <head>\n|   <body>\n|     <kbd>\n|       <select>\n|       <table>\n|         <colgroup>\n|           <col>\n|         <tbody>\n|           <tr>\n|       <div>\n",
+  ),
+  (
+    "webkit01.dat:38", "document", "", "<a><li><style></style><title></title></a>",
+    "| <html>\n|   <head>\n|   <body>\n|     <a>\n|     <li>\n|       <a>\n|         <style>\n|         <title>\n",
+  ),
+  (
+    "webkit01.dat:39", "document", "", "<font></p><p><meta><title></title></font>",
+    "| <html>\n|   <head>\n|   <body>\n|     <font>\n|       <p>\n|     <p>\n|       <font>\n|         <meta>\n|         <title>\n",
+  ),
+  (
+    "webkit01.dat:40", "document", "", "<a><center><title></title><a>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|     <center>\n|       <a>\n|         <title>\n|       <a>\n",
+  ),
+  (
+    "webkit01.dat:41", "document", "", "<svg><title><div>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg title>\n|         <div>\n",
+  ),
+  (
+    "webkit01.dat:42", "document", "", "<svg><title><rect><div>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg title>\n|         <rect>\n|           <div>\n",
+  ),
+  (
+    "webkit01.dat:43", "document", "", "<svg><title><svg><div>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg title>\n|         <svg svg>\n|         <div>\n",
+  ),
+  (
+    "webkit01.dat:44", "document", "", "<img <=\"\" FAIL>", "| <html>\n|   <head>\n|   <body>\n|     <img>\n|       <=\"\"\n|       fail=\"\"\n",
+  ),
+  (
+    "webkit01.dat:45", "document", "", "<ul><li><div id='foo'/>A</li><li>B<div>C</div></li></ul>",
+    "| <html>\n|   <head>\n|   <body>\n|     <ul>\n|       <li>\n|         <div>\n|           id=\"foo\"\n|           \"A\"\n|       <li>\n|         \"B\"\n|         <div>\n|           \"C\"\n",
+  ),
+  (
+    "webkit01.dat:46", "document", "", "<svg><em><desc></em>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|     <em>\n|       <desc>\n",
+  ),
+  (
+    "webkit01.dat:47", "document", "", "<table><tr><td><svg><desc><td></desc><circle>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <svg svg>\n|               <svg desc>\n|           <td>\n|             <circle>\n",
+  ),
+  (
+    "webkit01.dat:48", "document", "", "<svg><tfoot></mi><td>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg tfoot>\n|         <svg td>\n",
+  ),
+  (
+    "webkit01.dat:49", "document", "", "<math><mrow><mrow><mn>1</mn></mrow><mi>a</mi></mrow></math>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       <math mrow>\n|         <math mrow>\n|           <math mn>\n|             \"1\"\n|         <math mi>\n|           \"a\"\n",
+  ),
+  (
+    "webkit01.dat:50", "document", "", "<!doctype html><input type=\"hidden\"><frameset>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <frameset>\n",
+  ),
+  (
+    "webkit01.dat:51", "document", "", "<!doctype html><input type=\"button\"><frameset>",
+    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <input>\n|       type=\"button\"\n",
+  ),
+  (
+    "webkit02.dat:0", "document", "", "<foo bar=qux/>", "| <html>\n|   <head>\n|   <body>\n|     <foo>\n|       bar=\"qux/\"\n",
+  ),
+  (
+    "webkit02.dat:1", "document", "", "<p id=\"status\"><noscript><strong>A</strong></noscript><span>B</span></p>",
+    "| <html>\n|   <head>\n|   <body>\n|     <p>\n|       id=\"status\"\n|       <noscript>\n|         <strong>\n|           \"A\"\n|       <span>\n|         \"B\"\n",
+  ),
+  (
+    "webkit02.dat:2", "document", "", "<div><sarcasm><div></div></sarcasm></div>",
+    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <sarcasm>\n|         <div>\n",
+  ),
+  (
+    "webkit02.dat:3", "document", "", "<html><body><img src=\"\" border=\"0\" alt=\"><div>A</div></body></html>",
+    "| <html>\n|   <head>\n|   <body>\n",
+  ),
+  (
+    "webkit02.dat:4", "document", "", "<table><td></tbody>A", "| <html>\n|   <head>\n|   <body>\n|     \"A\"\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n",
+  ),
+  (
+    "webkit02.dat:5", "document", "", "<table><td></thead>A", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"A\"\n",
+  ),
+  (
+    "webkit02.dat:6", "document", "", "<table><td></tfoot>A", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             \"A\"\n",
+  ),
+  (
+    "webkit02.dat:7", "document", "", "<table><thead><td></tbody>A", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <thead>\n|         <tr>\n|           <td>\n|             \"A\"\n",
+  ),
+  (
+    "webkit02.dat:8", "document", "", "<legend>test</legend>", "| <html>\n|   <head>\n|   <body>\n|     <legend>\n|       \"test\"\n",
+  ),
+  (
+    "webkit02.dat:9", "document", "", "<table><input>", "| <html>\n|   <head>\n|   <body>\n|     <input>\n|     <table>\n",
+  ),
+  (
+    "webkit02.dat:10", "fragment", "div", "<b><em><dcell><postfield><postfield><postfield><postfield><missing_glyph><missing_glyph><missing_glyph><missing_glyph><hkern><aside></b></em>",
+    "| <b>\n|   <em>\n|     <dcell>\n|       <postfield>\n|         <postfield>\n|           <postfield>\n|             <postfield>\n|               <missing_glyph>\n|                 <missing_glyph>\n|                   <missing_glyph>\n|                     <missing_glyph>\n|                       <hkern>\n| <aside>\n|   <b>\n",
+  ),
+  (
+    "webkit02.dat:11", "document", "", "<b><em><foo><foo><aside></b>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <em>\n|         <foo>\n|           <foo>\n|     <em>\n|       <aside>\n|         <b>\n",
+  ),
+  (
+    "webkit02.dat:12", "document", "", "<b><em><foo><foo><aside></b></em>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <em>\n|         <foo>\n|           <foo>\n|     <em>\n|     <aside>\n|       <em>\n|         <b>\n",
+  ),
+  (
+    "webkit02.dat:13", "document", "", "<b><em><foo><foo><foo><aside></b>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <em>\n|         <foo>\n|           <foo>\n|             <foo>\n|     <aside>\n|       <b>\n",
+  ),
+  (
+    "webkit02.dat:14", "document", "", "<b><em><foo><foo><foo><aside></b></em>",
+    "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <em>\n|         <foo>\n|           <foo>\n|             <foo>\n|     <aside>\n|       <b>\n",
+  ),
+  (
+    "webkit02.dat:15", "fragment", "div", "<b><em><foo><foo><foo><foo><foo><foo><foo><foo><foo><foo><aside></b></em>",
+    "| <b>\n|   <em>\n|     <foo>\n|       <foo>\n|         <foo>\n|           <foo>\n|             <foo>\n|               <foo>\n|                 <foo>\n|                   <foo>\n|                     <foo>\n|                       <foo>\n| <aside>\n|   <b>\n",
+  ),
+  (
+    "webkit02.dat:16", "fragment", "div", "<b><em><foo><foob><foob><foob><foob><fooc><fooc><fooc><fooc><food><aside></b></em>",
+    "| <b>\n|   <em>\n|     <foo>\n|       <foob>\n|         <foob>\n|           <foob>\n|             <foob>\n|               <fooc>\n|                 <fooc>\n|                   <fooc>\n|                     <fooc>\n|                       <food>\n| <aside>\n|   <b>\n",
+  ),
+  (
+    "webkit02.dat:17", "fragment", "select", "<option><XH<optgroup></optgroup>",
+    "| <option>\n|   <xh<optgroup>\n",
+  ),
+  (
+    "webkit02.dat:18", "document", "", "<svg><foreignObject><div>foo</div><plaintext></foreignObject></svg><div>bar</div>",
+    "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg foreignObject>\n|         <div>\n|           \"foo\"\n|         <plaintext>\n|           \"</foreignObject></svg><div>bar</div>\"\n",
+  ),
+  (
+    "webkit02.dat:19", "document", "", "<svg><foreignObject></foreignObject><title></svg>foo",
+    "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       <svg foreignObject>\n|       <svg title>\n|     \"foo\"\n",
+  ),
+  (
+    "webkit02.dat:20", "document", "", "</foreignObject><plaintext><div>foo</div>",
+    "| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"<div>foo</div>\"\n",
+  ),
+  (
+    "webkit02.dat:21", "document", "", "<svg xml:base xml:lang xml:space xml:baaah definitionurl>",
+    "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       definitionurl=\"\"\n|       xml lang=\"\"\n|       xml space=\"\"\n|       xml:baaah=\"\"\n|       xml:base=\"\"\n",
+  ),
+  (
+    "webkit02.dat:22", "document", "", "<math definitionurl xlink:title xlink:show>",
+    "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       definitionURL=\"\"\n|       xlink show=\"\"\n|       xlink title=\"\"\n",
+  ),
+  (
+    "webkit02.dat:23", "document", "", "<math DEFINITIONURL>", "| <html>\n|   <head>\n|   <body>\n|     <math math>\n|       definitionURL=\"\"\n",
+  ),
+  (
+    "webkit02.dat:24", "document", "", "<select><hr>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <hr>\n",
+  ),
+  (
+    "webkit02.dat:25", "document", "", "<select><option><hr>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|       <hr>\n",
+  ),
+  (
+    "webkit02.dat:26", "document", "", "<select><optgroup><option><hr>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <optgroup>\n|         <option>\n|       <hr>\n",
+  ),
+  (
+    "webkit02.dat:27", "document", "", "<select><optgroup><hr>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <optgroup>\n|       <hr>\n",
+  ),
+  (
+    "webkit02.dat:28", "document", "", "<select><option><optgroup><hr>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|       <optgroup>\n|       <hr>\n",
+  ),
+  (
+    "webkit02.dat:29", "document", "", "<table><tr><td><select><hr>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <hr>\n",
+  ),
+  (
+    "webkit02.dat:30", "document", "", "<table><tr><td><select><option><hr>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <option>\n|               <hr>\n",
+  ),
+  (
+    "webkit02.dat:31", "document", "", "<table><tr><td><select><optgroup><option><hr>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <optgroup>\n|                 <option>\n|               <hr>\n",
+  ),
+  (
+    "webkit02.dat:32", "document", "", "<table><tr><td><select><optgroup><hr>", "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <optgroup>\n|               <hr>\n",
+  ),
+  (
+    "webkit02.dat:33", "document", "", "<table><tr><td><select><option><optgroup><hr>",
+    "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <option>\n|               <optgroup>\n|               <hr>\n",
+  ),
+  (
+    "webkit02.dat:34", "document", "", "<select><div><i></div><option>option", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <div>\n|         <i>\n|       <i>\n|         <option>\n|           \"option\"\n",
+  ),
+  (
+    "webkit02.dat:35", "document", "", "<div><i></div><option>option", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <i>\n|     <i>\n|       <option>\n|         \"option\"\n",
+  ),
+  (
+    "webkit02.dat:36", "document", "", "<select><div>div 1</div><button>button</button><div>div 2</div><datalist><option>option</option></datalist><div>div 3</div></select>",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <div>\n|         \"div 1\"\n|       <button>\n|         \"button\"\n|       <div>\n|         \"div 2\"\n|       <datalist>\n|         <option>\n|           \"option\"\n|       <div>\n|         \"div 3\"\n",
+  ),
+  (
+    "webkit02.dat:37", "document", "", "<select><button>button</select>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         \"button\"\n",
+  ),
+  (
+    "webkit02.dat:38", "document", "", "<select><datalist>datalist</select>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <datalist>\n|         \"datalist\"\n",
+  ),
+  (
+    "webkit02.dat:39", "document", "", "<select><button><select></select></button></select>",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n",
+  ),
+  (
+    "webkit02.dat:40", "document", "", "<select><button><div><select></select>",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         <div>\n",
+  ),
+  (
+    "webkit02.dat:41", "document", "", "<select><div><option><img>option</option></div></select>",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <div>\n|         <option>\n|           <img>\n|           \"option\"\n",
+  ),
+  (
+    "webkit02.dat:42", "document", "", "<select><input>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|     <input>\n",
+  ),
+  (
+    "webkit02.dat:43", "document", "", "<select><button><selectedcontent></button><option>X",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         <selectedcontent>\n|           \"X\"\n|       <option>\n|         \"X\"\n",
+  ),
+  (
+    "webkit02.dat:44", "document", "", "<select><button><selectedcontent></button><option>x<i>i<b>ib</i>b",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         <selectedcontent>\n|           \"x\"\n|           <i>\n|             \"i\"\n|             <b>\n|               \"ib\"\n|           <b>\n|             \"b\"\n|       <option>\n|         \"x\"\n|         <i>\n|           \"i\"\n|           <b>\n|             \"ib\"\n|         <b>\n|           \"b\"\n",
+  ),
+  (
+    "webkit02.dat:45", "document", "", "<select><button><selectedcontent></button><option>X<option>Y",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         <selectedcontent>\n|           \"X\"\n|       <option>\n|         \"X\"\n|       <option>\n|         \"Y\"\n",
+  ),
+  (
+    "webkit02.dat:46", "document", "", "<select><button><selectedcontent></button><option>X<option selected>Y",
+    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         <selectedcontent>\n|           \"Y\"\n|       <option>\n|         \"X\"\n|       <option>\n|         selected=\"\"\n|         \"Y\"\n",
+  ),
+  (
+    "webkit02.dat:47", "document", "", "<font><select><option>a</option></font></select>",
+    "| <html>\n|   <head>\n|   <body>\n|     <font>\n|       <select>\n|         <option>\n|           \"a\"\n",
+  ),
 ]
-
-///|
-/// Compare the parser against html5lib's tree-construction corpus, case by
-/// case, in html5lib's own spelling.
-///
-/// The number is a floor, not a ceiling: `scripts/gen_html5lib.py`
-/// regenerates the fixture, and the floor rises as the remaining gaps close.
-/// The cases that still differ are concentrated in the adoption agency's
-/// pathological corners and in the older documents whose expectations predate
-/// the current insertion modes.
-test "the corpus: 817 of 1105 documents reproduce exactly" {
-  let mut passed = 0
-  let failed : Array[String] = []
-  for entry in corpus {
-    let (name, source, expected) = entry
-    let got = shape(source)
-    if got == expected {
-      passed = passed + 1
-    } else if failed.length() < 5 {
-      failed.push(name)
-    }
-  }
-  let mut report = "\{passed} of \{corpus.length()}"
-  for name in failed {
-    report = report + "\n  " + name
-  }
-  assert_eq(passed >= 817, true)
-  ignore(report)
-}

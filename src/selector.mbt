@@ -41,6 +41,7 @@ pub struct SelectorFn {
 }
 
 ///|
+/// A selector made of a closure: the shape one with no state of its own takes.
 pub fn SelectorFn::new(
   f : (Selection, String) -> Selection raise Refused,
 ) -> SelectorFn {

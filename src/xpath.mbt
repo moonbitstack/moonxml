@@ -8,8 +8,8 @@
 /// node-set, or the string value of anything else as one text node, so the
 /// chain never breaks.
 ///
-/// Two documented departures: the `namespace` axis answers empty, because the
-/// tree carries Clark names rather than namespace nodes; and the attribute
+/// Two documented departures: the `space` axis answers empty, because the
+/// tree carries Clark names rather than space nodes; and the attribute
 /// axis answers each value as a text node, because attributes are not nodes in
 /// this tree — which is what makes `//a/@href` answer the links' URLs.
 
@@ -712,7 +712,7 @@ fn axis_of(name : String) -> Axis? {
     "following" => Some(Axis::Following)
     "preceding" => Some(Axis::Preceding)
     "attribute" => Some(Axis::Attribute)
-    "namespace" => Some(Axis::Namespace)
+    "space" => Some(Axis::Namespace)
     "self" => Some(Axis::SelfAxis)
     "descendant-or-self" => Some(Axis::DescendantOrSelf)
     "ancestor-or-self" => Some(Axis::AncestorOrSelf)
@@ -1501,8 +1501,8 @@ fn call(
     "position" => Num(ctx.order.to_double())
     "count" => Num(nodes_arg(args, 0, ctx, doc).length().to_double())
     "id" => id_function(args, ctx, doc)
-    "local-name" => name_part(args, ctx, doc, LocalName)
-    "namespace-uri" => name_part(args, ctx, doc, NamespaceUri)
+    "local_name-name" => name_part(args, ctx, doc, LocalName)
+    "space-uri" => name_part(args, ctx, doc, NamespaceUri)
     "name" => name_part(args, ctx, doc, FullName)
     "string" =>
       if args.is_empty() {
@@ -2006,6 +2006,7 @@ pub fn Selection::xpath_value(
 }
 
 ///|
+/// Narrow to the nodes an XPath 1.0 expression answers from this element.
 pub fn Element::xpath(
   self : Element,
   query : String,
@@ -2014,6 +2015,7 @@ pub fn Element::xpath(
 }
 
 ///|
+/// The typed answer of an XPath 1.0 expression, read from this element.
 pub fn Element::xpath_value(
   self : Element,
   query : String,
@@ -2022,11 +2024,13 @@ pub fn Element::xpath_value(
 }
 
 ///|
+/// Narrow to the nodes an XPath 1.0 expression answers from this node.
 pub fn Node::xpath(self : Node, query : String) -> Selection raise Refused {
   selection_of(self).xpath(query)
 }
 
 ///|
+/// The typed answer of an XPath 1.0 expression, read from this node.
 pub fn Node::xpath_value(
   self : Node,
   query : String,
@@ -2035,6 +2039,7 @@ pub fn Node::xpath_value(
 }
 
 ///|
+/// Narrow to the nodes an XPath 1.0 expression answers, over the whole document.
 pub fn Document::xpath(
   self : Document,
   query : String,
@@ -2043,6 +2048,7 @@ pub fn Document::xpath(
 }
 
 ///|
+/// The typed answer of an XPath 1.0 expression, read from the whole document.
 pub fn Document::xpath_value(
   self : Document,
   query : String,

@@ -278,6 +278,7 @@ pub fn Selection::descendants(self : Selection) -> Selection {
 // Reading.
 
 ///|
+/// How many nodes the selection holds.
 pub fn Selection::length(self : Selection) -> Int32 {
   self.items.length()
 }
@@ -305,6 +306,7 @@ pub fn Selection::html(self : Selection) -> String {
 }
 
 ///|
+/// The element's inner markup, written in the flavour its document was read as.
 pub fn Element::html(self : Element) -> String {
   inner_html(self)
 }
@@ -343,6 +345,7 @@ pub fn Selection::attr(self : Selection, name : String) -> String? {
 // Editing. Each verb applies to every selected element.
 
 ///|
+/// Append a node to every selected element.
 pub fn Selection::append(self : Selection, node : Node) -> Unit {
   for item in self.items {
     if item is ElementNode(data) {
@@ -352,6 +355,7 @@ pub fn Selection::append(self : Selection, node : Node) -> Unit {
 }
 
 ///|
+/// Insert a node as the first child of every selected element.
 pub fn Selection::prepend(self : Selection, node : Node) -> Unit {
   for item in self.items {
     if item is ElementNode(data) {
@@ -361,6 +365,7 @@ pub fn Selection::prepend(self : Selection, node : Node) -> Unit {
 }
 
 ///|
+/// Detach every selected element from its parent.
 pub fn Selection::remove(self : Selection) -> Unit {
   for item in self.items {
     if item is ElementNode(data) {
@@ -370,6 +375,7 @@ pub fn Selection::remove(self : Selection) -> Unit {
 }
 
 ///|
+/// Put a node in the place of every selected element.
 pub fn Selection::replace_with(self : Selection, node : Node) -> Unit {
   for item in self.items {
     if item is ElementNode(data) {
@@ -379,6 +385,7 @@ pub fn Selection::replace_with(self : Selection, node : Node) -> Unit {
 }
 
 ///|
+/// Replace every selected element with its children.
 pub fn Selection::unwrap(self : Selection) -> Unit {
   for item in self.items {
     if item is ElementNode(data) {
@@ -388,6 +395,7 @@ pub fn Selection::unwrap(self : Selection) -> Unit {
 }
 
 ///|
+/// Wrap every selected element in a fresh element of this name.
 pub fn Selection::wrap(self : Selection, name : String) -> Unit {
   for item in self.items {
     if item is ElementNode(data) {
@@ -397,6 +405,7 @@ pub fn Selection::wrap(self : Selection, name : String) -> Unit {
 }
 
 ///|
+/// Drop the children of every selected element.
 pub fn Selection::clear(self : Selection) -> Unit {
   for item in self.items {
     if item is ElementNode(data) {
@@ -406,6 +415,7 @@ pub fn Selection::clear(self : Selection) -> Unit {
 }
 
 ///|
+/// Replace the children of every selected element with one text node.
 pub fn Selection::set_text(self : Selection, text : String) -> Unit {
   for item in self.items {
     if item is ElementNode(data) {
@@ -416,6 +426,7 @@ pub fn Selection::set_text(self : Selection, text : String) -> Unit {
 }
 
 ///|
+/// Set an attribute on every selected element.
 pub fn Selection::set_attr(
   self : Selection,
   name : String,
@@ -429,6 +440,7 @@ pub fn Selection::set_attr(
 }
 
 ///|
+/// Remove an attribute from every selected element.
 pub fn Selection::remove_attr(self : Selection, name : String) -> Unit {
   for item in self.items {
     if item is ElementNode(data) {
@@ -438,6 +450,7 @@ pub fn Selection::remove_attr(self : Selection, name : String) -> Unit {
 }
 
 ///|
+/// Add a class to every selected element.
 pub fn Selection::add_class(self : Selection, name : String) -> Unit {
   for item in self.items {
     if item is ElementNode(data) {
@@ -447,6 +460,7 @@ pub fn Selection::add_class(self : Selection, name : String) -> Unit {
 }
 
 ///|
+/// Remove a class from every selected element.
 pub fn Selection::remove_class(self : Selection, name : String) -> Unit {
   for item in self.items {
     if item is ElementNode(data) {
@@ -456,6 +470,7 @@ pub fn Selection::remove_class(self : Selection, name : String) -> Unit {
 }
 
 ///|
+/// Fuse adjacent text nodes under every selected element.
 pub fn Selection::smooth(self : Selection) -> Unit {
   for item in self.items {
     if item is ElementNode(data) {
@@ -469,31 +484,37 @@ pub fn Selection::smooth(self : Selection) -> Unit {
 // query methods answer an empty selection.
 
 ///|
+/// Narrow to the descendants of this element that match a CSS selector.
 pub fn Element::css(self : Element, query : String) -> Selection raise Refused {
   selection_of(ElementNode(self)).css(query)
 }
 
 ///|
+/// The descendants of this element whose `id` attribute is `id`.
 pub fn Element::by_id(self : Element, id : String) -> Selection {
   selection_of(ElementNode(self)).by_id(id)
 }
 
 ///|
+/// The descendants of this element that carry the class `name`.
 pub fn Element::by_class(self : Element, name : String) -> Selection {
   selection_of(ElementNode(self)).by_class(name)
 }
 
 ///|
+/// The descendants of this element named `name`; `*` answers every element.
 pub fn Element::by_tag(self : Element, name : String) -> Selection {
   selection_of(ElementNode(self)).by_tag(name)
 }
 
 ///|
+/// The descendants of this element whose `name` attribute is `name`.
 pub fn Element::by_name(self : Element, name : String) -> Selection {
   selection_of(ElementNode(self)).by_name(name)
 }
 
 ///|
+/// The nearest ancestor of this element, itself included, that matches a CSS selector.
 pub fn Element::closest(
   self : Element,
   query : String,
@@ -502,6 +523,7 @@ pub fn Element::closest(
 }
 
 ///|
+/// Run the selector registered under `name`, over this element's descendants.
 pub fn Element::selector(
   self : Element,
   name : String,
@@ -511,6 +533,7 @@ pub fn Element::selector(
 }
 
 ///|
+/// Run a selector that was never registered, over this element's descendants.
 pub fn Element::custom(
   self : Element,
   sel : &Selector,
@@ -519,6 +542,7 @@ pub fn Element::custom(
 }
 
 ///|
+/// Narrow to the descendants of this node that match a CSS selector; a node that is not an element answers empty.
 pub fn Node::css(self : Node, query : String) -> Selection raise Refused {
   match self {
     ElementNode(data) => data.css(query)
@@ -527,6 +551,7 @@ pub fn Node::css(self : Node, query : String) -> Selection raise Refused {
 }
 
 ///|
+/// The descendants of this node whose `id` attribute is `id`.
 pub fn Node::by_id(self : Node, id : String) -> Selection {
   match self {
     ElementNode(data) => data.by_id(id)
@@ -535,6 +560,7 @@ pub fn Node::by_id(self : Node, id : String) -> Selection {
 }
 
 ///|
+/// The descendants of this node that carry the class `name`.
 pub fn Node::by_class(self : Node, name : String) -> Selection {
   match self {
     ElementNode(data) => data.by_class(name)
@@ -543,6 +569,7 @@ pub fn Node::by_class(self : Node, name : String) -> Selection {
 }
 
 ///|
+/// The descendants of this node named `name`.
 pub fn Node::by_tag(self : Node, name : String) -> Selection {
   match self {
     ElementNode(data) => data.by_tag(name)
@@ -551,6 +578,7 @@ pub fn Node::by_tag(self : Node, name : String) -> Selection {
 }
 
 ///|
+/// The descendants of this node whose `name` attribute is `name`.
 pub fn Node::by_name(self : Node, name : String) -> Selection {
   match self {
     ElementNode(data) => data.by_name(name)
@@ -559,6 +587,7 @@ pub fn Node::by_name(self : Node, name : String) -> Selection {
 }
 
 ///|
+/// The nearest ancestor of this node, itself included, that matches a CSS selector.
 pub fn Node::closest(self : Node, query : String) -> Selection raise Refused {
   match self {
     ElementNode(data) => data.closest(query)
@@ -567,6 +596,7 @@ pub fn Node::closest(self : Node, query : String) -> Selection raise Refused {
 }
 
 ///|
+/// Run the selector registered under `name`, over this node's descendants.
 pub fn Node::selector(
   self : Node,
   name : String,
@@ -579,6 +609,7 @@ pub fn Node::selector(
 }
 
 ///|
+/// Run a selector that was never registered, over this node's descendants.
 pub fn Node::custom(self : Node, sel : &Selector) -> Selection raise Refused {
   match self {
     ElementNode(data) => data.custom(sel)
