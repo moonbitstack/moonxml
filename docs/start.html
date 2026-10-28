@@ -148,6 +148,53 @@ feed.<span class="f">dumps</span>() == src                    <span class="cm">/
 <span class="f">@xml.scan</span>(<span class="s">"&lt;a&gt;&lt;b/&gt;&lt;c/&gt;&lt;/a&gt;"</span>, tagger)
 println(tagger.tags)                    <span class="cm">// 3, no tree built</span></pre>
 
+      </li>
+
+      <li>
+        <h3>Entities, defaults and the internal subset</h3>
+        <p>XML's doctype declares things, and a reader that ignores it cannot read the document. Entity references expand, attribute defaults fill in, and a document that expands past a million characters is refused rather than read.</p>
+        <p class="filename">step8.mbt</p>
+<pre><span class="k">let</span> doc = <span class="f">@xml.loads</span>(
+  <span class="s">"&lt;!DOCTYPE r [&lt;!ENTITY who 'the reader'&gt;"</span> +
+  <span class="s">"&lt;!ATTLIST r kind CDATA 'plain'&gt;]&gt;&lt;r&gt;hello &amp;who;&lt;/r&gt;"</span>)
+
+doc.<span class="f">css</span>(<span class="s">"r"</span>).<span class="f">text</span>()                <span class="cm">// "hello the reader"</span>
+doc.<span class="f">css</span>(<span class="s">"r"</span>).<span class="f">attr</span>(<span class="s">"kind"</span>)           <span class="cm">// Some("plain")</span>
+doc.<span class="f">unresolved</span>()                     <span class="cm">// [], nothing was out of reach</span></pre>
+        <p>An entity that lives in a file beside the document is not fetched — this library does no I/O — and <code>unresolved()</code> names what was skipped, which is what XML 1.0 asks a non-validating processor to do.</p>
+      </li>
+
+      <li>
+        <h3>SVG, MathML and templates</h3>
+        <p>HTML's foreign content is parsed as foreign, so an SVG subtree keeps its own spelling and its own namespace, and a template keeps its contents to itself.</p>
+        <p class="filename">step9.mbt</p>
+<pre><span class="k">let</span> page = <span class="f">@html.loads</span>(<span class="s">"&lt;svg viewBox='0 0 1 1'&gt;&lt;clipPath/&gt;&lt;/svg&gt;"</span>)
+
+page.<span class="f">css</span>(<span class="s">"svg"</span>).<span class="f">items</span>[<span class="s">0</span>].<span class="f">name</span>()   <span class="cm">// {http://www.w3.org/2000/svg}svg</span>
+page.<span class="f">css</span>(<span class="s">"clipPath"</span>).<span class="f">length</span>()        <span class="cm">// 1 — the name keeps its capital</span>
+page.<span class="f">css</span>(<span class="s">"svg"</span>).<span class="f">attr</span>(<span class="s">"viewBox"</span>)     <span class="cm">// Some("0 0 1 1")</span>
+
+<span class="k">let</span> with_template = <span class="f">@html.loads</span>(<span class="s">"&lt;template&gt;&lt;p&gt;inert&lt;/p&gt;&lt;/template&gt;"</span>)
+with_template.<span class="f">css</span>(<span class="s">"p"</span>).<span class="f">length</span>()      <span class="cm">// 0 — nothing in a template is in the document</span>
+with_template.<span class="f">css</span>(<span class="s">"template"</span>).<span class="f">items</span>[<span class="s">0</span>].<span class="f">content</span>()
+                                      <span class="cm">// the fragment it holds, children and all</span></pre>
+      </li>
+
+      <li>
+        <h3>Read a fragment the way innerHTML does</h3>
+        <p>A fragment is markup without a document around it, read inside an element named as the context.</p>
+        <p class="filename">step10.mbt</p>
+<pre><span class="k">let</span> cells = <span class="f">@html.loads_fragment</span>(
+  <span class="s">"&lt;tr&gt;&lt;td&gt;a&lt;/td&gt;&lt;/tr&gt;"</span>, context=<span class="s">"tbody"</span>)
+cells.<span class="f">css</span>(<span class="s">"td"</span>).<span class="f">text</span>()               <span class="cm">// "a"</span>
+cells.<span class="f">css</span>(<span class="s">"tr"</span>).<span class="f">length</span>()              <span class="cm">// 1</span>
+
+<span class="f">@html.loads_fragment</span>(<span class="s">"&lt;desc&gt;&lt;b&gt;x&lt;/b&gt;&lt;/desc&gt;"</span>, context=<span class="s">"svg svg"</span>)
+  .<span class="f">css</span>(<span class="s">"b"</span>).<span class="f">length</span>()                 <span class="cm">// 1, an HTML tag inside SVG's integration point</span></pre>
+      </li>
+
+      <li>
+        <h3>Then the API</h3>
         <div class="callout"><b>Next:</b> the <a href="api.html">complete API</a>, or <a href="inside.html">how the parsers and the chain work</a>.</div>
       </li>
 

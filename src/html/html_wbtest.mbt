@@ -368,3 +368,84 @@ test "bytes that are not UTF-8 read as replacement characters" {
   let doc = load(b"<p>a\xFFb</p>")
   assert_eq(doc.css("p").text(), "a\u{FFFD}b")
 }
+
+///|
+test "an SVG subtree keeps its namespace and its spelling" {
+  let page = loads("<svg viewBox='0 0 1 1'><clipPath/></svg>")
+  assert_eq(page.css("svg").items[0].name(), "{http://www.w3.org/2000/svg}svg")
+  assert_eq(page.css("clipPath").length(), 1)
+  assert_eq(page.css("svg").attr("viewBox"), Some("0 0 1 1"))
+}
+
+///|
+test "MathML is MathML, and HTML resumes inside its text integration points" {
+  let page = loads("<math><mi>x<b>y</b></mi></math>")
+  assert_eq(
+    page.css("mi").items[0].name(),
+    "{http://www.w3.org/1998/Math/MathML}mi",
+  )
+  // what is inside an mi is HTML again
+  assert_eq(page.css("b").items[0].name(), "b")
+  assert_eq(page.css("b").text(), "y")
+}
+
+///|
+test "an HTML tag inside SVG breaks out of it" {
+  let page = loads("<svg><g/><p>x</p></svg>")
+  assert_eq(page.css("p").length(), 1)
+  assert_eq(page.css("p").text(), "x")
+  // the p is not inside the svg: the breakout closed it
+  assert_eq(page.css("svg").items[0].children().length(), 1)
+}
+
+///|
+test "a template keeps its contents to itself" {
+  let page = loads("<template><p>inert</p></template>")
+  assert_eq(page.css("p").length(), 0)
+  let templates = page.css("template")
+  assert_eq(templates.length(), 1)
+  match templates.items[0] {
+    ElementNode(element) => {
+      let content = element.content().unwrap()
+      assert_eq(content.children.length(), 1)
+      assert_eq(content.children[0].name(), "p")
+    }
+    _ => assert_eq(true, false)
+  }
+  // and the writer puts them back inside the template
+  assert_eq(
+    page.dumps_html().contains("<template><p>inert</p></template>"),
+    true,
+  )
+}
+
+///|
+test "a frameset document is a document" {
+  let page = loads("<frameset><frame src=x></frameset>")
+  assert_eq(page.css("frameset").length(), 1)
+  assert_eq(page.css("frame").attr("src"), Some("x"))
+  assert_eq(page.css("body").length(), 0)
+}
+
+///|
+test "a fragment reads in the element its context names" {
+  let cells = loads_fragment("<tr><td>a</td></tr>", context="tbody")
+  assert_eq(cells.css("td").text(), "a")
+  assert_eq(cells.css("tr").length(), 1)
+  // a foreign context: HTML resumes inside an SVG integration point
+  let inside = loads_fragment("<desc><b>x</b></desc>", context="svg svg")
+  assert_eq(inside.css("b").length(), 1)
+  assert_eq(inside.css("b").text(), "x")
+}
+
+///|
+test "an unclosed template at the end of a document still holds its content" {
+  let page = loads("<template><b>x")
+  match page.css("template").items[0] {
+    ElementNode(element) => {
+      let content = element.content().unwrap()
+      assert_eq(content.children[0].name(), "b")
+    }
+    _ => assert_eq(true, false)
+  }
+}

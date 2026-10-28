@@ -216,6 +216,15 @@ fn write_html(node : Node, out : StringBuilder, raw~ : Bool) -> Unit {
       for child in data.children {
         write_html(child, out, raw=raw_here || raw)
       }
+      // A template's children are its contents, and they belong inside the
+      // element when it is written.
+      match data.content() {
+        Some(fragment) =>
+          for child in fragment.children {
+            write_html(child, out, raw=raw_here || raw)
+          }
+        None => ()
+      }
       out.write_string("</" + tag + ">")
     }
     TextNode(text) =>

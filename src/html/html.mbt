@@ -59,13 +59,17 @@ pub fn loads_fragment(
   }
   builder.mode = mode_for_context(element)
   let lexer = Lexer::new(preprocess(text), builder)
-  lexer.raw_name = local_name
-  match local_name {
-    "title" | "textarea" => lexer.state = Rcdata
-    "style" | "xmp" | "iframe" | "noembed" | "noframes" => lexer.state = Rawtext
-    "script" => lexer.state = ScriptData
-    "plaintext" => lexer.state = Plaintext
-    _ => ()
+  // A fragment has no start tag of its own, so no end tag in it is "the
+  // appropriate one": raw text runs to the end of the input.
+  if space == html_namespace {
+    match local_name {
+      "title" | "textarea" => lexer.state = Rcdata
+      "style" | "xmp" | "iframe" | "noembed" | "noframes" =>
+        lexer.state = Rawtext
+      "script" => lexer.state = ScriptData
+      "plaintext" => lexer.state = Plaintext
+      _ => ()
+    }
   }
   tokenize(lexer)
   finish(builder)

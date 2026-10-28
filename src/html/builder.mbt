@@ -86,6 +86,8 @@ priv struct Builder {
   /// Set when the element just opened keeps a newline it did not write: a
   /// `<pre>` whose content begins with one loses it.
   mut skip_lf : Bool
+  /// The mode to go back to when the characters a table was holding are done.
+  mut prior_mode : Mode
   /// The characters "in table text" is holding.
   mut pending : StringBuilder
   mut pending_space : Bool
@@ -111,6 +113,7 @@ fn Builder::new(doc : @moonxml.Document) -> Builder {
     frameset_ok: true,
     foster: false,
     skip_lf: false,
+    prior_mode: InBody,
     pending: StringBuilder(),
     pending_space: true,
     context: None,
@@ -602,9 +605,8 @@ fn push_afe(b : Builder, element : @moonxml.Element) -> Unit {
       Some(have) =>
         if have.name == element.name && same_attrs(have, element) {
           identical = identical + 1
-          if first_identical < 0 {
-            first_identical = k
-          }
+          // The earliest of them is the one Noah's Ark drops.
+          first_identical = k
         }
     }
     k = k - 1

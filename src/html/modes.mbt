@@ -1189,6 +1189,7 @@ fn in_table(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
       if is_table_part(current(b).name) {
         b.pending = StringBuilder()
         b.pending_space = true
+        b.prior_mode = b.mode
         b.mode = InTableText
         dispatch(b, lx, token, depth + 1)
       } else {
@@ -1307,7 +1308,7 @@ fn in_table_text(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit 
       b.pending = StringBuilder()
       let was_space = b.pending_space
       b.pending_space = true
-      b.mode = InTable
+      b.mode = b.prior_mode
       if !held.is_empty() {
         if was_space {
           insert_text(b, held)
@@ -1632,12 +1633,13 @@ fn in_select(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
             pop_until_name(b, "select")
             reset_mode(b)
           }
-        "input" | "keygen" | "textarea" =>
+        "input" =>
           if has_in_scope(b, "select", Select) {
             pop_until_name(b, "select")
             reset_mode(b)
             dispatch(b, lx, token, depth + 1)
           }
+        "keygen" | "textarea" => in_body(b, lx, token, depth + 1)
         "script" | "template" =>
           in_head(b, lx, StartTag(name~, attrs~, self_closing~), depth + 1)
         _ => in_body(b, lx, StartTag(name~, attrs~, self_closing~), depth + 1)
@@ -1810,6 +1812,9 @@ fn after_body(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
         if b.context is None {
           b.mode = AfterAfterBody
         }
+      } else {
+        b.mode = InBody
+        dispatch(b, lx, token, depth + 1)
       }
     Eof => ()
   }
@@ -1935,6 +1940,15 @@ fn after_after_frameset(
 /// Work out the mode from the stack, the standard's "reset the insertion mode
 /// appropriately".
 fn reset_mode(b : Builder) -> Unit {
+  // The bottom of the stack is the root, and in a fragment that root stands
+  // for the context element: the body's rules are the ones to go back to.
+  if b.stack.length() <= 1 {
+    b.mode = match b.context {
+      Some(_) => InBody
+      None => if b.head is None { BeforeHead } else { AfterHead }
+    }
+    return
+  }
   let mut k = b.stack.length() - 1
   while k >= 0 {
     let node = b.stack[k]
@@ -2028,7 +2042,12 @@ fn foreign_content(
   depth : Int32,
 ) -> Unit {
   match token {
-    Characters(text~) => insert_text(b, replace_nulls(text))
+    Characters(text~) => {
+      insert_text(b, replace_nulls(text))
+      if !is_space_text(text) && !only_nulls(text) {
+        b.frameset_ok = false
+      }
+    }
     CommentToken(text~) => insert_comment(b, text)
     DoctypeToken(_) => ()
     StartTag(name~, attrs~, self_closing~) => {
@@ -2104,6 +2123,18 @@ fn foreign_content(
     }
     Eof => in_body(b, lx, token, depth + 1)
   }
+}
+
+///|
+/// Whether every character in the run is U+0000, which foreign content reads as
+/// a replacement character and does not count as content.
+fn only_nulls(text : String) -> Bool {
+  for ch in text {
+    if ch != '\u{0}' {
+      return false
+    }
+  }
+  true
 }
 
 ///|

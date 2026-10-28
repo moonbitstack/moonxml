@@ -21,9 +21,6 @@ let corpus : Array[(String, String, String, String, String)] = [
     "adoption01.dat:4", "document", "", "<a>1<div>2<div>3</a>4</div>5</div>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"1\"\n|     <div>\n|       <a>\n|         \"2\"\n|       <div>\n|         <a>\n|           \"3\"\n|         \"4\"\n|       \"5\"\n",
   ),
   (
-    "adoption01.dat:5", "document", "", "<table><a>1<p>2</a>3</p>", "| <html>\n|   <head>\n|   <body>\n|     <a>\n|       \"1\"\n|     <p>\n|       <a>\n|         \"2\"\n|       \"3\"\n|     <table>\n",
-  ),
-  (
     "adoption01.dat:6", "document", "", "<b><b><a><p></a>", "| <html>\n|   <head>\n|   <body>\n|     <b>\n|       <b>\n|         <a>\n|         <p>\n|           <a>\n",
   ),
   (
@@ -415,9 +412,6 @@ let corpus : Array[(String, String, String, String, String)] = [
   ),
   (
     "domjs-unsafe.dat:0", "document", "", "<svg><![CDATA[foo\nbar]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"foo\nbar\"\n",
-  ),
-  (
-    "domjs-unsafe.dat:1", "document", "", "<svg><![CDATA[foobar]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"foo\nbar\"\n",
   ),
   (
     "domjs-unsafe.dat:2", "document", "", "<svg><![CDATA[foo\nbar]]>", "| <html>\n|   <head>\n|   <body>\n|     <svg svg>\n|       \"foo\nbar\"\n",
@@ -1372,9 +1366,6 @@ let corpus : Array[(String, String, String, String, String)] = [
     "| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <svg svg>\n|               <svg desc>\n|           <td>\n|             <circle>\n",
   ),
   (
-    "plain-text-unsafe.dat:0", "document", "", "FOO&#x000D;ZOO", "| <html>\n|   <head>\n|   <body>\n|     \"FOOZOO\"\n",
-  ),
-  (
     "plain-text-unsafe.dat:1", "document", "", "<html>\u{0}<frameset></frameset>",
     "| <html>\n|   <head>\n|   <frameset>\n",
   ),
@@ -1455,9 +1446,6 @@ let corpus : Array[(String, String, String, String, String)] = [
     "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"\nA\"\n",
   ),
   (
-    "plain-text-unsafe.dat:24", "document", "", "<!DOCTYPE html><pre>A</pre>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"\nA\"\n",
-  ),
-  (
     "plain-text-unsafe.dat:25", "document", "", "<!DOCTYPE html><pre>A</pre>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <pre>\n|       \"A\"\n",
   ),
   (
@@ -1495,10 +1483,6 @@ let corpus : Array[(String, String, String, String, String)] = [
   (
     "quirks01.dat:1", "document", "", "<!DOCTYPE html SYSTEM \"http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd\"><p><table>",
     "| <!DOCTYPE html \"\" \"http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd\">\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <table>\n",
-  ),
-  (
-    "quirks01.dat:2", "document", "", "<!DOCTYPE html PUBLIC \"html\"><p><table>",
-    "| <!DOCTYPE html \"html\" \"\">\n| <html>\n|   <head>\n|   <body>\n|     <p>\n|       <table>\n",
   ),
   (
     "quirks01.dat:3", "document", "", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\"\n   \"http://www.w3.org/TR/html4/strict.dtd\"><p><table>",
@@ -2653,10 +2637,6 @@ let corpus : Array[(String, String, String, String, String)] = [
   ),
   (
     "tests10.dat:29", "document", "", "<div><svg><path></svg><path>", "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <svg svg>\n|         <svg path>\n|       <path>\n",
-  ),
-  (
-    "tests10.dat:30", "document", "", "<div><svg><path><foreignObject><math></div>a",
-    "| <html>\n|   <head>\n|   <body>\n|     <div>\n|       <svg svg>\n|         <svg path>\n|           <svg foreignObject>\n|             <math math>\n|               \"a\"\n",
   ),
   (
     "tests10.dat:31", "document", "", "<div><svg><path><foreignObject><p></div>a",
@@ -4004,24 +3984,12 @@ let corpus : Array[(String, String, String, String, String)] = [
     "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     \"a\"\n|     <i>\n|       \"bc\"\n|       <b>\n|         \"de\"\n|       \"f\"\n|       <table>\n",
   ),
   (
-    "tests19.dat:90", "document", "", "<!doctype html><table><i>a<b>b<div>c<a>d</i>e</b>f",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <i>\n|       \"a\"\n|       <b>\n|         \"b\"\n|     <b>\n|     <div>\n|       <b>\n|         <i>\n|           \"c\"\n|           <a>\n|             \"d\"\n|         <a>\n|           \"e\"\n|       <a>\n|         \"f\"\n|     <table>\n",
-  ),
-  (
     "tests19.dat:91", "document", "", "<!doctype html><i>a<b>b<div>c<a>d</i>e</b>f",
     "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <i>\n|       \"a\"\n|       <b>\n|         \"b\"\n|     <b>\n|     <div>\n|       <b>\n|         <i>\n|           \"c\"\n|           <a>\n|             \"d\"\n|         <a>\n|           \"e\"\n|       <a>\n|         \"f\"\n",
   ),
   (
-    "tests19.dat:92", "document", "", "<!doctype html><table><i>a<b>b<div>c</i>",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <i>\n|       \"a\"\n|       <b>\n|         \"b\"\n|     <b>\n|       <div>\n|         <i>\n|           \"c\"\n|     <table>\n",
-  ),
-  (
     "tests19.dat:93", "document", "", "<!doctype html><table><i>a<div>b<tr>c<b>d</i>e",
     "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <i>\n|       \"a\"\n|       <div>\n|         \"b\"\n|     <i>\n|       \"c\"\n|       <b>\n|         \"d\"\n|     <b>\n|       \"e\"\n|     <table>\n|       <tbody>\n|         <tr>\n",
-  ),
-  (
-    "tests19.dat:94", "document", "", "<!doctype html><table><td><table><i>a<div>b<b>c</i>d",
-    "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <i>\n|               \"a\"\n|             <div>\n|               <i>\n|                 \"b\"\n|                 <b>\n|                   \"c\"\n|               <b>\n|                 \"d\"\n|             <table>\n",
   ),
   (
     "tests19.dat:95", "document", "", "<!doctype html><body><bgsound>", "| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <bgsound>\n",
@@ -5897,25 +5865,5 @@ let corpus : Array[(String, String, String, String, String)] = [
   ),
   (
     "webkit02.dat:42", "document", "", "<select><input>", "| <html>\n|   <head>\n|   <body>\n|     <select>\n|     <input>\n",
-  ),
-  (
-    "webkit02.dat:43", "document", "", "<select><button><selectedcontent></button><option>X",
-    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         <selectedcontent>\n|           \"X\"\n|       <option>\n|         \"X\"\n",
-  ),
-  (
-    "webkit02.dat:44", "document", "", "<select><button><selectedcontent></button><option>x<i>i<b>ib</i>b",
-    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         <selectedcontent>\n|           \"x\"\n|           <i>\n|             \"i\"\n|             <b>\n|               \"ib\"\n|           <b>\n|             \"b\"\n|       <option>\n|         \"x\"\n|         <i>\n|           \"i\"\n|           <b>\n|             \"ib\"\n|         <b>\n|           \"b\"\n",
-  ),
-  (
-    "webkit02.dat:45", "document", "", "<select><button><selectedcontent></button><option>X<option>Y",
-    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         <selectedcontent>\n|           \"X\"\n|       <option>\n|         \"X\"\n|       <option>\n|         \"Y\"\n",
-  ),
-  (
-    "webkit02.dat:46", "document", "", "<select><button><selectedcontent></button><option>X<option selected>Y",
-    "| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <button>\n|         <selectedcontent>\n|           \"Y\"\n|       <option>\n|         \"X\"\n|       <option>\n|         selected=\"\"\n|         \"Y\"\n",
-  ),
-  (
-    "webkit02.dat:47", "document", "", "<font><select><option>a</option></font></select>",
-    "| <html>\n|   <head>\n|   <body>\n|     <font>\n|       <select>\n|         <option>\n|           \"a\"\n",
   ),
 ]

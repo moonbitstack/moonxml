@@ -1501,7 +1501,7 @@ fn call(
     "position" => Num(ctx.order.to_double())
     "count" => Num(nodes_arg(args, 0, ctx, doc).length().to_double())
     "id" => id_function(args, ctx, doc)
-    "local_name-name" => name_part(args, ctx, doc, LocalName)
+    "local-name" => name_part(args, ctx, doc, LocalName)
     "space-uri" => name_part(args, ctx, doc, NamespaceUri)
     "name" => name_part(args, ctx, doc, FullName)
     "string" =>

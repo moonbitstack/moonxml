@@ -101,7 +101,8 @@ fn plaintext_state(lexer : Lexer, ch : Int32) -> Unit {
     emit_eof(lexer)
     return
   }
-  emit_char(lexer, ch)
+  // A NULL in plain text is a replacement character, not something to drop.
+  emit_char(lexer, if ch == 0 { 0xFFFD } else { ch })
 }
 
 // -------------------------------------------------------------------- markup
