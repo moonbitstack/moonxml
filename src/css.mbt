@@ -874,7 +874,7 @@ fn pseudo_matches(pseudo : Pseudo, element : Element) -> Bool {
       an_plus_b_holds(anb, of_type_position(element, from_end=true))
     Empty => {
       let mut empty = true
-      for child in element.childrens {
+      for child in element.children {
         match child {
           ElementNode(_) => empty = false
           TextNode(text) => if !text.trim().is_empty() { empty = false }
@@ -950,7 +950,7 @@ fn has_matches(list : Array[Complex], element : Element) -> Bool {
           candidates.push(data)
         }
       Child =>
-        for child in element.childrens {
+        for child in element.children {
           if child is ElementNode(data) {
             candidates.push(data)
           }
@@ -1005,7 +1005,7 @@ fn relative_chain(complex : Complex, idx : Int32, element : Element) -> Bool {
       false
     }
     Child => {
-      for child in element.childrens {
+      for child in element.children {
         if child is ElementNode(data) &&
           compound_matches(compound, data) &&
           relative_chain(complex, idx + 1, data) {
@@ -1055,7 +1055,7 @@ fn descendant_elements(element : Element) -> Array[Element] {
 /// The element children of a parent, in order.
 fn element_children(parent : Element) -> Array[Element] {
   let out : Array[Element] = []
-  for child in parent.childrens {
+  for child in parent.children {
     if child is ElementNode(data) {
       out.push(data)
     }

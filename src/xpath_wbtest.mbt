@@ -9,14 +9,14 @@ fn library() -> Document {
   let doc = Document::new(flavour=Xml)
   let catalog = Element::new("catalog", attrs=[("lang", "en")])
   let book1 = Element::new("book", attrs=[("id", "b1"), ("year", "1998")])
-  let title1 = Element::new("title", childrens=[TextNode("Lions")])
-  let author1 = Element::new("author", childrens=[TextNode("Ann")])
-  let price1 = Element::new("price", childrens=[TextNode("29.5")])
+  let title1 = Element::new("title", children=[TextNode("Lions")])
+  let author1 = Element::new("author", children=[TextNode("Ann")])
+  let price1 = Element::new("price", children=[TextNode("29.5")])
   let book2 = Element::new("book", attrs=[("id", "b2"), ("year", "2004")])
-  let title2 = Element::new("title", childrens=[TextNode("Tigers")])
-  let author2 = Element::new("author", childrens=[TextNode("Bo")])
-  let price2 = Element::new("price", childrens=[TextNode("12.0")])
-  let note = Element::new("note", childrens=[
+  let title2 = Element::new("title", children=[TextNode("Tigers")])
+  let author2 = Element::new("author", children=[TextNode("Bo")])
+  let price2 = Element::new("price", children=[TextNode("12.0")])
+  let note = Element::new("note", children=[
     CommentNode("draft"),
     TextNode("draft text"),
   ])

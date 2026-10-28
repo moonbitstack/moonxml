@@ -10,15 +10,12 @@ fn sample() -> Document {
   let head = Element::new("head")
   let body = Element::new("body")
   let main = Element::new("div", attrs=[("id", "main"), ("class", "wrap box")])
-  let first = Element::new("p", childrens=[TextNode("one")])
-  let second = Element::new("p", childrens=[TextNode("two")])
-  let span = Element::new("span", attrs=[("class", "tag")], childrens=[
+  let first = Element::new("p", children=[TextNode("one")])
+  let second = Element::new("p", children=[TextNode("two")])
+  let span = Element::new("span", attrs=[("class", "tag")], children=[
     TextNode("x"),
   ])
-  let tail = Element::new("p", childrens=[
-    CommentNode("note"),
-    TextNode("three"),
-  ])
+  let tail = Element::new("p", children=[CommentNode("note"), TextNode("three")])
   doc.root.append(ElementNode(html))
   html.append(ElementNode(head))
   html.append(ElementNode(body))
@@ -50,18 +47,18 @@ fn parent_name(el : Element) -> String {
 ///|
 test "a fresh element claims the parentage of its children" {
   let inner = Element::new("b")
-  let outer = Element::new("p", childrens=[ElementNode(inner)])
+  let outer = Element::new("p", children=[ElementNode(inner)])
   assert_eq(parent_name(inner), "p")
-  assert_eq(outer.childrens.length(), 1)
+  assert_eq(outer.children.length(), 1)
 }
 
 ///|
 test "the constructor detaches a child that already sits in a tree" {
   let doc = sample()
   let moved = only(doc.by_id("main"))
-  let other = Element::new("div", childrens=[ElementNode(moved)])
-  assert_eq(other.childrens.length(), 1)
-  assert_eq(doc.root.childrens.length(), 1)
+  let other = Element::new("div", children=[ElementNode(moved)])
+  assert_eq(other.children.length(), 1)
+  assert_eq(doc.root.children.length(), 1)
 }
 
 ///|
@@ -70,7 +67,7 @@ test "append keeps the parent pointer" {
   let main = only(doc.by_id("main"))
   let late = Element::new("em")
   main.append(ElementNode(late))
-  assert_eq(main.childrens.length(), 5)
+  assert_eq(main.children.length(), 5)
   assert_eq(parent_name(late), "div")
 }
 
@@ -81,8 +78,8 @@ test "a node has one parent: appending moves it" {
   let body = only(doc.by_tag("body"))
   let span = only(doc.by_tag("span"))
   body.append(ElementNode(span))
-  assert_eq(body.childrens.length(), 2)
-  assert_eq(main.childrens.length(), 3)
+  assert_eq(body.children.length(), 2)
+  assert_eq(main.children.length(), 3)
   assert_eq(parent_name(span), "body")
 }
 
@@ -91,8 +88,8 @@ test "insert clamps out of range" {
   let el = Element::new("p")
   el.insert(9, TextNode("a"))
   el.insert(-3, TextNode("b"))
-  assert_eq(el.childrens.length(), 2)
-  assert_eq(el.childrens[0].text(), "b")
+  assert_eq(el.children.length(), 2)
+  assert_eq(el.children[0].text(), "b")
 }
 
 ///|
@@ -101,7 +98,7 @@ test "remove detaches and answers" {
   let main = only(doc.by_id("main"))
   let span = only(doc.by_tag("span"))
   assert_eq(span.remove(), true)
-  assert_eq(main.childrens.length(), 3)
+  assert_eq(main.children.length(), 3)
   assert_eq(span.parent is None, true)
   assert_eq(span.remove(), false)
 }
@@ -113,7 +110,7 @@ test "replace_with takes the old node's place" {
   let first = only(doc.css("p"))
   let fresh = Element::new("h2")
   assert_eq(first.replace_with(ElementNode(fresh)), true)
-  assert_eq(main.childrens[0].name(), "h2")
+  assert_eq(main.children[0].name(), "h2")
   assert_eq(parent_name(fresh), "div")
 }
 
@@ -121,13 +118,13 @@ test "replace_with takes the old node's place" {
 test "unwrap lifts the children into the parent's place" {
   let doc = sample()
   let main = only(doc.by_id("main"))
-  let wrap = Element::new("section", childrens=[TextNode("kept")])
+  let wrap = Element::new("section", children=[TextNode("kept")])
   main.append(ElementNode(wrap))
   assert_eq(wrap.unwrap(), true)
-  assert_eq(main.childrens.length(), 5)
-  assert_eq(main.childrens[4].text(), "kept")
+  assert_eq(main.children.length(), 5)
+  assert_eq(main.children[4].text(), "kept")
   assert_eq(wrap.parent is None, true)
-  assert_eq(wrap.childrens.length(), 0)
+  assert_eq(wrap.children.length(), 0)
 }
 
 ///|
@@ -139,7 +136,7 @@ test "wrap puts the element inside a fresh one" {
   assert_eq(wrapper.name, "a")
   assert_eq(parent_name(wrapper), "div")
   assert_eq(parent_name(span), "a")
-  assert_eq(main.childrens[2].name(), "a")
+  assert_eq(main.children[2].name(), "a")
 }
 
 ///|
@@ -151,13 +148,13 @@ test "insert_before and insert_after place among siblings" {
   let after = Element::new("u")
   assert_eq(span.insert_before(ElementNode(before)), true)
   assert_eq(span.insert_after(ElementNode(after)), true)
-  assert_eq(main.childrens[2].name(), "i")
-  assert_eq(main.childrens[4].name(), "u")
+  assert_eq(main.children[2].name(), "i")
+  assert_eq(main.children[4].name(), "u")
 }
 
 ///|
 test "smooth fuses adjacent text and leaves CDATA alone" {
-  let el = Element::new("p", childrens=[
+  let el = Element::new("p", children=[
     TextNode("a"),
     TextNode("b"),
     CDataNode("<c>"),
@@ -165,9 +162,9 @@ test "smooth fuses adjacent text and leaves CDATA alone" {
     TextNode("e"),
   ])
   el.smooth()
-  assert_eq(el.childrens.length(), 3)
-  assert_eq(el.childrens[0].text(), "ab")
-  assert_eq(el.childrens[2].text(), "de")
+  assert_eq(el.children.length(), 3)
+  assert_eq(el.children[0].text(), "ab")
+  assert_eq(el.children[2].text(), "de")
 }
 
 ///|
@@ -221,7 +218,7 @@ test "document walks up to the virtual root" {
   let doc = sample()
   let span = only(doc.by_tag("span"))
   match span.document() {
-    Some(home) => assert_eq(home.root.childrens.length(), 1)
+    Some(home) => assert_eq(home.root.children.length(), 1)
     None => assert_eq(true, false)
   }
   let loose = Element::new("div")

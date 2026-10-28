@@ -20,7 +20,7 @@ test "names: the Clark spelling and its two halves" {
 ///|
 test "the byte writers answer the same text as the string writers" {
   let doc = Document::new(flavour=Html)
-  let p = Element::new("p", childrens=[TextNode("a & b")])
+  let p = Element::new("p", children=[TextNode("a & b")])
   doc.root.append(ElementNode(p))
   assert_eq(dumps(ElementNode(p)), "<p>a &amp; b</p>")
   assert_eq(dumps_html(ElementNode(p)), "<p>a &amp; b</p>")
@@ -35,27 +35,27 @@ test "the byte writers answer the same text as the string writers" {
 ///|
 test "clearing empties what it is called on and nothing else" {
   let doc = Document::new(flavour=Html)
-  let parent = Element::new("div", childrens=[TextNode("x")])
-  let kept = Element::new("span", childrens=[TextNode("y")])
+  let parent = Element::new("div", children=[TextNode("x")])
+  let kept = Element::new("span", children=[TextNode("y")])
   doc.root.append(ElementNode(parent))
   doc.root.append(ElementNode(kept))
   parent.clear()
-  assert_eq(parent.childrens.length(), 0)
+  assert_eq(parent.children.length(), 0)
   assert_eq(kept.text(), "y")
   doc.clear()
-  assert_eq(doc.root.childrens.length(), 0)
+  assert_eq(doc.root.children.length(), 0)
 }
 
 ///|
 test "a selection's clear reaches every matched node" {
   let doc = Document::new(flavour=Html)
-  let first = Element::new("a", childrens=[TextNode("x")])
-  let second = Element::new("b", childrens=[TextNode("y")])
+  let first = Element::new("a", children=[TextNode("x")])
+  let second = Element::new("b", children=[TextNode("y")])
   doc.root.append(ElementNode(first))
   doc.root.append(ElementNode(second))
   doc.css("*").clear()
-  assert_eq(first.childrens.length(), 0)
-  assert_eq(second.childrens.length(), 0)
+  assert_eq(first.children.length(), 0)
+  assert_eq(second.children.length(), 0)
 }
 
 ///|
@@ -125,7 +125,7 @@ test "repairs: their sum, and whether anything happened" {
 ///|
 test "an xpath value prints as the thing it is" {
   let doc = Document::new(flavour=Html)
-  doc.root.append(ElementNode(Element::new("p", childrens=[TextNode("x")])))
+  doc.root.append(ElementNode(Element::new("p", children=[TextNode("x")])))
   assert_eq(doc.xpath_value("count(//p)").to_string(), "1")
   assert_eq(doc.xpath_value("//p = 'x'").to_string(), "true")
   assert_eq(doc.xpath_value("'text'").to_string(), "text")

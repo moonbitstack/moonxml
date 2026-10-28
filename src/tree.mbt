@@ -57,7 +57,7 @@ pub extend Flavour with Show::{output, to_string}
 pub struct Element {
   name : String
   attrs : Array[(String, String)]
-  childrens : Array[Node]
+  children : Array[Node]
   mut parent : Element?
   mut closed : Bool
   priv mut home : Document?
@@ -112,7 +112,7 @@ pub fn Element::document(self : Element) -> Document? {
 /// The document element — the root's first element child, `documentElement`
 /// in the DOM, `getroot()` in lxml.
 pub fn Document::document_element(self : Document) -> Element? {
-  for child in self.root.childrens {
+  for child in self.root.children {
     if child is ElementNode(data) {
       return Some(data)
     }
@@ -143,19 +143,19 @@ pub fn Document::set_repairs(self : Document, repairs : Repairs) -> Unit {
 /// is given, so a tree built this way keeps its parent pointers true.
 pub fn Element::new(
   name : String,
-  childrens~ : Array[Node] = [],
+  children~ : Array[Node] = [],
   attrs~ : Array[(String, String)] = [],
   closed~ : Bool = false,
 ) -> Element {
   let element : Element = {
     name,
     attrs,
-    childrens,
+    children,
     parent: None,
     closed,
     home: None,
   }
-  for child in element.childrens {
+  for child in element.children {
     if child is ElementNode(data) {
       ignore(detach(data))
       data.parent = Some(element)
@@ -187,9 +187,9 @@ pub fn Node::is_text(self : Node) -> Bool {
 ///|
 /// The children of a node that is an element; a node with no children
 /// answers an empty list.
-pub fn Node::childrens(self : Node) -> Array[Node] {
+pub fn Node::children(self : Node) -> Array[Node] {
   match self {
-    ElementNode(data) => data.childrens
+    ElementNode(data) => data.children
     _ => []
   }
 }
@@ -212,7 +212,7 @@ pub fn Node::text(self : Node) -> String {
           TextNode(text) => out.write_string(text)
           CDataNode(text) => out.write_string(text)
           ElementNode(data) =>
-            for child in data.childrens {
+            for child in data.children {
               walk(child)
             }
           _ => ()
@@ -237,7 +237,7 @@ pub fn Element::text(self : Element) -> String {
 ///|
 /// Append a child node, claiming its parentage.
 pub fn Element::append(self : Element, node : Node) -> Unit {
-  self.insert(self.childrens.length(), node)
+  self.insert(self.children.length(), node)
 }
 
 ///|
@@ -252,12 +252,12 @@ pub fn Element::insert(self : Element, at : Int32, node : Node) -> Unit {
   if node is ElementNode(data) {
     ignore(detach(data))
   }
-  let n = self.childrens.length()
+  let n = self.children.length()
   let idx = if at < 0 { 0 } else if at > n { n } else { at }
   if node is ElementNode(data) {
     data.parent = Some(self)
   }
-  self.childrens.insert(idx, node)
+  self.children.insert(idx, node)
 }
 
 ///|
@@ -287,7 +287,7 @@ pub fn Element::replace_with(self : Element, node : Node) -> Bool {
           ignore(drop_child(parent, self))
           self.parent = None
           claim(parent, node)
-          parent.childrens.insert(at, node)
+          parent.children.insert(at, node)
           true
         }
         None => false
@@ -336,14 +336,14 @@ pub fn Element::unwrap(self : Element) -> Bool {
     Some(parent) =>
       match index_of(parent, self) {
         Some(at) => {
-          let inner = self.childrens.copy()
+          let inner = self.children.copy()
           ignore(drop_child(parent, self))
           self.parent = None
           for k = 0; k < inner.length(); k = k + 1 {
             claim(parent, inner[k])
-            parent.childrens.insert(at + k, inner[k])
+            parent.children.insert(at + k, inner[k])
           }
-          self.childrens.clear()
+          self.children.clear()
           true
         }
         None => false
@@ -364,7 +364,7 @@ pub fn Element::wrap(self : Element, name : String) -> Element? {
           ignore(drop_child(parent, self))
           wrapper.parent = Some(parent)
           wrapper.append(ElementNode(self))
-          parent.childrens.insert(at, ElementNode(wrapper))
+          parent.children.insert(at, ElementNode(wrapper))
           Some(wrapper)
         }
         None => None
@@ -376,7 +376,7 @@ pub fn Element::wrap(self : Element, name : String) -> Element? {
 ///|
 /// Drop every child.
 pub fn Element::clear(self : Element) -> Unit {
-  self.childrens.clear()
+  self.children.clear()
 }
 
 ///|
@@ -385,17 +385,17 @@ pub fn Element::clear(self : Element) -> Unit {
 /// alone: it is a distinct kind so it can round-trip.
 pub fn Element::smooth(self : Element) -> Unit {
   let mut k = 0
-  while k + 1 < self.childrens.length() {
-    let here = self.childrens[k]
-    let next = self.childrens[k + 1]
+  while k + 1 < self.children.length() {
+    let here = self.children[k]
+    let next = self.children[k + 1]
     if here is TextNode(a) && next is TextNode(b) {
-      self.childrens[k] = TextNode(a + b)
-      ignore(self.childrens.remove(k + 1))
+      self.children[k] = TextNode(a + b)
+      ignore(self.children.remove(k + 1))
     } else {
       k = k + 1
     }
   }
-  for child in self.childrens {
+  for child in self.children {
     if child is ElementNode(data) {
       data.smooth()
     }
@@ -502,15 +502,15 @@ pub fn Element::remove_class(self : Element, name : String) -> Unit {
 /// outrun the stack.
 pub fn Element::walk(self : Element, visit : (Node) -> Unit) -> Unit {
   let stack : Array[Node] = []
-  for k = self.childrens.length() - 1; k >= 0; k = k - 1 {
-    stack.push(self.childrens[k])
+  for k = self.children.length() - 1; k >= 0; k = k - 1 {
+    stack.push(self.children[k])
   }
   while !stack.is_empty() {
     let node = stack.pop().unwrap()
     visit(node)
     if node is ElementNode(data) {
-      for k = data.childrens.length() - 1; k >= 0; k = k - 1 {
-        stack.push(data.childrens[k])
+      for k = data.children.length() - 1; k >= 0; k = k - 1 {
+        stack.push(data.children[k])
       }
     }
   }
@@ -535,8 +535,8 @@ fn claim(parent : Element, node : Node) -> Unit {
 /// Where `element` sits among `parent`'s children, by identity rather than by
 /// value: two `<p>` with the same text are not the same node.
 fn index_of(parent : Element, element : Element) -> Int32? {
-  for k = 0; k < parent.childrens.length(); k = k + 1 {
-    if parent.childrens[k] is ElementNode(data) && physical_equal(data, element) {
+  for k = 0; k < parent.children.length(); k = k + 1 {
+    if parent.children[k] is ElementNode(data) && physical_equal(data, element) {
       return Some(k)
     }
   }
@@ -547,7 +547,7 @@ fn index_of(parent : Element, element : Element) -> Int32? {
 fn drop_child(parent : Element, element : Element) -> Bool {
   match index_of(parent, element) {
     Some(at) => {
-      ignore(parent.childrens.remove(at))
+      ignore(parent.children.remove(at))
       true
     }
     None => false

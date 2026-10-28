@@ -9,7 +9,7 @@
 ///
 ///     doc.xpath("//ul").css("li.external").xpath("@href")
 ///        .selector("tag", "a").custom(DeepLinks::new())
-///        .items[2].childrens[0].css("span").text()
+///        .items[2].children[0].css("span").text()
 pub struct Selection {
   priv doc : Document?
   items : Array[Node]
@@ -236,11 +236,11 @@ pub fn Selection::eq(self : Selection, i : Int32) -> Selection {
 
 ///|
 /// The children of every selected node.
-pub fn Selection::childrens(self : Selection) -> Selection {
+pub fn Selection::children(self : Selection) -> Selection {
   let out : Array[Node] = []
   for node in self.items {
     if node is ElementNode(data) {
-      for child in data.childrens {
+      for child in data.children {
         out.push(child)
       }
     }
@@ -316,7 +316,7 @@ fn inner_html(element : Element) -> String {
     Some(doc) => doc.flavour is Html
     None => false
   }
-  for child in element.childrens {
+  for child in element.children {
     if html {
       write_html(child, out, raw=false)
     } else {
@@ -494,11 +494,6 @@ pub fn Element::by_name(self : Element, name : String) -> Selection {
 }
 
 ///|
-pub fn Element::filter(self : Element, keep : (Node) -> Bool) -> Selection {
-  selection_of(ElementNode(self)).filter(keep)
-}
-
-///|
 pub fn Element::closest(
   self : Element,
   query : String,
@@ -564,14 +559,6 @@ pub fn Node::by_name(self : Node, name : String) -> Selection {
 }
 
 ///|
-pub fn Node::filter(self : Node, keep : (Node) -> Bool) -> Selection {
-  match self {
-    ElementNode(data) => data.filter(keep)
-    _ => Selection::new()
-  }
-}
-
-///|
 pub fn Node::closest(self : Node, query : String) -> Selection raise Refused {
   match self {
     ElementNode(data) => data.closest(query)
@@ -599,7 +586,16 @@ pub fn Node::custom(self : Node, sel : &Selector) -> Selection raise Refused {
   }
 }
 
+// The document's own surface. `Document::root` is a container, not an element
+// in the document, so the verbs that act on one node among its siblings
+// (`remove`, `replace_with`, `wrap`, `unwrap`, `parent`, `first`, `last`,
+// `eq`, `length`) answer nothing a caller could mean here and are not
+// forwarded. What is left is what a whole document can do: search it, read
+// it, put top-level nodes in it, and empty it.
+
 ///|
+/// Narrow with a CSS selector over the whole document. Descendant search from
+/// the virtual root, so every element is a candidate.
 pub fn Document::css(
   self : Document,
   query : String,
@@ -608,39 +604,32 @@ pub fn Document::css(
 }
 
 ///|
+/// The elements whose `id` attribute is `id` — `getElementById`, over the
+/// whole document.
 pub fn Document::by_id(self : Document, id : String) -> Selection {
   self.selection([ElementNode(self.root)]).by_id(id)
 }
 
 ///|
+/// The elements carrying the class `name`.
 pub fn Document::by_class(self : Document, name : String) -> Selection {
   self.selection([ElementNode(self.root)]).by_class(name)
 }
 
 ///|
+/// The elements named `name`; `*` answers every element.
 pub fn Document::by_tag(self : Document, name : String) -> Selection {
   self.selection([ElementNode(self.root)]).by_tag(name)
 }
 
 ///|
+/// The elements whose `name` attribute is `name`.
 pub fn Document::by_name(self : Document, name : String) -> Selection {
   self.selection([ElementNode(self.root)]).by_name(name)
 }
 
 ///|
-pub fn Document::filter(self : Document, keep : (Node) -> Bool) -> Selection {
-  self.selection([ElementNode(self.root)]).filter(keep)
-}
-
-///|
-pub fn Document::closest(
-  self : Document,
-  query : String,
-) -> Selection raise Refused {
-  self.selection([ElementNode(self.root)]).closest(query)
-}
-
-///|
+/// Run the selector registered under `name`, built-in or the caller's own.
 pub fn Document::selector(
   self : Document,
   name : String,
@@ -650,6 +639,7 @@ pub fn Document::selector(
 }
 
 ///|
+/// Run a selector that was never registered.
 pub fn Document::custom(
   self : Document,
   sel : &Selector,
@@ -658,120 +648,54 @@ pub fn Document::custom(
 }
 
 ///|
-pub fn Document::length(self : Document) -> Int32 {
-  self.selection([ElementNode(self.root)]).length()
-}
-
-///|
+/// The text of the whole document, concatenated.
 pub fn Document::text(self : Document) -> String {
   self.selection([ElementNode(self.root)]).text()
 }
 
 ///|
+/// The whole document as markup, in the flavour it was read as.
 pub fn Document::html(self : Document) -> String {
   self.selection([ElementNode(self.root)]).html()
 }
 
 ///|
-pub fn Document::attr(self : Document, name : String) -> String? {
-  self.selection([ElementNode(self.root)]).attr(name)
+/// The document's top-level nodes — the doctype, comments and processing
+/// instructions beside the document element, in document order.
+pub fn Document::children(self : Document) -> Selection {
+  self.selection([ElementNode(self.root)]).children()
 }
 
 ///|
-pub fn Document::first(self : Document) -> Selection {
-  self.selection([ElementNode(self.root)]).first()
-}
-
-///|
-pub fn Document::last(self : Document) -> Selection {
-  self.selection([ElementNode(self.root)]).last()
-}
-
-///|
-pub fn Document::eq(self : Document, i : Int32) -> Selection {
-  self.selection([ElementNode(self.root)]).eq(i)
-}
-
-///|
-pub fn Document::childrens(self : Document) -> Selection {
-  self.selection([ElementNode(self.root)]).childrens()
-}
-
-///|
-pub fn Document::parent(self : Document) -> Selection {
-  self.selection([ElementNode(self.root)]).parent()
-}
-
-///|
+/// Every node in the document, in document order.
 pub fn Document::descendants(self : Document) -> Selection {
   self.selection([ElementNode(self.root)]).descendants()
 }
 
 ///|
+/// Add a node at the end of the document: where a comment, a processing
+/// instruction or a second document element would go. The usual use is a
+/// doctype written before the root, which is what `prepend` is for.
 pub fn Document::append(self : Document, node : Node) -> Unit {
   self.selection([ElementNode(self.root)]).append(node)
 }
 
 ///|
+/// Add a node before everything else in the document.
 pub fn Document::prepend(self : Document, node : Node) -> Unit {
   self.selection([ElementNode(self.root)]).prepend(node)
 }
 
 ///|
-pub fn Document::remove(self : Document) -> Unit {
-  self.selection([ElementNode(self.root)]).remove()
-}
-
-///|
-pub fn Document::replace_with(self : Document, node : Node) -> Unit {
-  self.selection([ElementNode(self.root)]).replace_with(node)
-}
-
-///|
-pub fn Document::unwrap(self : Document) -> Unit {
-  self.selection([ElementNode(self.root)]).unwrap()
-}
-
-///|
-pub fn Document::wrap(self : Document, name : String) -> Unit {
-  self.selection([ElementNode(self.root)]).wrap(name)
-}
-
-///|
+/// Empty the document: every top-level node goes, and the document is then
+/// what a freshly created one is.
 pub fn Document::clear(self : Document) -> Unit {
   self.selection([ElementNode(self.root)]).clear()
 }
 
 ///|
-pub fn Document::set_text(self : Document, text : String) -> Unit {
-  self.selection([ElementNode(self.root)]).set_text(text)
-}
-
-///|
-pub fn Document::set_attr(
-  self : Document,
-  name : String,
-  value : String,
-) -> Unit {
-  self.selection([ElementNode(self.root)]).set_attr(name, value)
-}
-
-///|
-pub fn Document::remove_attr(self : Document, name : String) -> Unit {
-  self.selection([ElementNode(self.root)]).remove_attr(name)
-}
-
-///|
-pub fn Document::add_class(self : Document, name : String) -> Unit {
-  self.selection([ElementNode(self.root)]).add_class(name)
-}
-
-///|
-pub fn Document::remove_class(self : Document, name : String) -> Unit {
-  self.selection([ElementNode(self.root)]).remove_class(name)
-}
-
-///|
+/// Fuse adjacent text nodes everywhere in the document, which is what a
+/// writer wants after editing several places.
 pub fn Document::smooth(self : Document) -> Unit {
   self.selection([ElementNode(self.root)]).smooth()
 }

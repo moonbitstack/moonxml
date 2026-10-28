@@ -985,11 +985,11 @@ fn apply_axis(axis : Axis, node : Node) -> Array[Node] {
   match axis {
     Axis::SelfAxis => out.push(node)
     Axis::Child =>
-      for child in node.childrens() {
+      for child in node.children() {
         out.push(child)
       }
     Axis::Descendant => {
-      for child in node.childrens() {
+      for child in node.children() {
         out.push(child)
       }
       match node {
@@ -1162,7 +1162,7 @@ fn is_virtual_root(element : Element) -> Bool {
 ///|
 fn element_children_of(parent : Element) -> Array[Element] {
   let out : Array[Element] = []
-  for child in parent.childrens {
+  for child in parent.children {
     if child is ElementNode(data) {
       out.push(data)
     }

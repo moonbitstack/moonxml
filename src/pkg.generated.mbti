@@ -39,16 +39,13 @@ pub struct Document {
   root : Element
   // private fields
 }
-pub fn Document::add_class(Self, String) -> Unit
 pub fn Document::append(Self, Node) -> Unit
-pub fn Document::attr(Self, String) -> String?
 pub fn Document::by_class(Self, String) -> Selection
 pub fn Document::by_id(Self, String) -> Selection
 pub fn Document::by_name(Self, String) -> Selection
 pub fn Document::by_tag(Self, String) -> Selection
-pub fn Document::childrens(Self) -> Selection
+pub fn Document::children(Self) -> Selection
 pub fn Document::clear(Self) -> Unit
-pub fn Document::closest(Self, String) -> Selection raise Refused
 pub fn Document::css(Self, String) -> Selection raise Refused
 pub fn Document::custom(Self, &Selector) -> Selection raise Refused
 pub fn Document::descendants(Self) -> Selection
@@ -57,32 +54,18 @@ pub fn Document::dump(Self) -> Bytes
 pub fn Document::dump_html(Self) -> Bytes
 pub fn Document::dumps(Self) -> String
 pub fn Document::dumps_html(Self) -> String
-pub fn Document::eq(Self, Int32) -> Selection
 pub fn Document::events(Self) -> Array[@event.Event]
-pub fn Document::filter(Self, (Node) -> Bool) -> Selection
-pub fn Document::first(Self) -> Selection
 pub fn Document::flavour(Self) -> Flavour
 pub fn Document::html(Self) -> String
-pub fn Document::last(Self) -> Selection
-pub fn Document::length(Self) -> Int32
 pub fn Document::new(flavour? : Flavour) -> Self
-pub fn Document::parent(Self) -> Selection
 pub fn Document::prepend(Self, Node) -> Unit
 pub fn Document::push(Self, @event.Event) -> Unit
 pub fn Document::register(Self, String, &Selector) -> Unit
-pub fn Document::remove(Self) -> Unit
-pub fn Document::remove_attr(Self, String) -> Unit
-pub fn Document::remove_class(Self, String) -> Unit
 pub fn Document::repairs(Self) -> Repairs
-pub fn Document::replace_with(Self, Node) -> Unit
 pub fn Document::selector(Self, String, String) -> Selection raise Refused
-pub fn Document::set_attr(Self, String, String) -> Unit
 pub fn Document::set_repairs(Self, Repairs) -> Unit
-pub fn Document::set_text(Self, String) -> Unit
 pub fn Document::smooth(Self) -> Unit
 pub fn Document::text(Self) -> String
-pub fn Document::unwrap(Self) -> Unit
-pub fn Document::wrap(Self, String) -> Unit
 pub fn Document::xpath(Self, String) -> Selection raise Refused
 pub fn Document::xpath_value(Self, String) -> XPathValue raise Refused
 pub impl @event.Sink for Document
@@ -90,7 +73,7 @@ pub impl @event.Sink for Document
 pub struct Element {
   name : String
   attrs : Array[(String, String)]
-  childrens : Array[Node]
+  children : Array[Node]
   mut parent : Element?
   mut closed : Bool
   // private fields
@@ -108,14 +91,13 @@ pub fn Element::closest(Self, String) -> Selection raise Refused
 pub fn Element::css(Self, String) -> Selection raise Refused
 pub fn Element::custom(Self, &Selector) -> Selection raise Refused
 pub fn Element::document(Self) -> Document?
-pub fn Element::filter(Self, (Node) -> Bool) -> Selection
 pub fn Element::has_attr(Self, String) -> Bool
 pub fn Element::has_class(Self, String) -> Bool
 pub fn Element::html(Self) -> String
 pub fn Element::insert(Self, Int32, Node) -> Unit
 pub fn Element::insert_after(Self, Node) -> Bool
 pub fn Element::insert_before(Self, Node) -> Bool
-pub fn Element::new(String, childrens? : Array[Node], attrs? : Array[(String, String)], closed? : Bool) -> Self
+pub fn Element::new(String, children? : Array[Node], attrs? : Array[(String, String)], closed? : Bool) -> Self
 pub fn Element::prepend(Self, Node) -> Unit
 pub fn Element::remove(Self) -> Bool
 pub fn Element::remove_attr(Self, String) -> Bool
@@ -154,11 +136,10 @@ pub fn Node::by_class(Self, String) -> Selection
 pub fn Node::by_id(Self, String) -> Selection
 pub fn Node::by_name(Self, String) -> Selection
 pub fn Node::by_tag(Self, String) -> Selection
-pub fn Node::childrens(Self) -> Array[Self]
+pub fn Node::children(Self) -> Array[Self]
 pub fn Node::closest(Self, String) -> Selection raise Refused
 pub fn Node::css(Self, String) -> Selection raise Refused
 pub fn Node::custom(Self, &Selector) -> Selection raise Refused
-pub fn Node::filter(Self, (Self) -> Bool) -> Selection
 pub fn Node::is_element(Self) -> Bool
 pub fn Node::is_text(Self) -> Bool
 pub fn Node::name(Self) -> String
@@ -195,7 +176,7 @@ pub fn Selection::by_class(Self, String) -> Self
 pub fn Selection::by_id(Self, String) -> Self
 pub fn Selection::by_name(Self, String) -> Self
 pub fn Selection::by_tag(Self, String) -> Self
-pub fn Selection::childrens(Self) -> Self
+pub fn Selection::children(Self) -> Self
 pub fn Selection::clear(Self) -> Unit
 pub fn Selection::closest(Self, String) -> Self raise Refused
 pub fn Selection::css(Self, String) -> Self raise Refused

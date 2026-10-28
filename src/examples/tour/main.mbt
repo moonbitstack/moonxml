@@ -56,7 +56,7 @@ fn chain() -> Unit raise @moonxml.Refused {
     "chain into a node      -> \{page.css("#main").items[0].css("p").first().text()}",
   )
   println(
-    "childrens of the div   -> \{page.css("#main").childrens().length()} nodes",
+    "children of the div   -> \{page.css("#main").children().length()} nodes",
   )
   println(
     "xpath answering a number -> count(//p) answers \{page.xpath_value("count(//p)")}",
@@ -69,7 +69,7 @@ fn edit() -> Unit raise @moonxml.Refused {
   let page = @html.loads("<ul><li>one</li><li>two</li></ul>")
   page.css("li").first().set_text("edited")
   page.css("li").last().add_class("last")
-  let extra = @moonxml.Element::new("li", childrens=[@moonxml.TextNode("three")])
+  let extra = @moonxml.Element::new("li", children=[@moonxml.TextNode("three")])
   page.css("ul").append(@moonxml.ElementNode(extra))
   page.css("li").last().wrap("strong")
   println(page.dumps())

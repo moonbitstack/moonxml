@@ -55,10 +55,10 @@ fn merge_attrs_into(
 ///|
 /// The body element, which is whatever `body` sits directly under `html`.
 fn body_element(builder : Builder) -> @moonxml.Element? {
-  for node in builder.doc.root.childrens {
+  for node in builder.doc.root.children {
     match node {
       ElementNode(html) =>
-        for child in html.childrens {
+        for child in html.children {
           match child {
             ElementNode(el) => if el.name == "body" { return Some(el) }
             _ => ()
@@ -73,7 +73,7 @@ fn body_element(builder : Builder) -> @moonxml.Element? {
 ///|
 /// The HTML element: the document's one element child.
 fn html_element(builder : Builder) -> @moonxml.Element? {
-  for node in builder.doc.root.childrens {
+  for node in builder.doc.root.children {
     match node {
       ElementNode(el) => return Some(el)
       _ => ()
@@ -1821,7 +1821,7 @@ fn adoption_agency(builder : Builder, subject : String) -> Unit {
     )
     // A node's parent lives on the element, not on a text node, so the move
     // empties the block first rather than appending what is already there.
-    let kids = block.childrens.copy()
+    let kids = block.children.copy()
     block.clear()
     for kid in kids {
       fresh.append(kid)

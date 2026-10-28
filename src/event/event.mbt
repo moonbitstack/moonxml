@@ -16,11 +16,11 @@ pub(all) enum Event {
     self_closing~ : Bool
   )
   EndTag(name~ : String)
-  TextRun(text~ : String)
-  CDataRun(text~ : String)
-  CommentEvent(text~ : String)
+  Text(text~ : String)
+  CData(text~ : String)
+  Comment(text~ : String)
   ProcessingInstruction(target~ : String, data~ : String)
-  DoctypeEvent(text~ : String)
+  Doctype(text~ : String)
 }
 
 ///|

@@ -12,7 +12,7 @@ struct Counter {
 impl @event.Sink for Counter with fn push(self, event) {
   match event {
     StartTag(_) => self.starts = self.starts + 1
-    TextRun(_) => self.texts = self.texts + 1
+    Text(_) => self.texts = self.texts + 1
     _ => ()
   }
 }
@@ -92,7 +92,7 @@ test "the xml prefix is predefined and a prefix nobody declared is refused" {
 ///|
 test "mixed content, comments, CDATA and instructions all survive" {
   let doc = loads("<r>a<!--c--><![CDATA[<b>]]><?pi data?>b</r>")
-  let children = doc.css("r").items[0].childrens()
+  let children = doc.css("r").items[0].children()
   assert_eq(children.length(), 5)
   assert_eq(children[1] is CommentNode(_), true)
   assert_eq(children[2] is CDataNode(_), true)
@@ -105,7 +105,7 @@ test "a doctype keeps its internal subset" {
   let source = "<!DOCTYPE r [ <!ELEMENT r (#PCDATA)> ]><r>x</r>"
   let doc = loads(source)
   assert_eq(doc.dumps(), source)
-  match doc.root.childrens[0] {
+  match doc.root.children[0] {
     DoctypeNode(text) => assert_eq(text, "r [ <!ELEMENT r (#PCDATA)> ]")
     _ => assert_eq(true, false)
   }
@@ -152,7 +152,7 @@ test "bytes, the byte-order mark and fragments" {
   let doc = load(b"\xEF\xBB\xBF<a>x</a>")
   assert_eq(doc.css("a").text(), "x")
   let fragment = loads_fragment("<a/>text<b/>")
-  assert_eq(fragment.root.childrens.length(), 3)
+  assert_eq(fragment.root.children.length(), 3)
   assert_eq(fragment.dumps(), "<a/>text<b/>")
 }
 

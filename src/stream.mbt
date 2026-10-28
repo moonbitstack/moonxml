@@ -25,12 +25,12 @@ pub impl @event.Sink for Document with fn push(self, event) {
         Some(top) => if top.name == name { ignore(self.nesting.pop()) }
         None => ()
       }
-    TextRun(text~) => if !text.is_empty() { parent.append(TextNode(text)) }
-    CDataRun(text~) => parent.append(CDataNode(text))
-    CommentEvent(text~) => parent.append(CommentNode(text))
+    Text(text~) => if !text.is_empty() { parent.append(TextNode(text)) }
+    CData(text~) => parent.append(CDataNode(text))
+    Comment(text~) => parent.append(CommentNode(text))
     ProcessingInstruction(target~, data~) =>
       parent.append(ProcessingInstructionNode({ target, data, }))
-    DoctypeEvent(text~) => self.root.append(DoctypeNode(text))
+    Doctype(text~) => self.root.append(DoctypeNode(text))
   }
 }
 
@@ -48,23 +48,23 @@ pub fn Document::events(self : Document) -> Array[@event.Event] {
           @event.StartTag(
             name=data.name,
             attrs=data.attrs.copy(),
-            self_closing=data.childrens.is_empty() && data.closed,
+            self_closing=data.children.is_empty() && data.closed,
           ),
         )
-        for child in data.childrens {
+        for child in data.children {
           walk(child)
         }
         out.push(@event.EndTag(name=data.name))
       }
-      TextNode(text) => out.push(@event.TextRun(text~))
-      CDataNode(text) => out.push(@event.CDataRun(text~))
-      CommentNode(text) => out.push(@event.CommentEvent(text~))
+      TextNode(text) => out.push(@event.Text(text~))
+      CDataNode(text) => out.push(@event.CData(text~))
+      CommentNode(text) => out.push(@event.Comment(text~))
       ProcessingInstructionNode(pi) =>
         out.push(@event.ProcessingInstruction(target=pi.target, data=pi.data))
-      DoctypeNode(text) => out.push(@event.DoctypeEvent(text~))
+      DoctypeNode(text) => out.push(@event.Doctype(text~))
     }
   }
-  for child in self.root.childrens {
+  for child in self.root.children {
     walk(child)
   }
   out

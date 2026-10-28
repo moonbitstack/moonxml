@@ -455,7 +455,7 @@ fn text_run(scanner : Scan) -> Unit raise @moonxml.Refused {
   }
   let decoded = unescape(scanner, raw, at=start)
   if !decoded.is_empty() {
-    scanner.sink.push(@event.TextRun(text=decoded))
+    scanner.sink.push(@event.Text(text=decoded))
   }
 }
 
@@ -569,7 +569,7 @@ fn comment(scanner : Scan) -> Unit raise @moonxml.Refused {
     raise @moonxml.Malformed(at=start, why="`--` inside a comment")
   }
   scanner.at = close + 3
-  scanner.sink.push(@event.CommentEvent(text=body))
+  scanner.sink.push(@event.Comment(text=body))
 }
 
 ///|
@@ -582,7 +582,7 @@ fn cdata(scanner : Scan) -> Unit raise @moonxml.Refused {
       raise @moonxml.Malformed(at=start, why="a CDATA section is unterminated")
   }
   scanner.at = close + 3
-  scanner.sink.push(@event.CDataRun(text=scanner.text[start:close].to_owned()))
+  scanner.sink.push(@event.CData(text=scanner.text[start:close].to_owned()))
 }
 
 ///|
@@ -649,7 +649,7 @@ fn doctype(scanner : Scan) -> Unit raise @moonxml.Refused {
     } else if unit == 0x3E && depth == 0 {
       let body = text[start:scanner.at].trim().to_owned()
       scanner.at = scanner.at + 1
-      scanner.sink.push(@event.DoctypeEvent(text=body))
+      scanner.sink.push(@event.Doctype(text=body))
       return
     }
     scanner.at = scanner.at + 1

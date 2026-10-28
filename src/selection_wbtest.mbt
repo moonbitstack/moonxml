@@ -13,7 +13,7 @@ fn doc() -> Document {
   let link = Element::new("a", attrs=[("href", "https://example.com/a")])
   let two = Element::new("li")
   let inner = Element::new("a", attrs=[("href", "/local")])
-  let span = Element::new("span", childrens=[TextNode("deep")])
+  let span = Element::new("span", children=[TextNode("deep")])
   let form = Element::new("form")
   let field = Element::new("input", attrs=[("name", "q")])
   page.root.append(ElementNode(html))
@@ -90,7 +90,7 @@ test "css narrows, then xpath-shaped narrowing would follow" {
 ///|
 test "the chain the library exists for" {
   let page = doc()
-  let sel = page.css("#nav").css("li").items[1].childrens()[0].css("span")
+  let sel = page.css("#nav").css("li").items[1].children()[0].css("span")
   assert_eq(sel.length(), 1)
   assert_eq(sel.text(), "deep")
 }
@@ -172,15 +172,15 @@ test "filter, first, last and eq" {
 }
 
 ///|
-test "childrens, parent and descendants" {
+test "children, parent and descendants" {
   let page = doc()
   let li = page.by_tag("li")
   assert_eq(li.length(), 2)
   assert_eq(li.items[0].name(), "li")
   assert_eq(li.items[1].name(), "li")
-  assert_eq(li.items[0].childrens().length(), 1)
-  assert_eq(li.childrens().length(), 2)
-  assert_eq(li.childrens().items[0].name(), "a")
+  assert_eq(li.items[0].children().length(), 1)
+  assert_eq(li.children().length(), 2)
+  assert_eq(li.children().items[0].name(), "a")
   assert_eq(page.by_id("nav").parent().length(), 1)
   assert_eq(page.by_id("nav").parent().items[0].name(), "body")
   assert_eq(page.by_id("nav").descendants().length(), 6)
@@ -234,7 +234,7 @@ test "append and prepend on a selection" {
   page.by_tag("form").prepend(ElementNode(Element::new("label")))
   assert_eq(page.by_id("nav").text(), "deep!")
   assert_eq(page.by_tag("label").length(), 1)
-  assert_eq(page.by_tag("form").childrens().length(), 2)
+  assert_eq(page.by_tag("form").children().length(), 2)
 }
 
 ///|
@@ -254,7 +254,7 @@ test "a node keeps the chain going" {
   let li = page.by_tag("li").items[1]
   assert_eq(li.css("a").length(), 1)
   assert_eq(li.by_tag("span").length(), 1)
-  assert_eq(li.childrens()[0].css("span").text(), "deep")
+  assert_eq(li.children()[0].css("span").text(), "deep")
   assert_eq(li.closest("ul").length(), 1)
   assert_eq(li.selector("tag", "span").length(), 1)
   let text = page.css("span").items[0]
@@ -275,7 +275,7 @@ test "the document itself is a context" {
   let page = doc()
   assert_eq(page.css("html").length(), 1)
   assert_eq(page.css("a").length(), 2)
-  assert_eq(page.length(), 1)
+  assert_eq(page.children().length(), 1)
   assert_eq(page.descendants().length(), 11)
 }
 

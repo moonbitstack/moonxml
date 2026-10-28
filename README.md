@@ -33,7 +33,7 @@ HTML is read the way a browser reads it; XML is read strictly, as XML 1.0 requir
 | | |
 |:--|:--|
 | **One tree, two syntaxes** | `Node` is element, text, CDATA, comment, processing instruction or doctype. Nothing about a node says which parser made it. |
-| **One chain** | Every query answers a `Selection`, so `css` → `xpath` → `selector` → `custom` → `items[i]` → `childrens()[j]` → `css` again never changes type. |
+| **One chain** | Every query answers a `Selection`, so `css` → `xpath` → `selector` → `custom` → `items[i]` → `children()[j]` → `css` again never changes type. |
 | **Two engines, and yours** | CSS Selectors 4's statically decidable subset, all of XPath 1.0, and a `Selector` trait you implement and register by name. |
 | **Editing, not re-parsing** | A full set of editing verbs on the same selection the query returned, with parent pointers kept true. |
 | **Two ways to read** | Build the tree, or stream `Event`s into your own `Sink` and build nothing. The tree builder is itself a sink: one parser, no drift. |
@@ -64,7 +64,7 @@ page.xpath("//table")                      // any engine
     .selector("mine", "")                 // one you registered
     .custom(@moonxml.SelectorFn::new(f))  // one you did not
     .items[0]                             // a Node
-    .childrens()[1]                       // still going
+    .children()[1]                       // still going
     .css("span")
     .set_text("done")
 ```
@@ -73,16 +73,58 @@ Results arrive in document order, deduplicated by **identity** — two `<li>coff
 
 Where XPath answers something that is not a node-set, `xpath_value` answers it typed: `Nodes`, `Str`, `Num` or `Flag`.
 
-## The verbs
+## The interface
 
-| Group | |
+Four types, and every method sits on the type it acts on: `Selection` is a
+node list, `Element` is one node, `Node` is any node, `Document` is the
+container the tree hangs from. Query methods exist on all four, so a chain
+never has to stop and re-wrap.
+
+### `Document`
+
+| | |
 |:--|:--|
-| Structure | `append` `prepend` `insert` `insert_before` `insert_after` `replace_with` `remove` `unwrap` `wrap` `clear` `smooth` |
-| Attributes | `attr` `has_attr` `set_attr` `remove_attr` `classes` `has_class` `add_class` `remove_class` |
-| Content | `text` `set_text` `html` `dumps` `dumps_html` |
-| Navigation | `childrens` `parent` `descendants` `closest` `first` `last` `eq` `filter` |
+| read | `root` `document_element()` `flavour()` `repairs()` |
+| search | `css(q)` `xpath(q)` `xpath_value(q)` `selector(name, q)` `custom(sel)` `by_id(v)` `by_class(v)` `by_tag(v)` `by_name(v)` |
+| content | `text()` `html()` `children()` `descendants()` `dumps()` `dump()` `dumps_html()` `dump_html()` `events()` |
+| change | `append(node)` `prepend(node)` `clear()` `smooth()` `register(name, sel)` `push(event)` |
 
-Selection-level verbs (`append`, `set_text`, …) apply to every matched node; the ones that need a position (`insert`, `insert_before`, `insert_after`) live on `Element`, where a position means one thing.
+A document's `root` is a container, not a node of the document, so the verbs
+that act on one node among siblings are deliberately **not** forwarded to
+`Document`: `remove`, `replace_with`, `wrap`, `unwrap`, `parent`, `first`,
+`last`, `eq`, `length`, `attr`, `set_attr`, `remove_attr`, `add_class`,
+`remove_class`, `filter`, `closest`, `set_text`. Each would answer for the
+container itself — remove the document from the document, ask what a document
+is named — which is not an operation a caller can mean. They stay on
+`Selection` and `Element`, where they name something real.
+
+### `Selection`
+
+| | |
+|:--|:--|
+| search | `css` `xpath` `xpath_value` `selector` `custom` `by_id` `by_class` `by_tag` `by_name` `filter(f)` `closest(q)` |
+| narrow | `first()` `last()` `eq(i)` `children()` `parent()` `descendants()` `items[i]` |
+| read | `length()` `text()` `html()` `attr(name)` |
+| change | `append` `prepend` `remove` `replace_with` `unwrap` `wrap` `clear` `set_text` `set_attr` `remove_attr` `add_class` `remove_class` `smooth` |
+
+### `Element`
+
+| | |
+|:--|:--|
+| fields | `name` `attrs` `children` `parent` `closed` |
+| structure | `append` `prepend` `insert(at, node)` `insert_before` `insert_after` `replace_with` `remove` `unwrap` `wrap` `clear` `smooth` |
+| attributes | `attr` `has_attr` `set_attr` `remove_attr` `classes` `has_class` `add_class` `remove_class` |
+| content | `text()` `set_text(s)` `html()` `walk(f)` `document()` |
+
+### `Node`
+
+`name()` `is_element()` `is_text()` `text()` `children()`, plus the query
+methods above. A node that is not an element answers an empty selection
+rather than refusing, so `.items[0].css("a")` never needs a guard.
+
+Selection-level edits apply to every matched element; the verbs that need a
+position (`insert`, `insert_before`, `insert_after`) live on `Element`, where
+a position means one thing.
 
 ## Parsers
 

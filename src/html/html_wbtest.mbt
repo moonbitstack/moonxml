@@ -22,7 +22,7 @@ fn render(doc : @moonxml.Document) -> String {
         for pair in data.attrs {
           line(depth + 1, pair.0 + "=\"" + pair.1 + "\"")
         }
-        for child in data.childrens {
+        for child in data.children {
           walk(child, depth + 1)
         }
       }
@@ -34,7 +34,7 @@ fn render(doc : @moonxml.Document) -> String {
       @moonxml.DoctypeNode(text) => line(depth, "<!DOCTYPE " + text + ">")
     }
   }
-  for child in doc.root.childrens {
+  for child in doc.root.children {
     walk(child, 0)
   }
   out.to_string()
@@ -54,14 +54,14 @@ fn names_of(doc : @moonxml.Document) -> Array[String] {
     match node {
       @moonxml.ElementNode(data) => {
         out.push(data.name)
-        for child in data.childrens {
+        for child in data.children {
           walk(child)
         }
       }
       _ => ()
     }
   }
-  for child in doc.root.childrens {
+  for child in doc.root.children {
     walk(child)
   }
   out
@@ -108,7 +108,7 @@ test "an unclosed paragraph closes on the next block" {
 test "a list item closes the one before it" {
   let doc = loads("<ul><li>a<li>b</ul>")
   assert_eq(doc.css("li").length(), 2)
-  assert_eq(doc.css("ul").items[0].childrens().length(), 2)
+  assert_eq(doc.css("ul").items[0].children().length(), 2)
 }
 
 ///|
@@ -124,7 +124,7 @@ test "a table gains the tbody the document never wrote" {
 test "a cell closes itself at the next cell" {
   let doc = loads("<table><td>a<td>b</table>")
   assert_eq(doc.css("td").length(), 2)
-  assert_eq(doc.css("tr").items[0].childrens().length(), 2)
+  assert_eq(doc.css("tr").items[0].children().length(), 2)
 }
 
 ///|
@@ -145,7 +145,7 @@ test "stray text inside a table is put before it" {
   let doc = loads("<table>text<tr><td>x</td></tr></table>")
   assert_eq(doc.css("table").items[0].text(), "x")
   assert_eq(
-    doc.css("body").items[0].childrens()[0] is @moonxml.TextNode(_),
+    doc.css("body").items[0].children()[0] is @moonxml.TextNode(_),
     true,
   )
 }
@@ -177,7 +177,7 @@ test "formatting is put back before the text that needs it" {
 test "misnested formatting is repaired by the adoption agency" {
   let doc = loads("<b><p>x</b>y")
   assert_eq(doc.css("b").length(), 2)
-  assert_eq(doc.css("p").items[0].childrens()[0].name(), "b")
+  assert_eq(doc.css("p").items[0].children()[0].name(), "b")
 }
 
 ///|
@@ -218,8 +218,8 @@ test "rcdata decodes references but keeps its tags" {
 ///|
 test "a comment is a node, and a bogus one becomes a comment" {
   let doc = loads("<!-- hello --><?php echo ?><p>x")
-  assert_eq(doc.root.childrens[0] is CommentNode(_), true)
-  assert_eq(doc.root.childrens[1] is CommentNode(_), true)
+  assert_eq(doc.root.children[0] is CommentNode(_), true)
+  assert_eq(doc.root.children[1] is CommentNode(_), true)
 }
 
 ///|
@@ -280,8 +280,8 @@ test "text before any tag still lands in the body" {
 ///|
 test "an h1 closes an open h2" {
   let doc = loads("<h2>a<h3>b")
-  assert_eq(doc.css("h2").items[0].childrens().length(), 1)
-  assert_eq(doc.css("h2").items[0].childrens()[0].name(), "")
+  assert_eq(doc.css("h2").items[0].children().length(), 1)
+  assert_eq(doc.css("h2").items[0].children()[0].name(), "")
 }
 
 ///|

@@ -48,7 +48,7 @@ pub fn Document::dumps(self : Document) -> String {
   match self.flavour {
     Xml => {
       let out = StringBuilder()
-      for child in self.root.childrens {
+      for child in self.root.children {
         write_xml(child, out)
       }
       out.to_string()
@@ -66,7 +66,7 @@ pub fn Document::dump(self : Document) -> Bytes {
 /// A whole document, HTML rules whatever it was read as.
 pub fn Document::dumps_html(self : Document) -> String {
   let out = StringBuilder()
-  for child in self.root.childrens {
+  for child in self.root.children {
     write_html(child, out, raw=false)
   }
   out.to_string()
@@ -120,12 +120,12 @@ fn write_xml_in(
           "\"",
         )
       }
-      if data.childrens.is_empty() && data.closed {
+      if data.children.is_empty() && data.closed {
         out.write_string("/>")
         return
       }
       out.write_string(">")
-      for child in data.childrens {
+      for child in data.children {
         write_xml_in(child, out, local_scope)
       }
       out.write_string(
@@ -211,7 +211,7 @@ fn write_html(node : Node, out : StringBuilder, raw~ : Bool) -> Unit {
         return
       }
       let raw_here = !foreign && is_raw_text_element(tag)
-      for child in data.childrens {
+      for child in data.children {
         write_html(child, out, raw=raw_here || raw)
       }
       out.write_string("</" + tag + ">")

@@ -432,8 +432,8 @@ fn index_of_child(
   element : @moonxml.Element,
 ) -> Int32? {
   let mut k = 0
-  while k < parent.childrens.length() {
-    if parent.childrens[k] is @moonxml.ElementNode(data) &&
+  while k < parent.children.length() {
+    if parent.children[k] is @moonxml.ElementNode(data) &&
       physical_equal(data, element) {
       return Some(k)
     }
@@ -456,8 +456,8 @@ fn insert_text(builder : Builder, text : String) -> Unit {
           match index_of_child(parent, table) {
             Some(at) =>
               if at > 0 &&
-                parent.childrens[at - 1] is @moonxml.TextNode(existing) {
-                parent.childrens[at - 1] = @moonxml.TextNode(existing + text)
+                parent.children[at - 1] is @moonxml.TextNode(existing) {
+                parent.children[at - 1] = @moonxml.TextNode(existing + text)
                 true
               } else {
                 false
@@ -474,7 +474,7 @@ fn insert_text(builder : Builder, text : String) -> Unit {
       // A tree has one node per run of text, so a run that arrives in pieces
       // joins the one before it.
       let parent = current(builder)
-      let kids = parent.childrens
+      let kids = parent.children
       let n = kids.length()
       if n > 0 && kids[n - 1] is @moonxml.TextNode(existing) {
         kids[n - 1] = @moonxml.TextNode(existing + text)
