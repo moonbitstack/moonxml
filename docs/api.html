@@ -24,7 +24,7 @@
 </header>
 
 <main class="wrap" style="padding-top:44px">
-  <p class="eyebrow">152 public items</p>
+  <p class="eyebrow">155 public items</p>
   <h1 style="font-size:clamp(32px,4vw,44px);margin-bottom:10px">The API</h1>
   <p class="sub">Generated from each package's interface file, so it cannot describe something the code does not have — or miss something it does.</p>
   <div class="colophon-line">
@@ -72,8 +72,10 @@
 <a href="#moonxml-document-repairs">Document::repairs</a>
 <a href="#moonxml-document-selector">Document::selector</a>
 <a href="#moonxml-document-set-repairs">Document::set_repairs</a>
+<a href="#moonxml-document-set-unresolved">Document::set_unresolved</a>
 <a href="#moonxml-document-smooth">Document::smooth</a>
 <a href="#moonxml-document-text">Document::text</a>
+<a href="#moonxml-document-unresolved">Document::unresolved</a>
 <a href="#moonxml-document-xpath">Document::xpath</a>
 <a href="#moonxml-document-xpath-value">Document::xpath_value</a>
 <a href="#moonxml-pub-impl-event-sink-for-document">pub impl @event.Sink for Document</a>
@@ -185,6 +187,7 @@
 <a href="#moonxml-html-loads-fragment">loads_fragment</a>
 <a href="#moonxml-html-named-reference">named_reference</a>
 <h4><a href="#moonxml-xml">xml</a></h4>
+<a href="#moonxml-xml-entity-limit">entity_limit</a>
 <a href="#moonxml-xml-limit">limit</a>
 <a href="#moonxml-xml-load">load</a>
 <a href="#moonxml-xml-loads">loads</a>
@@ -364,6 +367,10 @@
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::set_repairs(<span class="ty">Self</span>, <span class="ty">Repairs</span>) -&gt; <span class="ty">Unit</span></span></pre>
 </div>
+<div class="api-item" id="moonxml-document-set-unresolved" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::set_unresolved(<span class="ty">Self</span>, <span class="ty">Array</span>[<span class="ty">String</span>]) -&gt; <span class="ty">Unit</span></span></pre>
+</div>
 <div class="api-item" id="moonxml-document-smooth" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::smooth(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
@@ -373,6 +380,11 @@
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::text(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
 <p class="doc">The text of the whole document, concatenated.</p>
+</div>
+<div class="api-item" id="moonxml-document-unresolved" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::unresolved(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[<span class="ty">String</span>]</span></pre>
+<p class="doc">The external entities the document named but the parser did not read, in the order they were referenced, each name once.  The library does no I/O, so a document whose entities live in a file beside it is read without them: XML 1.0 says a non-validating processor need not read them, but must tell the application which ones it skipped. That is this list. It is empty for a document that needed nothing from outside.</p>
 </div>
 <div class="api-item" id="moonxml-document-xpath" data-kind="fn">
 <span class="kind">fn</span>
@@ -936,29 +948,28 @@
 <h3 class="group" data-group="traits">Traits</h3>
 <div class="api-item" id="moonxml-xml-scan" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> scan(<span class="ty">String</span>, &amp;@event.<span class="ty">Sink</span>, fragment? : <span class="ty">Bool</span>, limit? : <span class="ty">Int32</span>) -&gt; <span class="ty">Unit</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
-<p class="doc">Stream a document's events into a sink, building nothing. <code>limit</code> is as for <code>loads</code>.</p>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> scan(<span class="ty">String</span>, &amp;@event.<span class="ty">Sink</span>, fragment? : <span class="ty">Bool</span>, limit? : <span class="ty">Int32</span>, entity_limit? : <span class="ty">Int32</span>) -&gt; <span class="ty">Unit</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
 </div>
 <h3 class="group" data-group="values">Values</h3>
+<div class="api-item" id="moonxml-xml-entity-limit" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">let</span> entity_limit : <span class="ty">Int32</span></span></pre>
+</div>
 <div class="api-item" id="moonxml-xml-limit" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">let</span> limit : <span class="ty">Int32</span></span></pre>
-<p class="doc">How deep elements may nest before a document is refused. Chrome and WebKit stop at 512 nested elements; a document deeper than that is a stack to eat, not a document.</p>
 </div>
 <div class="api-item" id="moonxml-xml-load" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> load(<span class="ty">Bytes</span>, limit? : <span class="ty">Int32</span>) -&gt; @moonxml.<span class="ty">Document</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
-<p class="doc">Read a document from bytes; UTF-8, with a leading byte-order mark skipped. <code>limit</code> is as for <code>loads</code>.</p>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> load(<span class="ty">Bytes</span>, limit? : <span class="ty">Int32</span>, entity_limit? : <span class="ty">Int32</span>) -&gt; @moonxml.<span class="ty">Document</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
 </div>
 <div class="api-item" id="moonxml-xml-loads" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads(<span class="ty">String</span>, limit? : <span class="ty">Int32</span>) -&gt; @moonxml.<span class="ty">Document</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
-<p class="doc">Read a document and answer its tree. <code>limit</code> bounds the element nesting.</p>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads(<span class="ty">String</span>, limit? : <span class="ty">Int32</span>, entity_limit? : <span class="ty">Int32</span>) -&gt; @moonxml.<span class="ty">Document</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
 </div>
 <div class="api-item" id="moonxml-xml-loads-fragment" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads_fragment(<span class="ty">String</span>, limit? : <span class="ty">Int32</span>) -&gt; @moonxml.<span class="ty">Document</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
-<p class="doc">Read content that has no single root — several elements, or text beside them — into a document whose root holds them. Not a well-formed document, which is the point: it is for a snippet.</p>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads_fragment(<span class="ty">String</span>, limit? : <span class="ty">Int32</span>, entity_limit? : <span class="ty">Int32</span>) -&gt; @moonxml.<span class="ty">Document</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
 </div>
 </section>
 <section id="moonxml-event">

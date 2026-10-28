@@ -193,3 +193,125 @@ test "bytes that are not UTF-8 are refused at the fault" {
   }
   assert_eq(refused, true)
 }
+
+///|
+test "an internal entity stands for its text" {
+  let doc = loads(
+    "<!DOCTYPE r [<!ENTITY who \"the reader\">]><r>hello &who;</r>",
+  )
+  assert_eq(doc.css("r").text(), "hello the reader")
+}
+
+///|
+test "an entity may stand for markup, and it is read as markup" {
+  let doc = loads("<!DOCTYPE r [<!ENTITY e \"<b>bold</b>\">]><r>&e;</r>")
+  assert_eq(doc.css("b").length(), 1)
+  assert_eq(doc.css("b").text(), "bold")
+}
+
+///|
+test "entities nest, and the inner one is expanded too" {
+  let doc = loads(
+    "<!DOCTYPE r [<!ENTITY inner \"deep\"><!ENTITY outer \"very &inner;\">]><r>&outer;</r>",
+  )
+  assert_eq(doc.css("r").text(), "very deep")
+}
+
+///|
+test "an entity that contains itself is refused" {
+  assert_eq(
+    refused("<!DOCTYPE r [<!ENTITY a \"&b;\"><!ENTITY b \"&a;\">]><r>&a;</r>"),
+    true,
+  )
+}
+
+///|
+test "a character reference stays a character, not markup" {
+  let doc = loads("<!DOCTYPE r [<!ENTITY e \"&lt;b&gt;\">]><r>&e;</r>")
+  assert_eq(doc.css("b").length(), 0)
+  assert_eq(doc.css("r").text(), "<b>")
+}
+
+///|
+test "expansion is bounded, and going past the bound is refused" {
+  let fifty = "A".repeat(50)
+  let source = "<!DOCTYPE r [<!ENTITY e \"" + fifty + "\">]><r>&e;</r>"
+  assert_eq(entity_limit, 1048576)
+  assert_eq(loads(source).css("r").text().length(), 50)
+  let refused = try {
+    ignore(loads(source, entity_limit=10))
+    false
+  } catch {
+    @moonxml.Exceeded(limit~, ..) => limit == 10
+    _ => false
+  }
+  assert_eq(refused, true)
+}
+
+///|
+test "a declaration gives an element an attribute it did not write" {
+  let doc = loads(
+    "<!DOCTYPE r [<!ELEMENT r EMPTY><!ATTLIST r kind CDATA \"plain\">]><r/>",
+  )
+  assert_eq(doc.css("r").attr("kind"), Some("plain"))
+}
+
+///|
+test "a default fills in what the start tag left out, and only that" {
+  let doc = loads(
+    "<!DOCTYPE r [<!ATTLIST r a CDATA \"one\" b CDATA \"two\">]><r b=\"own\"/>",
+  )
+  assert_eq(doc.css("r").attr("a"), Some("one"))
+  assert_eq(doc.css("r").attr("b"), Some("own"))
+}
+
+///|
+test "a typed attribute has its whitespace collapsed" {
+  let doc = loads(
+    "<!DOCTYPE r [<!ATTLIST r list NMTOKENS #IMPLIED>]><r list=\"  a   b  \"/>",
+  )
+  assert_eq(doc.css("r").attr("list"), Some("a b"))
+}
+
+///|
+test "a parameter entity stands for declarations" {
+  let doc = loads(
+    "<!DOCTYPE r [<!ENTITY % decl \"<!ENTITY who 'the reader'>\">%decl;]><r>&who;</r>",
+  )
+  assert_eq(doc.css("r").text(), "the reader")
+}
+
+///|
+test "an external entity is not fetched, and is named" {
+  let doc = loads(
+    "<!DOCTYPE r [<!ENTITY e SYSTEM \"elsewhere.txt\">]><r>a&e;b</r>",
+  )
+  assert_eq(doc.css("r").text(), "ab")
+  assert_eq(doc.unresolved(), ["e"])
+}
+
+///|
+test "a document that says standalone reads nothing from outside" {
+  assert_eq(
+    refused(
+      "<?xml version=\"1.0\" standalone=\"yes\"?><!DOCTYPE r SYSTEM \"r.dtd\"><r>&e;</r>",
+    ),
+    true,
+  )
+}
+
+///|
+test "a doctype with an internal subset writes back as it was read" {
+  let source = "<!DOCTYPE r [<!ELEMENT r (#PCDATA)><!ATTLIST r a CDATA #IMPLIED>]><r/>"
+  assert_eq(loads(source).dumps(), source)
+}
+
+///|
+test "a bare ampersand is not a reference" {
+  assert_eq(refused("<r>a & b</r>"), true)
+}
+
+///|
+test "an entity cannot be closed by what follows it" {
+  assert_eq(refused("<!DOCTYPE r [<!ENTITY e \"<b>\">]><r>&e;</r></b>"), true)
+}

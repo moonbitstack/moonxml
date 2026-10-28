@@ -73,6 +73,7 @@ pub struct Document {
   priv mut flavour : Flavour
   priv mut repairs : Repairs
   priv mut nesting : Array[Element]
+  priv mut unresolved : Array[String]
 }
 
 ///|
@@ -87,6 +88,7 @@ pub fn Document::new(flavour~ : Flavour = Xml) -> Document {
     flavour,
     repairs: Repairs::new(),
     nesting: [],
+    unresolved: [],
   }
   root.home = Some(doc)
   doc.seed_selectors()
@@ -136,6 +138,23 @@ pub fn Document::repairs(self : Document) -> Repairs {
 ///|
 pub fn Document::set_repairs(self : Document, repairs : Repairs) -> Unit {
   self.repairs = repairs
+}
+
+///|
+/// The external entities the document named but the parser did not read, in
+/// the order they were referenced, each name once.
+///
+/// The library does no I/O, so a document whose entities live in a file beside
+/// it is read without them: XML 1.0 says a non-validating processor need not
+/// read them, but must tell the application which ones it skipped. That is
+/// this list. It is empty for a document that needed nothing from outside.
+pub fn Document::unresolved(self : Document) -> Array[String] {
+  self.unresolved
+}
+
+///|
+pub fn Document::set_unresolved(self : Document, names : Array[String]) -> Unit {
+  self.unresolved = names
 }
 
 ///|

@@ -7,15 +7,17 @@ import {
 }
 
 // Values
+pub let entity_limit : Int32
+
 pub let limit : Int32
 
-pub fn load(Bytes, limit? : Int32) -> @moonxml.Document raise @moonxml.Refused
+pub fn load(Bytes, limit? : Int32, entity_limit? : Int32) -> @moonxml.Document raise @moonxml.Refused
 
-pub fn loads(String, limit? : Int32) -> @moonxml.Document raise @moonxml.Refused
+pub fn loads(String, limit? : Int32, entity_limit? : Int32) -> @moonxml.Document raise @moonxml.Refused
 
-pub fn loads_fragment(String, limit? : Int32) -> @moonxml.Document raise @moonxml.Refused
+pub fn loads_fragment(String, limit? : Int32, entity_limit? : Int32) -> @moonxml.Document raise @moonxml.Refused
 
-pub fn scan(String, &@event.Sink, fragment? : Bool, limit? : Int32) -> Unit raise @moonxml.Refused
+pub fn scan(String, &@event.Sink, fragment? : Bool, limit? : Int32, entity_limit? : Int32) -> Unit raise @moonxml.Refused
 
 // Errors
 

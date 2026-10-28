@@ -64,8 +64,10 @@ pub fn Document::register(Self, String, &Selector) -> Unit
 pub fn Document::repairs(Self) -> Repairs
 pub fn Document::selector(Self, String, String) -> Selection raise Refused
 pub fn Document::set_repairs(Self, Repairs) -> Unit
+pub fn Document::set_unresolved(Self, Array[String]) -> Unit
 pub fn Document::smooth(Self) -> Unit
 pub fn Document::text(Self) -> String
+pub fn Document::unresolved(Self) -> Array[String]
 pub fn Document::xpath(Self, String) -> Selection raise Refused
 pub fn Document::xpath_value(Self, String) -> XPathValue raise Refused
 pub impl @event.Sink for Document
