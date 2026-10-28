@@ -188,6 +188,20 @@ def page(source, rows):
 
   <section style="border-top:1px solid var(--rule)">
     <div class="sec-head"><span class="sec-num">01</span><h2>The document</h2></div>
+    <div class="demo-brief">
+      <div>
+        <span class="lab">the specimen</span>
+        <p>A page, not a form. The fields take typing, the boxes tick, the list opens — the controls work, and they submit nothing. They are here to be selected.</p>
+      </div>
+      <div>
+        <span class="lab">the source</span>
+        <p>Under the box, the document in full: the bytes the engine read to make these tables. Parse it with <code>@html.parse</code> and every answer below falls out again.</p>
+      </div>
+      <div>
+        <span class="lab">the answers</span>
+        <p>Sections 02 to 07 give the selectors, the query as written, the nodes it answered, and those nodes. Section 06 adds what a node yields when read from — its text, its attribute, its markup, its typed XPath value.</p>
+      </div>
+    </div>
     <div class="demo-box">
       <div class="demo-cap"><span>the article, rendered</span><span>%s elements · %d queries below</span></div>
 %s

@@ -521,6 +521,29 @@ td code { white-space: nowrap; }
 
 /* ------------------------------------------------- the selector board */
 
+/* before the box, three notes in the margin's voice: what it is, where its
+   source is, and where the answers are — ruled like a colophon, not a card */
+.demo-brief {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--rule-strong);
+  border-bottom: 1px solid var(--rule-strong);
+  margin: 0 0 20px;
+}
+.demo-brief > div { padding: 13px 18px 14px; border-left: 1px solid var(--rule); }
+.demo-brief > div:first-child { padding-left: 0; border-left: none; }
+.demo-brief > div:last-child { padding-right: 0; }
+.demo-brief .lab {
+  display: block;
+  font-family: var(--typewriter);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--brick);
+  margin-bottom: 7px;
+}
+.demo-brief p { margin: 0; font-size: 13.5px; line-height: 1.52; color: var(--ink-soft); }
+
 /* the document itself, set on a lifted sheet inside the ruled page */
 .demo-box {
   border: 1px solid var(--rule-strong);
@@ -894,6 +917,9 @@ pre::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hot); backgr
   nav.top-nav { gap: 14px; }
   nav.top-nav a.hide-sm { display: none; }
   .lede, .sub, .feature p, .callout, ol.steps p { text-align: left; hyphens: manual; }
+  .demo-brief { grid-template-columns: 1fr; }
+  .demo-brief > div { padding: 12px 0; border-left: none; border-top: 1px solid var(--rule); }
+  .demo-brief > div:first-child { border-top: none; }
   .dropcap::first-letter { float: none; font-size: inherit; color: inherit; padding: 0; }
 }
 
