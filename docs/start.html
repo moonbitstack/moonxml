@@ -201,7 +201,7 @@ cells.<span class="f">css</span>(<span class="s">"tr"</span>).<span class="f">le
   <span class="s">"&lt;form hx-post='/todos' hx-target='#list' hx-swap='beforeend'&gt;"</span> +
   <span class="s">"&lt;input name='title' value='write it down'&gt;&lt;/form&gt;&lt;ul id='list'&gt;&lt;/ul&gt;"</span>)
 
-<span class="k">let</span> request = <span class="f">@htmx.Hx.of</span>(page.<span class="f">css</span>(<span class="s">"form"</span>).<span class="f">items</span>[<span class="s">0</span>])
+<span class="k">let</span> request = <span class="f">@htmx.Hx::of</span>(page.<span class="f">css</span>(<span class="s">"form"</span>).<span class="f">items</span>[<span class="s">0</span>])
   .<span class="f">request</span>(<span class="s">"submit"</span>).<span class="f">unwrap</span>()
 
 request.<span class="f">address</span>()      <span class="cm">// "/todos"</span>

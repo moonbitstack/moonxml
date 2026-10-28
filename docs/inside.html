@@ -166,7 +166,8 @@
         <tr><td>CSS engine</td><td>Every combinator, every attribute operator, every pseudo-class implemented — and the parse errors for the ones refused.</td></tr>
         <tr><td>XPath 1.0</td><td>Axes including the reverse ones, predicate positions per context node, the comparison rules of §3.4, number formatting of §4.2.</td></tr>
         <tr><td>XML</td><td>Byte-for-byte round trips, namespaces, and the well-formedness errors with their offsets.</td></tr>
-        <tr><td>HTML</td><td>html5lib's tree-construction corpus, and a hand-written case for every repair above.</td></tr>
+        <tr><td>HTML</td><td>html5lib's tree-construction corpus — every case of it — and a hand-written case for every repair above.</td></tr>
+        <tr><td>htmx</td><td>Triggers and swaps as they are spelled, inheritance and <code>hx-disinherit</code>, the values a form sends, and the answer landing where the page said.</td></tr>
       </tbody>
     </table>
     <p class="sub">All of it runs on all four backends — wasm, wasm-gc, js, native — in CI, with <code>--deny-warn</code> and a formatting check that fails the build.</p>

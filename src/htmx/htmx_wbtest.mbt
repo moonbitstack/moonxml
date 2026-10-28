@@ -296,3 +296,30 @@ test "a request outside a document answers nothing rather than failing" {
   assert_eq(Hx::of(loose).verb() is None, true)
   assert_eq(Hx::of(loose).request("click") is None, true)
 }
+
+///|
+test "the snippet the README shows answers what the README says" {
+  let page = page(
+    "<form hx-post='/todos' hx-target='#list' hx-swap='beforeend'>" +
+    "<input name='title' value='write it down'><button>Add</button></form>" +
+    "<ul id='list'></ul>",
+  )
+  let request = Hx::of(
+      match page.css("form").items[0] {
+        @moonxml.ElementNode(data) => data
+        _ => abort("no form")
+      },
+    )
+    .request("submit")
+    .unwrap()
+  assert_eq(request.address(), "/todos")
+  assert_eq(request.query(), "title=write+it+down")
+  let headers = pairs(request.headers())
+  assert_eq(headers.contains("HX-Request=true"), true)
+  assert_eq(headers.contains("HX-Target=list"), true)
+  ignore(request.answer("<li>a second one</li>"))
+  assert_eq(
+    page.dumps_html().contains("<ul id=\"list\"><li>a second one</li></ul>"),
+    true,
+  )
+}

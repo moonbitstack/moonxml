@@ -35,9 +35,8 @@
           <span><b>HTML</b></span><span class="sep">·</span>
           <span><b>XML</b></span><span class="sep">·</span>
           <span><b>SVG</b></span><span class="sep">·</span>
-          <span>one tree</span><span class="sep">·</span>
-          <span>CSS &amp; XPath</span><span class="sep">·</span>
-          <span>Apache-2.0</span>
+          <span><b>htmx</b></span><span class="sep">·</span>
+          <span><b>XPath</b></span>
         </div>
       </div>
       <div>
@@ -209,7 +208,7 @@ page.<span class="f">dumps</span>()</pre>
   <span class="s">"&lt;form hx-post='/todos' hx-target='#list' hx-swap='beforeend'&gt;"</span> +
   <span class="s">"&lt;input name='title' value='write it down'&gt;&lt;/form&gt;&lt;ul id='list'&gt;&lt;/ul&gt;"</span>)
 
-<span class="k">let</span> request = <span class="f">@htmx.Hx.of</span>(page.<span class="f">css</span>(<span class="s">"form"</span>).<span class="f">items</span>[<span class="s">0</span>])
+<span class="k">let</span> request = <span class="f">@htmx.Hx::of</span>(page.<span class="f">css</span>(<span class="s">"form"</span>).<span class="f">items</span>[<span class="s">0</span>])
   .<span class="f">request</span>(<span class="s">"submit"</span>).<span class="f">unwrap</span>()
 
 request.<span class="f">address</span>()   <span class="cm">  "/todos" — a post keeps its values out of the URL</span>
@@ -274,13 +273,14 @@ request.<span class="f">headers</span>()   <span class="cm">  HX-Request, HX-Tar
   <span class="s">"moonbitstack/moonxml"</span>       <span class="cm">// tree, chain, engines</span>
   <span class="s">"moonbitstack/moonxml/html"</span>  <span class="cm">// @html.loads</span>
   <span class="s">"moonbitstack/moonxml/xml"</span>   <span class="cm">// @xml.loads</span>
+  <span class="s">"moonbitstack/moonxml/htmx"</span>  <span class="cm">// @htmx.Hx</span>
 }</pre>
           </div>
         </div>
         <p class="sub" style="margin-top:22px;margin-bottom:0">
-          <a href="start.html" style="color:var(--brick)">Start the guided tour →</a> &nbsp;·&nbsp;
-          <a href="api.html" style="color:var(--ink-soft)">the complete API</a> &nbsp;·&nbsp;
-          <a href="inside.html" style="color:var(--ink-soft)">how it works</a>
+          <a href="start.html" style="color:var(--brick)">Start The Guided Tour</a> &nbsp;·&nbsp;
+          <a href="api.html" style="color:var(--ink-soft)">The Complete API</a> &nbsp;·&nbsp;
+          <a href="inside.html" style="color:var(--ink-soft)">How It Works</a>
         </p>
       </div>
     </div>
