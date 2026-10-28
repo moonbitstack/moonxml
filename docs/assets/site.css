@@ -281,6 +281,8 @@ h1 em {
   padding: 10px 0;
   margin-top: 30px;
 }
+/* the same line, with its imprint centred between the rules */
+.colophon-line.centered { justify-content: center; }
 .colophon-line b { color: var(--brick); font-weight: 700; }
 .colophon-line .sep { color: var(--rule-strong); }
 
