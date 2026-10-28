@@ -24,6 +24,8 @@ PACKAGES = [
      "The XML 1.0 parser: strict, with namespaces, and with the offset of the fault."),
     ("moonxml/event", "src/event/pkg.generated.mbti",
      "The streaming vocabulary — what a parser emits and what a sink receives."),
+    ("moonxml/htmx", "src/htmx/pkg.generated.mbti",
+     "htmx's attributes, read off a tree and carried out on it: the trigger, the request, the swap."),
 ]
 
 KEYWORDS = (

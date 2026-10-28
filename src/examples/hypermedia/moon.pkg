@@ -1,0 +1,8 @@
+// htmx, worked through end to end: `moon run examples/hypermedia`.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonxml",
+  "moonbitstack/moonxml/htmx",
+  "moonbitstack/moonxml/html",
+}

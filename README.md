@@ -51,6 +51,7 @@ import {
   "moonbitstack/moonxml/html",  // @html.loads
   "moonbitstack/moonxml/xml",   // @xml.loads
   "moonbitstack/moonxml/event", // Event, Sink
+  "moonbitstack/moonxml/htmx",  // @htmx.Hx — htmx's attributes, read and carried out
 }
 ```
 
@@ -164,11 +165,43 @@ that has no single root.
 **Streaming** — `@xml.scan(text, sink)` emits `Event`s to any `Sink`;
 `document.events()` reads a finished tree back as the same stream.
 
+## Hypermedia
+
+`moonxml/htmx` reads the attributes htmx defines and carries them out: when to
+ask, what to ask, and where the answer goes.
+
+```moonbit
+let page = @html.loads(
+  "<form hx-post='/todos' hx-target='#list' hx-swap='beforeend'>" +
+  "<input name='title' value='write it down'><button>Add</button></form>" +
+  "<ul id='list'></ul>")
+
+let request = @htmx.Hx::of(page.css("form").items[0]).request("submit").unwrap()
+
+request.address()                    // "/todos"
+request.query()                      // "title=write+it+down"
+request.headers()                    // [("HX-Request", "true"), ("HX-Target", "list")]
+
+request.answer("<li>a second one</li>")   // and the list has it
+```
+
+The verbs (`hx-get`, `hx-post`, `hx-put`, `hx-patch`, `hx-delete`), `hx-trigger`
+with `once`, `changed`, `delay:`, `throttle:`, `from:`, `queue:` and `every`;
+`hx-target` with `this`, `closest`, `find`, `next`, `previous` and bare
+selectors; `hx-swap` with its seven positions and its timing; `hx-vals`,
+`hx-headers`, `hx-include`, `hx-params`, `hx-select`, `hx-confirm`,
+`hx-indicator`, `hx-push-url`, `hx-boost` and `hx-swap-oob`. Attributes
+inherit down the tree, and `hx-disinherit` and `unset` stop them, as htmx does.
+
+What it does not do is the two things a library cannot: send the request, and
+wait for the answer. It describes the first and applies the second.
+
 ## Examples
 
 | | |
 |:--|:--|
 | [`src/examples/tour`](src/examples/tour/main.mbt) | the whole surface in one run: `moon run src/examples/tour` |
+| [`src/examples/hypermedia`](src/examples/hypermedia/main.mbt) | a page that declares its requests: read it, make one, swap the answer in |
 | [`src/examples/scrape`](src/examples/scrape/main.mbt) | a page in, a table out: query, filter, reshape, serialize |
 | [`src/examples/rewrite`](src/examples/rewrite/main.mbt) | read a feed, edit every entry, write it back byte-faithfully |
 
@@ -178,7 +211,9 @@ that has no single root.
 need a live browser (`:hover`, `:visited`) — none of those can be decided from
 a document alone, so each is a named answer rather than a silent miss. XSLT,
 DTD validation and XPath 2.0 are transformations and languages of their own,
-not features of a tree library.
+not features of a tree library. The same goes for htmx's `ws:` and `sse:`
+extensions, `hx-on` handlers and history cache: they need an event loop and a
+connection, so `moonxml/htmx` stops at the request and the swap.
 
 ## Licence
 

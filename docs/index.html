@@ -171,7 +171,7 @@ page.<span class="f">dumps</span>()</pre>
 
               <rect x="410" y="52" width="150" height="70" fill="none" stroke="currentColor" stroke-width="1"/>
               <text x="426" y="80">Event</text>
-              <text x="426" y="100" fill="currentColor" opacity="0.55">StartTag, TextRun…</text>
+              <text x="426" y="100" fill="currentColor" opacity="0.55">StartTag, Text…</text>
 
               <rect x="604" y="42" width="160" height="90" fill="none" stroke="#4a5636" stroke-width="1.6"/>
               <text x="620" y="70" fill="#4a5636">Sink</text>
@@ -200,7 +200,44 @@ page.<span class="f">dumps</span>()</pre>
 
   <section>
     <div class="chapter">
-      <div class="chapter-mark">V<span>the limits</span></div>
+      <div class="chapter-mark">V<span>the hypermedia</span></div>
+      <div>
+        <h2>A page that declares its requests</h2>
+        <p class="sub">htmx puts the wiring in attributes: when to ask, what to ask, where the answer goes. <code>moonxml/htmx</code> reads those attributes the way htmx reads them — inherited down the tree, resolved from the element that wrote them — and hands back the request a click would have made, then puts the answer where it said.</p>
+        <p class="filename">listing v — one submit, described and answered</p>
+<pre><span class="k">let</span> page = <span class="f">@html.loads</span>(
+  <span class="s">"&lt;form hx-post='/todos' hx-target='#list' hx-swap='beforeend'&gt;"</span> +
+  <span class="s">"&lt;input name='title' value='write it down'&gt;&lt;/form&gt;&lt;ul id='list'&gt;&lt;/ul&gt;"</span>)
+
+<span class="k">let</span> request = <span class="f">@htmx.Hx.of</span>(page.<span class="f">css</span>(<span class="s">"form"</span>).<span class="f">items</span>[<span class="s">0</span>])
+  .<span class="f">request</span>(<span class="s">"submit"</span>).<span class="f">unwrap</span>()
+
+request.<span class="f">address</span>()   <span class="cm">  "/todos" — a post keeps its values out of the URL</span>
+request.<span class="f">query</span>()     <span class="cm">  "title=write+it+down"</span>
+request.<span class="f">headers</span>()   <span class="cm">  HX-Request, HX-Target, HX-Trigger</span>
+
+<span class="k">ignore</span>(request.<span class="f">answer</span>(<span class="s">"&lt;li&gt;a second one&lt;/li&gt;"</span>))</pre>
+        <div class="cols three">
+          <div class="feature">
+            <h3>Triggers</h3>
+            <p><code>hx-trigger</code> with <code>once</code>, <code>changed</code>, <code>delay:</code>, <code>throttle:</code>, <code>from:</code>, <code>queue:</code>, and <code>every 2s</code>.</p>
+          </div>
+          <div class="feature">
+            <h3>Targets</h3>
+            <p><code>this</code>, <code>closest</code>, <code>find</code>, <code>next</code>, <code>previous</code>, or a selector — resolved from the element that wrote it, inherited until something nearer says otherwise.</p>
+          </div>
+          <div class="feature">
+            <h3>Swaps</h3>
+            <p>Seven positions, <code>hx-select</code> for a part of the answer, and out-of-band elements sent to the ids they name.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="chapter">
+      <div class="chapter-mark">VI<span>the limits</span></div>
       <div>
         <h2>Small, and stated plainly</h2>
         <div class="cols three">
@@ -223,7 +260,7 @@ page.<span class="f">dumps</span>()</pre>
 
   <section>
     <div class="chapter">
-      <div class="chapter-mark">VI<span>the copy</span></div>
+      <div class="chapter-mark">VII<span>the copy</span></div>
       <div>
         <h2>Install</h2>
         <div class="cols two">

@@ -22,6 +22,25 @@ pub fn Selection::new() -> Selection {
 }
 
 ///|
+/// A selection of these nodes, in the order given, carrying the document the
+/// first of them belongs to.
+pub fn Selection::of(nodes : Array[Node]) -> Selection {
+  let mut doc : Document? = None
+  for node in nodes {
+    if node is ElementNode(data) {
+      match data.document() {
+        Some(found) => {
+          doc = Some(found)
+          break
+        }
+        None => ()
+      }
+    }
+  }
+  { doc, items: nodes, }
+}
+
+///|
 /// Wrap one node, answering a selection that carries the document the node
 /// belongs to when it has one.
 fn selection_of(node : Node) -> Selection {

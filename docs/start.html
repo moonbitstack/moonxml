@@ -194,6 +194,25 @@ cells.<span class="f">css</span>(<span class="s">"tr"</span>).<span class="f">le
       </li>
 
       <li>
+        <h3>htmx, without a browser</h3>
+        <p>A hypermedia page does not script its requests; it declares them. <code>@htmx</code> reads those declarations off the tree, describes the request they add up to, and puts the answer where they say it goes.</p>
+        <p class="filename">step11.mbt</p>
+<pre><span class="k">let</span> page = <span class="f">@html.loads</span>(
+  <span class="s">"&lt;form hx-post='/todos' hx-target='#list' hx-swap='beforeend'&gt;"</span> +
+  <span class="s">"&lt;input name='title' value='write it down'&gt;&lt;/form&gt;&lt;ul id='list'&gt;&lt;/ul&gt;"</span>)
+
+<span class="k">let</span> request = <span class="f">@htmx.Hx.of</span>(page.<span class="f">css</span>(<span class="s">"form"</span>).<span class="f">items</span>[<span class="s">0</span>])
+  .<span class="f">request</span>(<span class="s">"submit"</span>).<span class="f">unwrap</span>()
+
+request.<span class="f">address</span>()      <span class="cm">// "/todos"</span>
+request.<span class="f">query</span>()        <span class="cm">// "title=write+it+down"</span>
+request.<span class="f">headers</span>()      <span class="cm">// HX-Request, HX-Target, and what the page declared</span>
+
+<span class="k">ignore</span>(request.<span class="f">answer</span>(<span class="s">"&lt;li&gt;a second one&lt;/li&gt;"</span>))   <span class="cm">// the list grows</span></pre>
+        <p>Triggers, targets, swaps, values and out-of-band content are all read the way htmx reads them, inheritance included. Sending the request and waiting for the answer are the two things left to the caller, because they are the two things a library cannot do.</p>
+      </li>
+
+      <li>
         <h3>Then the API</h3>
         <div class="callout"><b>Next:</b> the <a href="api.html">complete API</a>, or <a href="inside.html">how the parsers and the chain work</a>.</div>
       </li>

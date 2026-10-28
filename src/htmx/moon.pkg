@@ -1,0 +1,10 @@
+// htmx's attributes, read off a document and carried out on it.
+//
+// https://htmx.org — this package is what a hypermedia-driven page declares:
+// a trigger, a request, and a swap. Nothing here touches a network or a
+// clock; the request is described, the answer is applied, and the caller
+// supplies both.
+import {
+  "moonbitstack/moonxml",
+  "moonbitstack/moonxml/html",
+}

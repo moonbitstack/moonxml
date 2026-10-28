@@ -193,6 +193,7 @@ pub fn Selection::html(Self) -> String
 pub fn Selection::last(Self) -> Self
 pub fn Selection::length(Self) -> Int32
 pub fn Selection::new() -> Self
+pub fn Selection::of(Array[Node]) -> Self
 pub fn Selection::parent(Self) -> Self
 pub fn Selection::prepend(Self, Node) -> Unit
 pub fn Selection::remove(Self) -> Unit

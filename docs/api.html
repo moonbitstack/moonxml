@@ -24,7 +24,7 @@
 </header>
 
 <main class="wrap" style="padding-top:44px">
-  <p class="eyebrow">155 public items</p>
+  <p class="eyebrow">186 public items</p>
   <h1 style="font-size:clamp(32px,4vw,44px);margin-bottom:10px">The API</h1>
   <p class="sub">Generated from each package's interface file, so it cannot describe something the code does not have — or miss something it does.</p>
   <div class="colophon-line">
@@ -160,6 +160,7 @@
 <a href="#moonxml-selection-last">Selection::last</a>
 <a href="#moonxml-selection-length">Selection::length</a>
 <a href="#moonxml-selection-new">Selection::new</a>
+<a href="#moonxml-selection-of">Selection::of</a>
 <a href="#moonxml-selection-parent">Selection::parent</a>
 <a href="#moonxml-selection-prepend">Selection::prepend</a>
 <a href="#moonxml-selection-remove">Selection::remove</a>
@@ -196,6 +197,37 @@
 <h4><a href="#moonxml-event">event</a></h4>
 <a href="#moonxml-event-event">Event</a>
 <a href="#moonxml-event-sink">Sink</a>
+<h4><a href="#moonxml-htmx">htmx</a></h4>
+<a href="#moonxml-htmx-hx">Hx</a>
+<a href="#moonxml-htmx-hx-attr">Hx::attr</a>
+<a href="#moonxml-htmx-hx-boosted">Hx::boosted</a>
+<a href="#moonxml-htmx-hx-confirm">Hx::confirm</a>
+<a href="#moonxml-htmx-hx-element">Hx::element</a>
+<a href="#moonxml-htmx-hx-headers">Hx::headers</a>
+<a href="#moonxml-htmx-hx-indicator">Hx::indicator</a>
+<a href="#moonxml-htmx-hx-of">Hx::of</a>
+<a href="#moonxml-htmx-hx-push-url">Hx::push_url</a>
+<a href="#moonxml-htmx-hx-request">Hx::request</a>
+<a href="#moonxml-htmx-hx-target">Hx::target</a>
+<a href="#moonxml-htmx-hx-triggers">Hx::triggers</a>
+<a href="#moonxml-htmx-hx-url">Hx::url</a>
+<a href="#moonxml-htmx-hx-values">Hx::values</a>
+<a href="#moonxml-htmx-hx-verb">Hx::verb</a>
+<a href="#moonxml-htmx-request">Request</a>
+<a href="#moonxml-htmx-request-address">Request::address</a>
+<a href="#moonxml-htmx-request-answer">Request::answer</a>
+<a href="#moonxml-htmx-request-headers">Request::headers</a>
+<a href="#moonxml-htmx-request-query">Request::query</a>
+<a href="#moonxml-htmx-swap">Swap</a>
+<a href="#moonxml-htmx-swap-spec">Swap::spec</a>
+<a href="#moonxml-htmx-swapspec">SwapSpec</a>
+<a href="#moonxml-htmx-swapspec-new">SwapSpec::new</a>
+<a href="#moonxml-htmx-swapspec-parse">SwapSpec::parse</a>
+<a href="#moonxml-htmx-trigger">Trigger</a>
+<a href="#moonxml-htmx-trigger-default-for">Trigger::default_for</a>
+<a href="#moonxml-htmx-trigger-list">Trigger::list</a>
+<a href="#moonxml-htmx-trigger-matches">Trigger::matches</a>
+<a href="#moonxml-htmx-trigger-parse">Trigger::parse</a>
       </div>
     </aside>
     <div id="items">
@@ -839,6 +871,11 @@
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::new() -&gt; <span class="ty">Self</span></span></pre>
 <p class="doc">An empty selection, belonging to no document.</p>
 </div>
+<div class="api-item" id="moonxml-selection-of" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::of(<span class="ty">Array</span>[<span class="ty">Node</span>]) -&gt; <span class="ty">Self</span></span></pre>
+<p class="doc">A selection of these nodes, in the order given, carrying the document the first of them belongs to.</p>
+</div>
 <div class="api-item" id="moonxml-selection-parent" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::parent(<span class="ty">Self</span>) -&gt; <span class="ty">Self</span></span></pre>
@@ -1053,6 +1090,202 @@
   <span class="kw">fn</span> push(<span class="ty">Self</span>, <span class="ty">Event</span>) -&gt; <span class="ty">Unit</span>
 }</span></pre>
 <p class="doc">Where events go. The tree builder is one implementation; a caller counting tags or writing rows to a database is another, and it never builds a tree.</p>
+</div>
+</section>
+<section id="moonxml-htmx">
+<div class="sec-head"><h2>moonxml/htmx</h2></div>
+<p class="sub">htmx&#x27;s attributes, read off a tree and carried out on it: the trigger, the request, the swap.</p>
+<h3 class="group" data-group="traits">Traits</h3>
+<div class="api-item" id="moonxml-htmx-trigger-parse" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Trigger</span>::parse(<span class="ty">String</span>) -&gt; <span class="ty">Self</span></span></pre>
+<p class="doc">One trigger, from its spelling.  The spelling is the event — possibly with a bracketed condition — followed by modifiers separated by spaces. An empty spelling is a <code>click</code>.</p>
+</div>
+<h3 class="group" data-group="types">Types</h3>
+<div class="api-item" id="moonxml-htmx-hx" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">struct</span> <span class="ty">Hx</span> {
+  element : @moonxml.<span class="ty">Element</span>
+}</span></pre>
+<p class="doc">An element's htmx attributes — its own, or the ones it inherits.  htmx's attributes travel down the tree: <code>hx-target</code> on a container is the target of every button inside it, until something nearer says otherwise or <code>hx-disinherit</code> stops the inheritance at a boundary. Reading an attribute through <code>Hx</code> is reading it the way htmx would.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-attr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::attr(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">String</span>?</span></pre>
+<p class="doc">The value of <code>hx-&lt;name&gt;</code> — <code>attr("target")</code> is <code>hx-target</code> — inherited from the nearest ancestor that declares it. <code>None</code> when nothing does, and when the nearest declaration is <code>unset</code>.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-boosted" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::boosted(<span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+<p class="doc">Whether the element is boosted: <code>hx-boost="true"</code> somewhere on the way up.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-confirm" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::confirm(<span class="ty">Self</span>) -&gt; <span class="ty">String</span>?</span></pre>
+<p class="doc">The question to ask before asking: <code>hx-confirm</code>.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-element" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::element(<span class="ty">Self</span>) -&gt; @moonxml.<span class="ty">Element</span></span></pre>
+<p class="doc">The element the attributes were read off.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-headers" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::headers(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[(<span class="ty">String</span>, <span class="ty">String</span>)]</span></pre>
+<p class="doc">The headers this element's request carries: <code>hx-headers</code>, a JSON object.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-indicator" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::indicator(<span class="ty">Self</span>) -&gt; @moonxml.<span class="ty">Element</span>?</span></pre>
+<p class="doc">The element that says the request is in flight: <code>hx-indicator</code>, resolved the way a target is.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-of" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::of(@moonxml.<span class="ty">Element</span>) -&gt; <span class="ty">Self</span></span></pre>
+<p class="doc">The htmx attributes of <code>element</code>, as htmx would see them.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-push-url" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::push_url(<span class="ty">Self</span>) -&gt; <span class="ty">Bool</span>?</span></pre>
+<p class="doc">Whether the address bar should follow: <code>hx-push-url</code>. <code>Some(true)</code> and <code>Some(false)</code> are the two things htmx lets it say, <code>None</code> is silence.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-request" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::request(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Request</span>?</span></pre>
+<p class="doc">The request an event on this element would make, or <code>None</code> when it would make none: no verb, no address, or a trigger that is about something else.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-target" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::target(<span class="ty">Self</span>) -&gt; @moonxml.<span class="ty">Element</span>?</span></pre>
+<p class="doc">Where the answer goes: <code>hx-target</code>, resolved. A bare selector is looked up in the document; <code>this</code>, <code>closest …</code>, <code>find …</code>, <code>next …</code> and <code>previous …</code> are resolved from the element that wrote them.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-triggers" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::triggers(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[<span class="ty">Trigger</span>]</span></pre>
+<p class="doc">What an event on this element asks: the <code>hx-trigger</code> it declares, or the event an element of its kind listens for when it declares none.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-url" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::url(<span class="ty">Self</span>) -&gt; <span class="ty">String</span>?</span></pre>
+<p class="doc">Where the request goes: the value of the verb's attribute, or the <code>href</code> of a boosted link, or the <code>action</code> of a boosted form.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-values" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::values(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[(<span class="ty">String</span>, <span class="ty">String</span>)]</span></pre>
+<p class="doc">The values this element's request carries: what <code>hx-include</code> names, the element's own fields, and <code>hx-vals</code> over the top of them.  A form contributes every control inside it that has a name and is not disabled; a field contributes itself; <code>hx-include</code> adds the fields of whatever its selectors answer. <code>hx-params</code> then keeps or drops names, the way a server would expect.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-verb" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::verb(<span class="ty">Self</span>) -&gt; <span class="ty">String</span>?</span></pre>
+<p class="doc">The verb this element asks with, in lower case — <code>get</code>, <code>post</code>, <code>put</code>, <code>patch</code> or <code>delete</code> — taken from the first of those it declares.  A boosted link asks with <code>get</code> and a boosted form with <code>post</code>, which is what <code>hx-boost</code> is: an ordinary element that becomes a request.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-request" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">struct</span> <span class="ty">Request</span> {
+  verb : <span class="ty">String</span>
+  url : <span class="ty">String</span>
+  element : @moonxml.<span class="ty">Element</span>
+  target : @moonxml.<span class="ty">Element</span>
+  values : <span class="ty">Array</span>[(<span class="ty">String</span>, <span class="ty">String</span>)]
+  headers : <span class="ty">Array</span>[(<span class="ty">String</span>, <span class="ty">String</span>)]
+  swap : <span class="ty">SwapSpec</span>
+  select : <span class="ty">String</span>?
+  confirm : <span class="ty">String</span>?
+  push_url : <span class="ty">Bool</span>?
+  trigger : <span class="ty">String</span>
+}</span></pre>
+<p class="doc">A request htmx would have made: the verb, the address, what it carries, and how the answer is put back.  Nothing here is sent. A caller reads this, sends it however it likes, and hands the answer to <code>answer</code>.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-request-address" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Request</span>::address(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+<p class="doc">The address to send to: a <code>get</code> carries its values in the query, and the other verbs carry them in the body, so only a <code>get</code> has them added here.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-request-answer" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Request</span>::answer(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; @moonxml.<span class="ty">Selection</span></span></pre>
+<p class="doc">Put an answer into the page: parse it, take the part the element asked for, send the out-of-band pieces to the places they name, and swap the rest into the target.  The nodes that went in are answered, in the order they were put there.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-request-headers" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Request</span>::headers(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[(<span class="ty">String</span>, <span class="ty">String</span>)]</span></pre>
+<p class="doc">The headers to send: what the element declared, and the four htmx adds so that a server knows what it is answering.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-request-query" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Request</span>::query(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+<p class="doc">The values as <code>application/x-www-form-urlencoded</code> text, without the <code>?</code>.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-swap" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">enum</span> <span class="ty">Swap</span> {
+  <span class="ty">Inner</span>
+  <span class="ty">Outer</span>
+  <span class="ty">BeforeBegin</span>
+  <span class="ty">AfterBegin</span>
+  <span class="ty">BeforeEnd</span>
+  <span class="ty">AfterEnd</span>
+  <span class="ty">Delete</span>
+  <span class="ty">NoSwap</span>
+}</span></pre>
+<p class="doc">Where an answer goes. The first six are the ones the DOM can be told to do without asking a stylesheet; <code>Delete</code> takes the target away, and <code>NoSwap</code> keeps the answer out of the page entirely — for a response that is only out-of-band content.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-swap-spec" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Swap</span>::spec(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+<p class="doc">The position as htmx spells it.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-swapspec" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">struct</span> <span class="ty">SwapSpec</span> {
+  <span class="kw">mut</span> style : <span class="ty">Swap</span>
+  mut delay : <span class="ty">Int32</span>
+  mut settle : <span class="ty">Int32</span>
+  mut transition : <span class="ty">Bool</span>
+  mut ignore_title : <span class="ty">Bool</span>
+}</span></pre>
+<p class="doc">How an answer goes there: the position, and the timing a page might want to know about.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-swapspec-new" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">SwapSpec</span>::new() -&gt; <span class="ty">Self</span></span></pre>
+<p class="doc">The default: the inside of the target, at once.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-swapspec-parse" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">SwapSpec</span>::parse(<span class="ty">String</span>) -&gt; <span class="ty">Self</span></span></pre>
+<p class="doc">A <code>hx-swap</code> spelling: a position and, after it, modifiers.  <code>innerHTML</code>, <code>outerHTML</code>, <code>beforebegin</code>, <code>afterbegin</code>, <code>beforeend</code>, <code>afterend</code>, <code>delete</code> and <code>none</code> are the positions; <code>swap:100ms</code>, <code>settle:50ms</code>, <code>transition:true</code> and <code>ignoreTitle:true</code> are the modifiers this reader keeps. <code>scroll:</code> and <code>show:</code> are the page's business, and are read but not carried out.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-trigger" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">struct</span> <span class="ty">Trigger</span> {
+  <span class="kw">mut</span> event : <span class="ty">String</span>
+  mut filter : <span class="ty">String</span>?
+  mut once : <span class="ty">Bool</span>
+  mut changed : <span class="ty">Bool</span>
+  mut delay : <span class="ty">Int32</span>
+  mut throttle : <span class="ty">Int32</span>
+  mut from : <span class="ty">String</span>?
+  mut target : <span class="ty">String</span>?
+  mut queue : <span class="ty">String</span>?
+  mut consume : <span class="ty">Bool</span>
+}</span></pre>
+<p class="doc">When an element asks: the event, and the conditions htmx puts on it.  <code>hx-trigger="keyup changed delay:500ms from:#search"</code> is one trigger; <code>hx-trigger="click, keyup[key=='Enter']"</code> is two.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-trigger-default-for" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Trigger</span>::default_for(@moonxml.<span class="ty">Element</span>) -&gt; <span class="ty">Self</span></span></pre>
+<p class="doc">What an element listens for when it does not say: a form is submitted, a field changes, and everything else is clicked.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-trigger-list" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Trigger</span>::list(<span class="ty">String</span>) -&gt; <span class="ty">Array</span>[<span class="ty">Self</span>]</span></pre>
+<p class="doc">Every trigger a spelling names, in the order it names them.  <code>click, keyup[key=='Enter'] changed delay:500ms</code> is two triggers. A comma inside a condition does not split.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-trigger-matches" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Trigger</span>::matches(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Bool</span></span></pre>
+<p class="doc">Whether this trigger is about <code>event</code>.</p>
 </div>
 </section>
     </div>

@@ -1,0 +1,91 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonxml/htmx"
+
+import {
+  "moonbitstack/moonxml",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct Hx {
+  element : @moonxml.Element
+}
+pub fn Hx::attr(Self, String) -> String?
+pub fn Hx::boosted(Self) -> Bool
+pub fn Hx::confirm(Self) -> String?
+pub fn Hx::element(Self) -> @moonxml.Element
+pub fn Hx::headers(Self) -> Array[(String, String)]
+pub fn Hx::indicator(Self) -> @moonxml.Element?
+pub fn Hx::of(@moonxml.Element) -> Self
+pub fn Hx::push_url(Self) -> Bool?
+pub fn Hx::request(Self, String) -> Request?
+pub fn Hx::select(Self) -> String?
+pub fn Hx::target(Self) -> @moonxml.Element?
+pub fn Hx::triggers(Self) -> Array[Trigger]
+pub fn Hx::url(Self) -> String?
+pub fn Hx::values(Self) -> Array[(String, String)]
+pub fn Hx::verb(Self) -> String?
+
+pub(all) struct Request {
+  verb : String
+  url : String
+  element : @moonxml.Element
+  target : @moonxml.Element
+  values : Array[(String, String)]
+  headers : Array[(String, String)]
+  swap : SwapSpec
+  select : String?
+  confirm : String?
+  push_url : Bool?
+  trigger : String
+}
+pub fn Request::address(Self) -> String
+pub fn Request::answer(Self, String) -> @moonxml.Selection
+pub fn Request::headers(Self) -> Array[(String, String)]
+pub fn Request::query(Self) -> String
+
+pub(all) enum Swap {
+  Inner
+  Outer
+  BeforeBegin
+  AfterBegin
+  BeforeEnd
+  AfterEnd
+  Delete
+  NoSwap
+}
+pub fn Swap::spec(Self) -> String
+
+pub(all) struct SwapSpec {
+  mut style : Swap
+  mut delay : Int32
+  mut settle : Int32
+  mut transition : Bool
+  mut ignore_title : Bool
+}
+pub fn SwapSpec::new() -> Self
+pub fn SwapSpec::parse(String) -> Self
+
+pub(all) struct Trigger {
+  mut event : String
+  mut filter : String?
+  mut once : Bool
+  mut changed : Bool
+  mut delay : Int32
+  mut throttle : Int32
+  mut from : String?
+  mut target : String?
+  mut queue : String?
+  mut consume : Bool
+}
+pub fn Trigger::default_for(@moonxml.Element) -> Self
+pub fn Trigger::list(String) -> Array[Self]
+pub fn Trigger::matches(Self, String) -> Bool
+pub fn Trigger::parse(String) -> Self
+
+// Type aliases
+
+// Traits
