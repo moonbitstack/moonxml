@@ -145,4 +145,122 @@ fn mode_for_context(element : @moonxml.Element) -> Mode {
 ///|
 fn finish(builder : Builder) -> Unit {
   builder.doc.set_repairs(builder.repairs)
+  fill_selects(builder.doc.root)
+}
+
+///|
+/// A deep copy of a node. What a `<selectedcontent>` holds is a copy of the
+/// chosen option's children, not the children themselves.
+fn copy_node(node : @moonxml.Node) -> @moonxml.Node {
+  match node {
+    @moonxml.ElementNode(data) => {
+      let copy = @moonxml.Element::new(data.name, attrs=data.attrs.copy())
+      for child in data.children {
+        copy.append(copy_node(child))
+      }
+      match data.content() {
+        Some(fragment) => {
+          let inner = @moonxml.Element::new("#content")
+          for child in fragment.children {
+            inner.append(copy_node(child))
+          }
+          copy.set_content(inner)
+        }
+        None => ()
+      }
+      @moonxml.ElementNode(copy)
+    }
+    @moonxml.TextNode(text) => @moonxml.TextNode(text)
+    @moonxml.CDataNode(text) => @moonxml.CDataNode(text)
+    @moonxml.CommentNode(text) => @moonxml.CommentNode(text)
+    @moonxml.ProcessingInstructionNode(instruction) =>
+      @moonxml.ProcessingInstructionNode(instruction)
+    @moonxml.DoctypeNode(text) => @moonxml.DoctypeNode(text)
+  }
+}
+
+///|
+/// The first element named `name` under `element`, in document order.
+fn first_named(element : @moonxml.Element, name : String) -> @moonxml.Element? {
+  for child in element.children {
+    if child is @moonxml.ElementNode(data) {
+      if data.name == name {
+        return Some(data)
+      }
+      match first_named(data, name) {
+        Some(found) => return Some(found)
+        None => ()
+      }
+    }
+  }
+  None
+}
+
+///|
+fn collect_named(
+  element : @moonxml.Element,
+  name : String,
+  into : Array[@moonxml.Element],
+) -> Unit {
+  for child in element.children {
+    if child is @moonxml.ElementNode(data) {
+      if data.name == name {
+        into.push(data)
+      }
+      collect_named(data, name, into)
+    }
+  }
+}
+
+///|
+/// The option a select chose: the first one that says it is selected, or, when
+/// none does, the first one that is not disabled.
+fn chosen_option(select : @moonxml.Element) -> @moonxml.Element? {
+  let options : Array[@moonxml.Element] = []
+  collect_named(select, "option", options)
+  for option in options {
+    if option.has_attr("selected") {
+      return Some(option)
+    }
+  }
+  for option in options {
+    if !option.has_attr("disabled") {
+      return Some(option)
+    }
+  }
+  None
+}
+
+///|
+/// A `<select>`'s own algorithm, run over the finished tree: what the chosen
+/// option holds is copied into the `<selectedcontent>` the select carries. A
+/// browser runs this whenever the choice changes, which is what makes the box
+/// show the option's content; a reader runs it once, when the tree is done, so
+/// that the tree it answers is the tree a browser would show.
+fn fill_select(select : @moonxml.Element) -> Unit {
+  let holder = match first_named(select, "selectedcontent") {
+    Some(found) => found
+    None => return
+  }
+  let chosen = chosen_option(select)
+  holder.clear()
+  match chosen {
+    Some(option) =>
+      for child in option.children {
+        holder.append(copy_node(child))
+      }
+    None => ()
+  }
+}
+
+///|
+fn fill_selects(element : @moonxml.Element) -> Unit {
+  for child in element.children.copy() {
+    if child is @moonxml.ElementNode(data) {
+      if data.name == "select" {
+        fill_select(data)
+      }
+      fill_selects(data)
+    }
+  }
 }

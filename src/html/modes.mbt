@@ -199,6 +199,9 @@ fn quirks_of(
       "-//w3c//dtd html 4.0 transitional//", "-//w3c//dtd html experimental 19960712//",
       "-//w3c//dtd html experimental 970421//", "-//w3c//dtd w3 html//", "-//w3o//dtd w3 html 3.0//",
       "-//webtechs//dtd mozilla html 2.0//", "-//webtechs//dtd mozilla html//",
+      // The last entry of the standard's list is the bare word: a public
+      // identifier that begins with `html` is one of the old ones.
+       "html",
     ] {
     if public.has_prefix(prefix) {
       return Quirks
@@ -1591,8 +1594,11 @@ fn in_cell(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
 fn in_select(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
   match token {
     Characters(text~) => {
-      let cleaned = strip_nulls(text)
+      let cleaned = text_for(b, strip_nulls(text))
       if !cleaned.is_empty() {
+        // An option holds what any element holds, so the formatting that was
+        // open when it was inserted is open here too.
+        reconstruct_afe(b)
         insert_text(b, cleaned)
       }
     }
@@ -1663,7 +1669,24 @@ fn in_select(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
             reset_mode(b)
           }
         "template" => in_head(b, lx, token, depth + 1)
-        _ => in_body(b, lx, token, depth + 1)
+        // A button around a select's content is closed the ordinary way.
+        "button" => in_body(b, lx, token, depth + 1)
+        _ =>
+          match find_afe(b, name) {
+            Some(formatting) =>
+              // A formatting element that encloses the select is not the
+              // select's to close: a `</font>` around a select is ignored,
+              // while a `</i>` inside an option runs the adoption agency as it
+              // would anywhere else.
+              if inside_select(b, formatting) {
+                in_body(b, lx, token, depth + 1)
+              } else {
+                note_dropped(b)
+              }
+            // Everything else closes the element of that name, if the stack
+            // has one this side of a special element.
+            None => any_other_end_tag(b, name)
+          }
       }
     Eof => in_body(b, lx, token, depth + 1)
   }
@@ -2102,23 +2125,33 @@ fn foreign_content(
         dispatch_html(b, lx, token, depth + 1)
         return
       }
-      let mut k = b.stack.length() - 1
-      let mut node = b.stack[k]
-      if @moonxml.local_of(node.name).to_lower() != name {
-        // Walk outward for the element this closes, and stop at the top.
-        while k > 0 {
-          if @moonxml.local_of(node.name).to_lower() == name {
-            break
+      // Walk outward for the element this closes. An integration point is
+      // where foreign content ends and HTML begins again: a token that has to
+      // cross one to find its element is not foreign content's to close, so it
+      // is handed to the HTML rules, which is how a `</div>` inside a `<math>`
+      // in an SVG `foreignObject` is ignored rather than closing the div.
+      let start = b.stack.length() - 1
+      let mut k = start
+      while k >= 0 {
+        let node = b.stack[k]
+        if @moonxml.local_of(node.name).to_lower() == name {
+          while b.stack.length() > k {
+            ignore(pop(b))
           }
-          k = k - 1
-          node = b.stack[k]
-        }
-        if @moonxml.local_of(node.name).to_lower() != name {
           return
         }
-      }
-      while b.stack.length() > k {
-        ignore(pop(b))
+        // The current node itself may be an integration point and still be
+        // foreign content — `<svg><title>` is. It is the ones above it that
+        // mark where the foreign subtree ends.
+        if k < start &&
+          (
+            is_html_integration_point(node) ||
+            is_mathml_text_integration_point(node)
+          ) {
+          dispatch_html(b, lx, token, depth + 1)
+          return
+        }
+        k = k - 1
       }
     }
     Eof => in_body(b, lx, token, depth + 1)
@@ -2254,14 +2287,10 @@ fn adoption_agency(b : Builder, subject : String) -> Unit {
       }
       at = at - 1
     }
-    // The last node takes the place of the block in the common ancestor.
-    match index_of(common, block) {
-      Some(at) => {
-        ignore(block.remove())
-        common.insert(at, @moonxml.ElementNode(last))
-      }
-      None => append_into(common, @moonxml.ElementNode(last))
-    }
+    // The last node goes where a node inserted into the common ancestor goes:
+    // inside it, or in front of the table when the common ancestor is one.
+    let (parent, before) = insertion_point_at(b, common, foster=true)
+    place(parent, before, @moonxml.ElementNode(last))
     let fresh = @moonxml.Element::new(
       formatting.name,
       attrs=formatting.attrs.copy(),
@@ -2294,5 +2323,27 @@ fn adoption_agency(b : Builder, subject : String) -> Unit {
       Some(at) => b.stack.insert(at + 1, fresh)
       None => ()
     }
+  }
+}
+
+///|
+/// Whether `element` sits in the stack below the innermost select — that is,
+/// whether it was opened inside the select's own content.
+fn inside_select(b : Builder, element : @moonxml.Element) -> Bool {
+  let mut select_at = -1
+  let mut k = b.stack.length() - 1
+  while k >= 0 {
+    if b.stack[k].name == "select" {
+      select_at = k
+      break
+    }
+    k = k - 1
+  }
+  if select_at < 0 {
+    return true
+  }
+  match index_on_stack(b, element) {
+    Some(at) => at > select_at
+    None => false
   }
 }

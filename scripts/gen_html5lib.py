@@ -6,45 +6,17 @@ html5lib-tests writes each case as `#data`, an optional `#errors`, an optional
 `#script-off`, and `#document` with the expected tree spelled one node per
 line. That is exactly what the test renders, so a failure is a diff.
 
-Every file of the corpus is in the fixture. Cases marked `#script-on` are not:
-this parser has scripting off, which is the posture the rest of the corpus
-assumes, and each `#script-on` case has a `#script-off` twin that is in.
+Every file of the corpus is in the fixture, and every case: documents and
+fragments alike. The only cases left out are the eight marked `#script-on`,
+because this parser has scripting off — the posture the rest of the corpus
+assumes — and each of those eight has a `#script-off` twin that is in.
 
 Usage: python3 scripts/gen_html5lib.py <tree-construction-dir> <out.mbt>
 """
 
 import os
+import re
 import sys
-
-
-# Cases this fixture leaves out. Every one of them is a gap on this reader's
-# side rather than a rule it disagrees with, and is named here so that the
-# fixture measures what the parser actually does.
-#
-# `<selectedcontent>` is filled by the select element's own algorithm, which
-# clones the chosen option into it on a live tree; a parser alone cannot
-# produce the trees these five cases expect.
-EXCLUDE = [
-    "webkit02.dat:43",
-    "webkit02.dat:44",
-    "webkit02.dat:45",
-    "webkit02.dat:46",
-    "webkit02.dat:47",
-    # Formatting elements that a table fostered: the adoption agency and the
-    # foster parent disagree about where the block goes.
-    "adoption01.dat:5",
-    "tests19.dat:90",
-    "tests19.dat:92",
-    "tests19.dat:94",
-    "tests10.dat:30",
-    # A carriage return that a character reference produced, and a NULL that
-    # plain text turns into a replacement character.
-    "plain-text-unsafe.dat:0",
-    "plain-text-unsafe.dat:24",
-    "domjs-unsafe.dat:1",
-    # A doctype whose public identifier is `html` on its own.
-    "quirks01.dat:2",
-]
 
 
 def escape(text):
@@ -59,7 +31,9 @@ def escape(text):
         elif ch == "\t":
             out.append("\\t")
         elif ch == "\r":
-            continue
+            # A carriage return in a tree is data: a character reference to
+            # U+000D puts one there, and nothing normalises it away.
+            out.append("\\r")
         elif ord(ch) < 0x20:
             out.append("\\u{%X}" % ord(ch))
         else:
@@ -75,18 +49,27 @@ def cases(path):
     # that is not followed by a line feed is data and stays.
     body = body.replace("\r\n", "\n")
     for chunk in body.split("#data\n")[1:]:
-        if "\n#errors" not in chunk:
+        if "\n#document\n" not in chunk:
             continue
-        data, rest = chunk.split("\n#errors", 1)
-        if "#document\n" not in rest:
-            continue
-        if "#script-on" in rest:
+        head, expected = chunk.split("\n#document\n", 1)
+        # The data runs until the first of the markers that follow it. A case
+        # need not carry `#errors` — it is a log of parse errors, and one case
+        # in the corpus has none — so the data ends at whichever comes first.
+        data = re.split(
+            r"^#(?:errors|document-fragment|script-\S*)", head, maxsplit=1, flags=re.M
+        )[0]
+        # The marker's own line feed is not part of the data.
+        if data.endswith("\n"):
+            data = data[:-1]
+        if "#script-on" in head:
             continue
         context = ""
-        if "#document-fragment\n" in rest:
-            context = rest.split("#document-fragment\n", 1)[1].split("\n", 1)[0]
+        if "#document-fragment\n" in head:
+            context = head.split("#document-fragment\n", 1)[1].split("\n", 1)[0]
             context = context.strip()
-        expected = rest.split("#document\n", 1)[1]
+        # The standard preprocesses its input: a CRLF pair, and a CR on its
+        # own, are both one line feed by the time the tokenizer sees them.
+        data = data.replace("\r\n", "\n").replace("\r", "\n")
         # the corpus separates cases with a blank line; the tree runs until it
         yield data, context, expected.rstrip("\n") + "\n"
 
@@ -99,8 +82,6 @@ def main():
             continue
         for k, (data, context, expected) in enumerate(cases(os.path.join(source, name))):
             label = f"{name}:{k}"
-            if label in EXCLUDE:
-                continue
             kind = "fragment" if context else "document"
             rows.append((label, kind, context, data, expected))
 

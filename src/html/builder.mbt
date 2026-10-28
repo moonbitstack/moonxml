@@ -397,7 +397,20 @@ fn clear_to_row(b : Builder) -> Unit {
 /// is being fostered, it is in front of the innermost table instead, which is
 /// how a stray `<div>` outside a table ends up before it.
 fn insertion_point(b : Builder) -> (@moonxml.Element, @moonxml.Element?) {
-  let target = current(b)
+  insertion_point_at(b, current(b), foster=b.foster)
+}
+
+///|
+/// The appropriate place for inserting a node, given the target it is inserted
+/// into and whether the table rules apply. `foster` is what decides between
+/// going inside a table and going in front of it: the table modes set it, and
+/// the adoption agency asks for it when the node it is placing belongs above
+/// the table the formatting element was found in.
+fn insertion_point_at(
+  b : Builder,
+  target : @moonxml.Element,
+  foster~ : Bool,
+) -> (@moonxml.Element, @moonxml.Element?) {
   // A template's children are its contents: the element itself holds nothing.
   if target.name == "template" {
     match target.content() {
@@ -405,7 +418,7 @@ fn insertion_point(b : Builder) -> (@moonxml.Element, @moonxml.Element?) {
       None => ()
     }
   }
-  if !b.foster {
+  if !foster {
     return (target, None)
   }
   if !is_table_part(target.name) {
