@@ -6,6 +6,9 @@
 /// a document read, or a fragment read in its context, then the tree spelled
 /// the way the corpus spells it. A failure is a diff.
 ///
+/// Every case that speaks for scripting off is here; the eight marked
+/// `#script-on` are not, and each of them has a `#script-off` twin that is.
+///
 /// The documents are the corpus's, in `html_corpus_wbtest.mbt`.
 test "the corpus: every case reproduces exactly" {
   let mut passed = 0
