@@ -217,7 +217,7 @@ def main():
         .replace("__BODY__", "\n".join(body))
         .replace("__TOTAL__", str(total))
     )
-    with open(out_path, "w", encoding="utf-8") as handle:
+    with open(out_path, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(page)
     print("%d items written to %s" % (total, out_path))
     if MISSING:
