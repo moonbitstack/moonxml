@@ -94,7 +94,9 @@ def run():
         if parts[0] == "document" and len(parts) == 2:
             source = parts[1].replace("\\n", "\n").replace("\\t", "\t")
         elif parts[0] == "row" and len(parts) >= 6:
-            rows.append(tuple(parts[1:6]))
+            # value rows carry no hits, so the seventh field may be missing
+            parts += [""] * (7 - len(parts))
+            rows.append(tuple(parts[1:7]))
     if not source or not rows:
         raise SystemExit("the demonstration program printed nothing usable")
     return source, rows
@@ -116,16 +118,20 @@ def table(rows):
         "<thead><tr><th>Query</th><th>Nodes</th><th>Answer</th></tr></thead>"
     )
     out.append("<tbody>")
-    for engine, query, count, answer in rows:
+    for engine, query, count, answer, hits in rows:
         tag = ""
         if engine != "css":
             tag = '<span class="eng">%s</span>' % html.escape(engine)
         cell = '<code>%s</code>' % html.escape(query)
         klass = ' class="none"' if answer == "nothing" else ""
         number = count if count else "—"
+        # the routes the engine answered with, for the page to point at
+        marker = (
+            ' data-hit="%s" tabindex="0"' % html.escape(hits) if hits else ""
+        )
         out.append(
-            "<tr><td>%s%s</td><td class=\"n\">%s</td><td%s>%s</td></tr>"
-            % (tag, cell, number, klass, html.escape(answer))
+            "<tr%s><td>%s%s</td><td class=\"n\">%s</td><td%s>%s</td></tr>"
+            % (marker, tag, cell, number, klass, html.escape(answer))
         )
     out.append("</tbody></table>")
     return "\n".join(out)
@@ -136,7 +142,7 @@ def page(source, rows):
     for row in rows:
         by_group.setdefault(row[0], []).append(row[1:])
     elements = 0
-    for _group, _engine, query, count, _answer in rows:
+    for _group, _engine, query, count, _answer, _hits in rows:
         if query == "*" and count:
             elements = int(count)
     parts = []
@@ -188,6 +194,7 @@ def page(source, rows):
     </div>
     <p class="filename">the document, in full</p>
 <pre>%s</pre>
+    <p class="sub demo-hint">Hover a query — or click to pin it, <kbd>Esc</kbd> to let go — and the nodes it answered light up in the document above. The page does not run the query again: it follows the routes the engine answered with.</p>
     <p class="sub">A node is labelled <code>tag#id.class "text"</code> when it is an element, and <code>#text "…"</code> when it is not — <code>#text (blank)</code> is the whitespace between two tags, which is a node like any other. The <code>head</code>, <code>title</code> and <code>html</code> rows select from the whole document, not from the article shown.</p>
   </section>
 """
@@ -230,6 +237,72 @@ def page(source, rows):
 </footer>
 
 <script>
+  (function () {
+    var box = document.querySelector(".demo-box article");
+    if (!box) return;
+    var lit = [];
+    var pinned = null;
+    function clear() {
+      for (var i = 0; i < lit.length; i++) lit[i].classList.remove("hit");
+      lit = [];
+    }
+    function resolve(route) {
+      if (route === ".") return box;
+      var node = box;
+      var steps = route.split("/");
+      for (var i = 0; i < steps.length; i++) {
+        if (!node) return null;
+        node = node.children[parseInt(steps[i], 10)];
+      }
+      return node || null;
+    }
+    function show(row) {
+      clear();
+      var routes = (row.getAttribute("data-hit") || "").split(" ");
+      for (var i = 0; i < routes.length; i++) {
+        if (!routes[i]) continue;
+        var node = resolve(routes[i]);
+        if (node) { node.classList.add("hit"); lit.push(node); }
+      }
+    }
+    box.addEventListener("click", function (event) {
+      var link = event.target.closest ? event.target.closest("a") : null;
+      if (link) event.preventDefault();
+    });
+    var rows = document.querySelectorAll("tr[data-hit]");
+    for (var i = 0; i < rows.length; i++) {
+      (function (row) {
+        row.addEventListener("mouseenter", function () { if (!pinned) show(row); });
+        row.addEventListener("focus", function () { if (!pinned) show(row); });
+        row.addEventListener("click", function () {
+          if (pinned === row) {
+            pinned = null;
+            row.classList.remove("pinned");
+            clear();
+          } else {
+            if (pinned) pinned.classList.remove("pinned");
+            pinned = row;
+            row.classList.add("pinned");
+            show(row);
+          }
+        });
+      })(rows[i]);
+    }
+    var tables = document.querySelectorAll(".demos");
+    for (var t = 0; t < tables.length; t++) {
+      tables[t].addEventListener("mouseleave", function () {
+        if (pinned) { show(pinned); } else { clear(); }
+      });
+    }
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && pinned) {
+        pinned.classList.remove("pinned");
+        pinned = null;
+        clear();
+      }
+    });
+  })();
+
   (function () {
     var root = document.documentElement;
     var saved = null;

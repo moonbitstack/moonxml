@@ -79,6 +79,22 @@
 }
 
 * { box-sizing: border-box; }
+
+/* Every link is set in the second roller. The browser's blue-and-underline is
+   not a colour this page has, so prose, callouts and table cells all begin
+   from the same rule; the places that carry their own rule — the wordmark, the
+   top navigation, the footer — opt out of it below. */
+a {
+  color: var(--brick);
+  text-decoration: none;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+a:hover { text-decoration: underline; }
+.brand, .brand:hover, nav.top-nav a, nav.top-nav a:hover, footer.site a,
+footer.site a:hover, a.nav-icon, a.nav-icon:hover, .api-nav a, .api-nav a:hover {
+  text-decoration: none;
+}
 html { scroll-behavior: smooth; }
 
 body {
@@ -220,6 +236,28 @@ nav.top-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var
 .theme-toggle:hover, .nav-icon:hover { color: var(--brick); border-color: var(--brick); }
 a.nav-icon { text-decoration: none; }
 
+/* The half-moon is drawn rather than typed: a glyph's ink sits wherever its
+   font puts it, and a typed ◐ lands a pixel high in every face that has one.
+   Two shapes in a grid are centred by construction. */
+.theme-toggle {
+  /* the glyph is not shown, and a flex line keeps its zero-width box from
+     taking a grid row of its own above the drawn mark */
+  font-size: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.theme-toggle::before {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 12px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: linear-gradient(90deg, currentColor 0 50%, transparent 50%);
+  background-clip: border-box;
+}
+
 /* ------------------------------------------------------------- title page */
 
 .hero { padding: 88px 0 40px; }
@@ -289,6 +327,14 @@ h1 em {
 /* ------------------------------------------------------------------ code */
 
 pre, code, kbd { font-family: var(--mono); font-size: 12.5px; }
+kbd {
+  font-family: var(--typewriter);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  border: 1px solid var(--rule);
+  padding: 1px 4px;
+  color: var(--ink-soft);
+}
 code { font-size: 0.88em; }
 
 pre {
@@ -501,12 +547,101 @@ td code { white-space: nowrap; }
 .demo-box ul, .demo-box table { margin-bottom: 12px; }
 .demo-box form { margin: 0 0 12px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 14px; }
 .demo-box label { font-family: var(--typewriter); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); }
-.demo-box input, .demo-box select { font: inherit; font-size: 14px; padding: 3px 7px; border: 1px solid var(--rule-strong); background: var(--paper); color: var(--ink); }
-.demo-box input[disabled] { opacity: 0.55; }
-.demo-box .btn { font: inherit; font-size: 14px; padding: 4px 14px; border: 1px solid var(--brick); background: none; color: var(--brick); }
+/* the specimen's controls are the page's controls: same rule, same paper,
+   same ink, and no piece of the browser's own furniture left showing */
+.demo-box input,
+.demo-box select {
+  font: inherit;
+  font-size: 14px;
+  padding: 3px 7px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 0;
+  background-color: var(--paper);
+  color: var(--ink);
+}
+.demo-box input:focus-visible,
+.demo-box select:focus-visible,
+.demo-box .btn:focus-visible {
+  outline: 1px solid var(--brick);
+  outline-offset: 1px;
+}
+.demo-box input[disabled] { opacity: 0.5; }
+.demo-box input[type="number"] { width: 96px; padding-right: 2px; }
+/* the stepper: the browser's two grey triangles, redrawn in ink. The button
+   keeps its behaviour — it is still clickable — but not its look. */
+.demo-box input[type="number"]::-webkit-outer-spin-button,
+.demo-box input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 22px;
+  margin: 0;
+  opacity: 1;
+  cursor: pointer;
+  border: 0;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 10px 20px;
+}
+[data-theme="light"] .demo-box input[type="number"]::-webkit-inner-spin-button {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 18'%3E%3Cpath d='M5 3.4 L8.1 7.4 L1.9 7.4 Z' fill='%238d7c5f'/%3E%3Cpath d='M5 14.6 L1.9 10.6 L8.1 10.6 Z' fill='%238d7c5f'/%3E%3C/svg%3E");
+}
+[data-theme="dark"] .demo-box input[type="number"]::-webkit-inner-spin-button {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 18'%3E%3Cpath d='M5 3.4 L8.1 7.4 L1.9 7.4 Z' fill='%23b8a88a'/%3E%3Cpath d='M5 14.6 L1.9 10.6 L8.1 10.6 Z' fill='%23b8a88a'/%3E%3C/svg%3E");
+}
+/* the drop-down arrow, drawn as a chevron rather than left to the platform */
+.demo-box select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 26px;
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 9px 6px;
+}
+[data-theme="light"] .demo-box select {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1 L5 5 L9 1' fill='none' stroke='%238d7c5f' stroke-width='1.4'/%3E%3C/svg%3E");
+}
+[data-theme="dark"] .demo-box select {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1 L5 5 L9 1' fill='none' stroke='%23b8a88a' stroke-width='1.4'/%3E%3C/svg%3E");
+}
+/* the checkbox: a ruled box that fills with the second roller when it is on */
+.demo-box input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  margin: 0;
+  vertical-align: -2px;
+  cursor: pointer;
+  background-color: var(--paper-lift);
+  border: 1px solid var(--rule-strong);
+}
+.demo-box input[type="checkbox"]:checked {
+  background-color: var(--brick);
+  border-color: var(--brick);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 10px 10px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.6 5.2 L4 7.5 L8.4 2.6' fill='none' stroke='%23f2e8ce' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+.demo-box input[type="checkbox"][disabled] { cursor: not-allowed; }
+.demo-box .btn {
+  font: inherit;
+  font-size: 14px;
+  padding: 4px 14px;
+  border: 1px solid var(--brick);
+  background: none;
+  color: var(--brick);
+  cursor: pointer;
+}
+.demo-box .btn:hover { background: var(--brick); color: var(--paper-lift); }
 .demo-box .flag { display: inline-block; width: 12px; height: 12px; border: 1px solid var(--rule-strong); }
 .demo-box .note { font-size: 14px; color: var(--ink-soft); }
-.demo-box a { color: var(--brick); text-decoration: underline; text-underline-offset: 2px; }
+/* a link in a specimen is content, not navigation: the page stops the click
+   in script, and the cursor says so before the click happens */
+.demo-box a { cursor: text; }
 
 /* the answers, one query a row */
 .demos { margin-bottom: 26px; }
@@ -538,6 +673,30 @@ td code { white-space: nowrap; }
   border: 1px solid color-mix(in srgb, var(--olive) 35%, transparent);
 }
 .demos .none { color: var(--ink-faint); font-style: italic; }
+/* a row points at its answer: hovering it marks the nodes in the document */
+.demos tbody tr { transition: background-color 120ms ease; }
+.demos tbody tr[data-hit] { cursor: pointer; }
+.demos tbody tr[data-hit]:hover,
+.demos tbody tr[data-hit]:focus,
+.demos tbody tr.pinned { background: color-mix(in srgb, var(--brick) 7%, transparent); }
+.demos tbody tr[data-hit]:focus-visible { outline: 1px solid var(--brick); outline-offset: -2px; }
+.demos tbody tr.pinned td:first-child code { border-color: var(--brick); }
+.demos tbody td:first-child code { transition: border-color 120ms ease; }
+.demos tbody tr[data-hit]:hover td:first-child code { border-color: var(--brick); }
+.demo-hint {
+  font-size: 13px;
+  color: var(--ink-soft);
+  border-left: 2px solid var(--brick);
+  padding-left: 12px;
+  margin: 0 0 22px;
+}
+.demo-box .hit {
+  /* a margin rule and a tint, not an outline: two lit siblings would draw
+     their outlines into each other, and a block's outline is its neighbours' */
+  box-shadow: inset 3px 0 0 var(--brick);
+  background-color: color-mix(in srgb, var(--brick) 12%, transparent);
+  transition: background-color 120ms ease;
+}
 
 /* --------------------------------------------------------------- api page */
 

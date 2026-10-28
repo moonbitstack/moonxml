@@ -51,7 +51,7 @@
           <li class="item" data-kind="bean" data-price="22" lang="en-GB">Huila</li>
           <li class="item sold" data-kind="leaf" data-price="9">Sencha</li>
           <li class="item" data-kind="leaf" data-price="14">Assam</li>
-          <li class="item" data-kind="blend" data-price="16"><a href="/b/1">House</a></li>
+          <li class="item" data-kind="blend" data-price="16"><a href="https://example.com/b/1">House</a></li>
         </ul>
         <form id="order" action="/order" method="post">
           <label for="qty">Quantity</label>
@@ -96,7 +96,7 @@
     &lt;li class=&quot;item&quot; data-kind=&quot;bean&quot; data-price=&quot;22&quot; lang=&quot;en-GB&quot;&gt;Huila&lt;/li&gt;
     &lt;li class=&quot;item sold&quot; data-kind=&quot;leaf&quot; data-price=&quot;9&quot;&gt;Sencha&lt;/li&gt;
     &lt;li class=&quot;item&quot; data-kind=&quot;leaf&quot; data-price=&quot;14&quot;&gt;Assam&lt;/li&gt;
-    &lt;li class=&quot;item&quot; data-kind=&quot;blend&quot; data-price=&quot;16&quot;&gt;&lt;a href=&quot;/b/1&quot;&gt;House&lt;/a&gt;&lt;/li&gt;
+    &lt;li class=&quot;item&quot; data-kind=&quot;blend&quot; data-price=&quot;16&quot;&gt;&lt;a href=&quot;https://example.com/b/1&quot;&gt;House&lt;/a&gt;&lt;/li&gt;
   &lt;/ul&gt;
   &lt;form id=&quot;order&quot; action=&quot;/order&quot; method=&quot;post&quot;&gt;
     &lt;label for=&quot;qty&quot;&gt;Quantity&lt;/label&gt;
@@ -125,6 +125,7 @@
 &lt;/article&gt;
 &lt;/body&gt;
 &lt;/html&gt;</pre>
+    <p class="sub demo-hint">Hover a query — or click to pin it, <kbd>Esc</kbd> to let go — and the nodes it answered light up in the document above. The page does not run the query again: it follows the routes the engine answered with.</p>
     <p class="sub">A node is labelled <code>tag#id.class "text"</code> when it is an element, and <code>#text "…"</code> when it is not — <code>#text (blank)</code> is the whitespace between two tags, which is a node like any other. The <code>head</code>, <code>title</code> and <code>html</code> rows select from the whole document, not from the article shown.</p>
   </section>
   <section>
@@ -133,22 +134,22 @@
 <table class="demos">
 <thead><tr><th>Query</th><th>Nodes</th><th>Answer</th></tr></thead>
 <tbody>
-<tr><td><code>*</code></td><td class="n">42</td><td>html · head &quot;Field Notes&quot; · title &quot;Field Notes&quot; · body · article#shop.catalogue · +37</td></tr>
-<tr><td><code>li</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
-<tr><td><code>.item</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
-<tr><td><code>.sold</code></td><td class="n">1</td><td>li.item &quot;Sencha&quot;</td></tr>
-<tr><td><code>#items</code></td><td class="n">1</td><td>ul#items.list</td></tr>
-<tr><td><code>[data-price]</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
-<tr><td><code>[data-price=&quot;18&quot;]</code></td><td class="n">1</td><td>li.item &quot;Yirgacheffe&quot;</td></tr>
-<tr><td><code>[data-price^=&quot;1&quot;]</code></td><td class="n">3</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
-<tr><td><code>[data-price$=&quot;2&quot;]</code></td><td class="n">1</td><td>li.item &quot;Huila&quot;</td></tr>
-<tr><td><code>[data-price*=&quot;4&quot;]</code></td><td class="n">1</td><td>li.item &quot;Assam&quot;</td></tr>
-<tr><td><code>[lang|=&quot;en&quot;]</code></td><td class="n">2</td><td>html · li.item &quot;Huila&quot;</td></tr>
-<tr><td><code>[class~=&quot;sold&quot;]</code></td><td class="n">1</td><td>li.item &quot;Sencha&quot;</td></tr>
-<tr><td><code>[data-kind=&quot;BEAN&quot; i]</code></td><td class="n">2</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot;</td></tr>
+<tr data-hit=". 0 0/0 0/1 1 1/0 1/1 1/2 1/3 1/4 1/4/0 2 2/0 2/1 2/2 2/3 2/3/0 2/3/1 2/4 2/5 3 3/0 3/1 3/1/0 3/1/0/0 3/1/0/1 3/2 3/2/0 3/2/0/0 3/2/0/1 3/2/1 3/2/1/0 3/2/1/1 4 4/0 5 5/0 5/1" tabindex="0"><td><code>*</code></td><td class="n">42</td><td>html · head &quot;Field Notes&quot; · title &quot;Field Notes&quot; · body · article#shop.catalogue · +37</td></tr>
+<tr data-hit="1/0 1/1 1/2 1/3 1/4" tabindex="0"><td><code>li</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/0 1/1 1/2 1/3 1/4" tabindex="0"><td><code>.item</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/2" tabindex="0"><td><code>.sold</code></td><td class="n">1</td><td>li.item &quot;Sencha&quot;</td></tr>
+<tr data-hit="1" tabindex="0"><td><code>#items</code></td><td class="n">1</td><td>ul#items.list</td></tr>
+<tr data-hit="1/0 1/1 1/2 1/3 1/4" tabindex="0"><td><code>[data-price]</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/0" tabindex="0"><td><code>[data-price=&quot;18&quot;]</code></td><td class="n">1</td><td>li.item &quot;Yirgacheffe&quot;</td></tr>
+<tr data-hit="1/0 1/3 1/4" tabindex="0"><td><code>[data-price^=&quot;1&quot;]</code></td><td class="n">3</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/1" tabindex="0"><td><code>[data-price$=&quot;2&quot;]</code></td><td class="n">1</td><td>li.item &quot;Huila&quot;</td></tr>
+<tr data-hit="1/3" tabindex="0"><td><code>[data-price*=&quot;4&quot;]</code></td><td class="n">1</td><td>li.item &quot;Assam&quot;</td></tr>
+<tr data-hit="1/1" tabindex="0"><td><code>[lang|=&quot;en&quot;]</code></td><td class="n">2</td><td>html · li.item &quot;Huila&quot;</td></tr>
+<tr data-hit="1/2" tabindex="0"><td><code>[class~=&quot;sold&quot;]</code></td><td class="n">1</td><td>li.item &quot;Sencha&quot;</td></tr>
+<tr data-hit="1/0 1/1" tabindex="0"><td><code>[data-kind=&quot;BEAN&quot; i]</code></td><td class="n">2</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot;</td></tr>
 <tr><td><code>[data-kind=&quot;BEAN&quot; s]</code></td><td class="n">0</td><td class="none">nothing</td></tr>
-<tr><td><code>[data-kind=&quot;bean&quot;]</code></td><td class="n">2</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot;</td></tr>
-<tr><td><code>li, td</code></td><td class="n">9</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot; · +4</td></tr>
+<tr data-hit="1/0 1/1" tabindex="0"><td><code>[data-kind=&quot;bean&quot;]</code></td><td class="n">2</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot;</td></tr>
+<tr data-hit="1/0 1/1 1/2 1/3 1/4 3/2/0/0 3/2/0/1 3/2/1/0 3/2/1/1" tabindex="0"><td><code>li, td</code></td><td class="n">9</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot; · +4</td></tr>
 </tbody></table>
   </section>
   <section>
@@ -157,12 +158,12 @@
 <table class="demos">
 <thead><tr><th>Query</th><th>Nodes</th><th>Answer</th></tr></thead>
 <tbody>
-<tr><td><code>#items &gt; li</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
-<tr><td><code>#items li</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
-<tr><td><code>li + li</code></td><td class="n">4</td><td>li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
-<tr><td><code>li ~ li</code></td><td class="n">4</td><td>li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
-<tr><td><code>#shop &gt; ul &gt; li</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
-<tr><td><code>#prices tr &gt; td:last-child</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
+<tr data-hit="1/0 1/1 1/2 1/3 1/4" tabindex="0"><td><code>#items &gt; li</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/0 1/1 1/2 1/3 1/4" tabindex="0"><td><code>#items li</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/1 1/2 1/3 1/4" tabindex="0"><td><code>li + li</code></td><td class="n">4</td><td>li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/1 1/2 1/3 1/4" tabindex="0"><td><code>li ~ li</code></td><td class="n">4</td><td>li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/0 1/1 1/2 1/3 1/4" tabindex="0"><td><code>#shop &gt; ul &gt; li</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr data-hit="3/2/0/1 3/2/1/1" tabindex="0"><td><code>#prices tr &gt; td:last-child</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
 </tbody></table>
   </section>
   <section>
@@ -171,33 +172,33 @@
 <table class="demos">
 <thead><tr><th>Query</th><th>Nodes</th><th>Answer</th></tr></thead>
 <tbody>
-<tr><td><code>li:first-child</code></td><td class="n">1</td><td>li.item &quot;Yirgacheffe&quot;</td></tr>
-<tr><td><code>li:last-child</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
-<tr><td><code>li:nth-child(2)</code></td><td class="n">1</td><td>li.item &quot;Huila&quot;</td></tr>
-<tr><td><code>li:nth-child(odd)</code></td><td class="n">3</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Sencha&quot; · li.item &quot;House&quot;</td></tr>
-<tr><td><code>li:nth-child(3n+1)</code></td><td class="n">2</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Assam&quot;</td></tr>
-<tr><td><code>li:nth-last-child(1)</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
-<tr><td><code>td:nth-of-type(2)</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
-<tr><td><code>p:first-of-type</code></td><td class="n">3</td><td>p.dek · p.note · p &quot;One shipment a week.&quot;</td></tr>
-<tr><td><code>td:last-of-type</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
-<tr><td><code>#aside &gt; p:only-of-type</code></td><td class="n">1</td><td>p &quot;One shipment a week.&quot;</td></tr>
+<tr data-hit="1/0" tabindex="0"><td><code>li:first-child</code></td><td class="n">1</td><td>li.item &quot;Yirgacheffe&quot;</td></tr>
+<tr data-hit="1/4" tabindex="0"><td><code>li:last-child</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/1" tabindex="0"><td><code>li:nth-child(2)</code></td><td class="n">1</td><td>li.item &quot;Huila&quot;</td></tr>
+<tr data-hit="1/0 1/2 1/4" tabindex="0"><td><code>li:nth-child(odd)</code></td><td class="n">3</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Sencha&quot; · li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/0 1/3" tabindex="0"><td><code>li:nth-child(3n+1)</code></td><td class="n">2</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Assam&quot;</td></tr>
+<tr data-hit="1/4" tabindex="0"><td><code>li:nth-last-child(1)</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
+<tr data-hit="3/2/0/1 3/2/1/1" tabindex="0"><td><code>td:nth-of-type(2)</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
+<tr data-hit="0/1 4 5/1" tabindex="0"><td><code>p:first-of-type</code></td><td class="n">3</td><td>p.dek · p.note · p &quot;One shipment a week.&quot;</td></tr>
+<tr data-hit="3/2/0/1 3/2/1/1" tabindex="0"><td><code>td:last-of-type</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
+<tr data-hit="5/1" tabindex="0"><td><code>#aside &gt; p:only-of-type</code></td><td class="n">1</td><td>p &quot;One shipment a week.&quot;</td></tr>
 <tr><td><code>:root</code></td><td class="n">1</td><td>html</td></tr>
-<tr><td><code>#hollow:empty</code></td><td class="n">1</td><td>span#hollow.flag</td></tr>
-<tr><td><code>option:checked</code></td><td class="n">1</td><td>option &quot;Coarse&quot;</td></tr>
-<tr><td><code>input:disabled</code></td><td class="n">1</td><td>input#gift</td></tr>
-<tr><td><code>input:enabled</code></td><td class="n">1</td><td>input#qty</td></tr>
-<tr><td><code>input:required</code></td><td class="n">1</td><td>input#qty</td></tr>
-<tr><td><code>input:optional</code></td><td class="n">1</td><td>input#gift</td></tr>
-<tr><td><code>li &gt; a:only-child</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
-<tr><td><code>td:nth-last-of-type(1)</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
-<tr><td><code>a:link</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
-<tr><td><code>a:any-link</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
-<tr><td><code>li:not(.sold)</code></td><td class="n">4</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
-<tr><td><code>li:is(.sold, [data-kind=&quot;blend&quot;])</code></td><td class="n">2</td><td>li.item &quot;Sencha&quot; · li.item &quot;House&quot;</td></tr>
-<tr><td><code>:where(.item, .btn)</code></td><td class="n">6</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot; · button#send.btn &quot;Order&quot;</td></tr>
-<tr><td><code>#order:has(option[selected])</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
-<tr><td><code>li:has(&gt; a)</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
-<tr><td><code>li:has(+ li.sold)</code></td><td class="n">1</td><td>li.item &quot;Huila&quot;</td></tr>
+<tr data-hit="2/5" tabindex="0"><td><code>#hollow:empty</code></td><td class="n">1</td><td>span#hollow.flag</td></tr>
+<tr data-hit="2/3/1" tabindex="0"><td><code>option:checked</code></td><td class="n">1</td><td>option &quot;Coarse&quot;</td></tr>
+<tr data-hit="2/2" tabindex="0"><td><code>input:disabled</code></td><td class="n">1</td><td>input#gift</td></tr>
+<tr data-hit="2/1" tabindex="0"><td><code>input:enabled</code></td><td class="n">1</td><td>input#qty</td></tr>
+<tr data-hit="2/1" tabindex="0"><td><code>input:required</code></td><td class="n">1</td><td>input#qty</td></tr>
+<tr data-hit="2/2" tabindex="0"><td><code>input:optional</code></td><td class="n">1</td><td>input#gift</td></tr>
+<tr data-hit="1/4/0" tabindex="0"><td><code>li &gt; a:only-child</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
+<tr data-hit="3/2/0/1 3/2/1/1" tabindex="0"><td><code>td:nth-last-of-type(1)</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
+<tr data-hit="1/4/0" tabindex="0"><td><code>a:link</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
+<tr data-hit="1/4/0" tabindex="0"><td><code>a:any-link</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
+<tr data-hit="1/0 1/1 1/3 1/4" tabindex="0"><td><code>li:not(.sold)</code></td><td class="n">4</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/2 1/4" tabindex="0"><td><code>li:is(.sold, [data-kind=&quot;blend&quot;])</code></td><td class="n">2</td><td>li.item &quot;Sencha&quot; · li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/0 1/1 1/2 1/3 1/4 2/4" tabindex="0"><td><code>:where(.item, .btn)</code></td><td class="n">6</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot; · button#send.btn &quot;Order&quot;</td></tr>
+<tr data-hit="2" tabindex="0"><td><code>#order:has(option[selected])</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr data-hit="1/4" tabindex="0"><td><code>li:has(&gt; a)</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/1" tabindex="0"><td><code>li:has(+ li.sold)</code></td><td class="n">1</td><td>li.item &quot;Huila&quot;</td></tr>
 </tbody></table>
   </section>
   <section>
@@ -206,22 +207,22 @@
 <table class="demos">
 <thead><tr><th>Query</th><th>Nodes</th><th>Answer</th></tr></thead>
 <tbody>
-<tr><td><code>page.css(&quot;#items&quot;).css(&quot;li[data-kind=leaf]&quot;)</code></td><td class="n">2</td><td>li.item &quot;Sencha&quot; · li.item &quot;Assam&quot;</td></tr>
-<tr><td><code>page.css(&quot;tbody tr&quot;).xpath(&quot;./td[2]&quot;)</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
-<tr><td><code>page.css(&quot;li&quot;).first()</code></td><td class="n">1</td><td>li.item &quot;Yirgacheffe&quot;</td></tr>
-<tr><td><code>page.css(&quot;li&quot;).last()</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
-<tr><td><code>page.css(&quot;li&quot;).eq(2)</code></td><td class="n">1</td><td>li.item &quot;Sencha&quot;</td></tr>
-<tr><td><code>page.css(&quot;td&quot;).parent()</code></td><td class="n">2</td><td>tr &quot;Huila22&quot; · tr &quot;Sencha9&quot;</td></tr>
-<tr><td><code>page.css(&quot;#prices&quot;).children()</code></td><td class="n">7</td><td>#text (blank) · caption &quot;Per 250 g&quot; · #text (blank) · thead &quot;ItemPrice&quot; · #text (blank) · +2</td></tr>
-<tr><td><code>page.css(&quot;abbr&quot;).closest(&quot;p&quot;)</code></td><td class="n">1</td><td>p.note</td></tr>
-<tr><td><code>page.by_id(&quot;order&quot;)</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
-<tr><td><code>page.by_tag(&quot;option&quot;)</code></td><td class="n">2</td><td>option &quot;Fine&quot; · option &quot;Coarse&quot;</td></tr>
-<tr><td><code>page.by_class(&quot;sold&quot;)</code></td><td class="n">1</td><td>li.item &quot;Sencha&quot;</td></tr>
-<tr><td><code>page.by_name(&quot;grind&quot;)</code></td><td class="n">1</td><td>select &quot;Fine Coarse&quot;</td></tr>
-<tr><td><code>page.selector(&quot;pricey&quot;, &quot;&quot;)</code></td><td class="n">3</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;House&quot;</td></tr>
-<tr><td><code>page.css(&quot;li&quot;).items[4].css(&quot;a&quot;)</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
-<tr><td><span class="eng">xpath</span><code>page.xpath(&quot;//li[last()]&quot;)</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
-<tr><td><span class="eng">xpath</span><code>page.xpath(&quot;//tr[td[2] &gt; 15]&quot;)</code></td><td class="n">1</td><td>tr &quot;Huila22&quot;</td></tr>
+<tr data-hit="1/2 1/3" tabindex="0"><td><code>page.css(&quot;#items&quot;).css(&quot;li[data-kind=leaf]&quot;)</code></td><td class="n">2</td><td>li.item &quot;Sencha&quot; · li.item &quot;Assam&quot;</td></tr>
+<tr data-hit="3/2/0/1 3/2/1/1" tabindex="0"><td><code>page.css(&quot;tbody tr&quot;).xpath(&quot;./td[2]&quot;)</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
+<tr data-hit="1/0" tabindex="0"><td><code>page.css(&quot;li&quot;).first()</code></td><td class="n">1</td><td>li.item &quot;Yirgacheffe&quot;</td></tr>
+<tr data-hit="1/4" tabindex="0"><td><code>page.css(&quot;li&quot;).last()</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/2" tabindex="0"><td><code>page.css(&quot;li&quot;).eq(2)</code></td><td class="n">1</td><td>li.item &quot;Sencha&quot;</td></tr>
+<tr data-hit="3/2/0 3/2/1" tabindex="0"><td><code>page.css(&quot;td&quot;).parent()</code></td><td class="n">2</td><td>tr &quot;Huila22&quot; · tr &quot;Sencha9&quot;</td></tr>
+<tr data-hit="3/0 3/1 3/2" tabindex="0"><td><code>page.css(&quot;#prices&quot;).children()</code></td><td class="n">7</td><td>#text (blank) · caption &quot;Per 250 g&quot; · #text (blank) · thead &quot;ItemPrice&quot; · #text (blank) · +2</td></tr>
+<tr data-hit="4" tabindex="0"><td><code>page.css(&quot;abbr&quot;).closest(&quot;p&quot;)</code></td><td class="n">1</td><td>p.note</td></tr>
+<tr data-hit="2" tabindex="0"><td><code>page.by_id(&quot;order&quot;)</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr data-hit="2/3/0 2/3/1" tabindex="0"><td><code>page.by_tag(&quot;option&quot;)</code></td><td class="n">2</td><td>option &quot;Fine&quot; · option &quot;Coarse&quot;</td></tr>
+<tr data-hit="1/2" tabindex="0"><td><code>page.by_class(&quot;sold&quot;)</code></td><td class="n">1</td><td>li.item &quot;Sencha&quot;</td></tr>
+<tr data-hit="2/3" tabindex="0"><td><code>page.by_name(&quot;grind&quot;)</code></td><td class="n">1</td><td>select &quot;Fine Coarse&quot;</td></tr>
+<tr data-hit="1/0 1/1 1/4" tabindex="0"><td><code>page.selector(&quot;pricey&quot;, &quot;&quot;)</code></td><td class="n">3</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/4/0" tabindex="0"><td><code>page.css(&quot;li&quot;).items[4].css(&quot;a&quot;)</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
+<tr data-hit="1/4" tabindex="0"><td><span class="eng">xpath</span><code>page.xpath(&quot;//li[last()]&quot;)</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
+<tr data-hit="3/2/0" tabindex="0"><td><span class="eng">xpath</span><code>page.xpath(&quot;//tr[td[2] &gt; 15]&quot;)</code></td><td class="n">1</td><td>tr &quot;Huila22&quot;</td></tr>
 </tbody></table>
   </section>
   <section>
@@ -237,7 +238,7 @@
 <tr><td><span class="eng">attr</span><code>page.css(&quot;abbr&quot;).attr(&quot;title&quot;)</code></td><td class="n">—</td><td>United States dollars</td></tr>
 <tr><td><span class="eng">attr</span><code>page.css(&quot;option[selected]&quot;).attr(&quot;value&quot;)</code></td><td class="n">—</td><td>coarse</td></tr>
 <tr><td><span class="eng">attr</span><code>page.css(&quot;#prices tbody tr&quot;).attr(&quot;data-band&quot;)</code></td><td class="n">—</td><td>high</td></tr>
-<tr><td><span class="eng">html</span><code>page.css(&quot;#items li&quot;).last().html()</code></td><td class="n">—</td><td>&lt;a href=&quot;/b/1&quot;&gt;House&lt;/a&gt;</td></tr>
+<tr><td><span class="eng">html</span><code>page.css(&quot;#items li&quot;).last().html()</code></td><td class="n">—</td><td>&lt;a href=&quot;https://example.com/b/1&quot;&gt;House&lt;/a&gt;</td></tr>
 <tr><td><span class="eng">html</span><code>page.css(&quot;#order&quot;).html()</code></td><td class="n">—</td><td>&lt;label for=&quot;qty&quot;&gt;Quantity&lt;/label&gt; &lt;input id=&quot;qty&quot; name=&quot;qty&quot; type=&quot;number&quot; value=&quot;2&quot; required&gt; &lt;input id=&quot;gift&quot; name=&quot;gift&quot; type=&quot;checkbox&quot; disabled&gt; &lt;select name=&quot;grind&quot;&gt; &lt;option value=&quot;fine&quot;&gt;Fine&lt;/option&gt; &lt;option value=&quot;coarse&quot; selected&gt;Coarse&lt;/option&gt; &lt;/select&gt; &lt;button id=&quot;send&quot; type=&quot;submit&quot; class=&quot;btn primary&quot;&gt;Order&lt;/button&gt; &lt;span id=&quot;hollow&quot; class=&quot;flag&quot;&gt;&lt;/span&gt;</td></tr>
 <tr><td><span class="eng">xpath</span><code>page.xpath_value(&quot;count(//li)&quot;)</code></td><td class="n">—</td><td>5</td></tr>
 <tr><td><span class="eng">xpath</span><code>page.xpath_value(&quot;string(//abbr/@title)&quot;)</code></td><td class="n">—</td><td>United States dollars</td></tr>
@@ -251,13 +252,13 @@
 <table class="demos">
 <thead><tr><th>Query</th><th>Nodes</th><th>Answer</th></tr></thead>
 <tbody>
-<tr><td><code>#order</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
-<tr><td><code>form</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
-<tr><td><code>form[action=&quot;/order&quot;]</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
-<tr><td><code>#shop &gt; form</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
-<tr><td><code>article :is(form)</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
-<tr><td><span class="eng">xpath</span><code>//form</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
-<tr><td><span class="eng">xpath</span><code>//*[@action]</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr data-hit="2" tabindex="0"><td><code>#order</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr data-hit="2" tabindex="0"><td><code>form</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr data-hit="2" tabindex="0"><td><code>form[action=&quot;/order&quot;]</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr data-hit="2" tabindex="0"><td><code>#shop &gt; form</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr data-hit="2" tabindex="0"><td><code>article :is(form)</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr data-hit="2" tabindex="0"><td><span class="eng">xpath</span><code>//form</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
+<tr data-hit="2" tabindex="0"><td><span class="eng">xpath</span><code>//*[@action]</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
 </tbody></table>
   </section>
   <section>
@@ -278,6 +279,72 @@
 </footer>
 
 <script>
+  (function () {
+    var box = document.querySelector(".demo-box article");
+    if (!box) return;
+    var lit = [];
+    var pinned = null;
+    function clear() {
+      for (var i = 0; i < lit.length; i++) lit[i].classList.remove("hit");
+      lit = [];
+    }
+    function resolve(route) {
+      if (route === ".") return box;
+      var node = box;
+      var steps = route.split("/");
+      for (var i = 0; i < steps.length; i++) {
+        if (!node) return null;
+        node = node.children[parseInt(steps[i], 10)];
+      }
+      return node || null;
+    }
+    function show(row) {
+      clear();
+      var routes = (row.getAttribute("data-hit") || "").split(" ");
+      for (var i = 0; i < routes.length; i++) {
+        if (!routes[i]) continue;
+        var node = resolve(routes[i]);
+        if (node) { node.classList.add("hit"); lit.push(node); }
+      }
+    }
+    box.addEventListener("click", function (event) {
+      var link = event.target.closest ? event.target.closest("a") : null;
+      if (link) event.preventDefault();
+    });
+    var rows = document.querySelectorAll("tr[data-hit]");
+    for (var i = 0; i < rows.length; i++) {
+      (function (row) {
+        row.addEventListener("mouseenter", function () { if (!pinned) show(row); });
+        row.addEventListener("focus", function () { if (!pinned) show(row); });
+        row.addEventListener("click", function () {
+          if (pinned === row) {
+            pinned = null;
+            row.classList.remove("pinned");
+            clear();
+          } else {
+            if (pinned) pinned.classList.remove("pinned");
+            pinned = row;
+            row.classList.add("pinned");
+            show(row);
+          }
+        });
+      })(rows[i]);
+    }
+    var tables = document.querySelectorAll(".demos");
+    for (var t = 0; t < tables.length; t++) {
+      tables[t].addEventListener("mouseleave", function () {
+        if (pinned) { show(pinned); } else { clear(); }
+      });
+    }
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && pinned) {
+        pinned.classList.remove("pinned");
+        pinned = null;
+        clear();
+      }
+    });
+  })();
+
   (function () {
     var root = document.documentElement;
     var saved = null;
