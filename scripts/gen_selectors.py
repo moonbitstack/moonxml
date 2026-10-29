@@ -155,6 +155,7 @@ def page(source, rows):
 <title>Selectors — moonxml</title>
 <meta name="description" content="Every selector moonxml implements, run against one document: CSS, XPath, the chain, and the values and attributes they answer with.">
 <link rel="stylesheet" href="assets/site.css">
+<script type="module" src="assets/scrollbar.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%%237d2f22'>&lt;/&gt;</text></svg>">
 </head>
 <body>
