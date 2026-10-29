@@ -8,6 +8,8 @@
    listing, figures captioned as plates, and a single brick red used only
    where a press would have inked a second roller. */
 
+html, button, input, textarea, select { font-variant-ligatures: no-contextual; }
+
 :root {
   /* buff kraft, the colour of a manila envelope */
   --paper: #e9dcbd;
@@ -923,9 +925,36 @@ pre::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hot); backgr
   .dropcap::first-letter { float: none; font-size: inherit; color: inherit; padding: 0; }
 }
 
+/* A phone takes the navigation onto a line of its own rather than dropping
+   any of it: the way back to the repository stays on every page. */
+@media (width <= 560px) {
+  header.top .wrap { flex-wrap: wrap; height: auto; padding-block: 12px; row-gap: 10px; }
+  nav.top-nav { margin-left: 0; width: 100%; justify-content: space-between; gap: 8px; }
+  nav.top-nav a { letter-spacing: 0.12em; }
+  nav.top-nav a.hide-sm { display: inline; }
+}
+
+.hero-grid > * { min-width: 0; }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }
 
 ::selection { background: var(--brick-soft); color: var(--ink); }
 :focus-visible { outline: 1px solid var(--brick); outline-offset: 2px; }
+
+/* The page scroll bar shows while the page moves or under the pointer and
+   hides a moment after; it keeps its place, so nothing shifts. */
+@supports selector(::-webkit-scrollbar) {
+  html:not(.scrolling)::-webkit-scrollbar-thumb { background: transparent; border-color: transparent; box-shadow: none; }
+}
+@supports not selector(::-webkit-scrollbar) {
+  html:not(.scrolling) { scrollbar-color: transparent transparent; }
+}
+
+/* Long identifiers in running text break rather than widen the page. */
+:where(p, li, td, dd, h1, h2, h3, h4) code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.chapter > *, .cols > * { min-width: 0; }
+@media (width <= 560px) {
+  main table { display: block; overflow-x: auto; }
+}
