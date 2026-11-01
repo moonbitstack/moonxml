@@ -107,10 +107,15 @@ jobs:
           git diff --exit-code -- tests/html5lib_cases.mbt tests/tokenizer_cases.mbt html/entities.mbt
       - name: Corpus rates
         run: |
+          # The summary is written whether or not the tests pass, and the step
+          # still fails when they do not.
+          set +e
           moon test 2>&1 | tee "$RUNNER_TEMP/test.log"
+          status=${PIPESTATUS[0]}
           {
             echo "### html5lib conformance"
             echo '```'
-            grep -E 'html5lib (tree-construction|tokenizer):|fixpoint:' "$RUNNER_TEMP/test.log" || true
+            grep -aE 'html5lib (tree-construction|tokenizer):|fixpoint:' "$RUNNER_TEMP/test.log"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
