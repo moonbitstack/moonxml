@@ -708,6 +708,15 @@ fn H::push_comment(self : H, text : String) -> Unit {
 
 /// Append a node to the `html` element, or to the current node when no `html`
 /// element is open.
+/// Whether the document being built has a frameset instead of a body.
+fn H::frameset_document(self : H) -> Bool {
+  let container = match find_child_named(self.stack[0], "html") {
+    Some(h) => h
+    None => self.stack[0]
+  }
+  has_child_named(container, "frameset")
+}
+
 fn H::append_to_html(self : H, node : @moonxml.Node) -> Unit {
   let mut i = self.stack.length() - 1
   while i > 0 {
@@ -717,8 +726,16 @@ fn H::append_to_html(self : H, node : @moonxml.Node) -> Unit {
     }
     i = i - 1
   }
-  // No `html` element: the comment belongs to the document, above `html`.
   self.stack[0].append(node)
+}
+
+/// Whitespace after `</html>` still belongs inside `html`, even though the
+/// element is closed and gone from the stack.
+fn H::append_ws_to_html(self : H, s : String) -> Unit {
+  match find_child_named(self.stack[0], "html") {
+    Some(h) => h.append(@moonxml.Node::TextNode(s))
+    None => self.append_to_html(@moonxml.Node::TextNode(s))
+  }
 }
 
 fn find_child_named(parent : @moonxml.Element, name : String) -> @moonxml.Element? {
@@ -1030,7 +1047,7 @@ fn H::append_node(self : H, node : @moonxml.Node) -> Unit {
 }
 
 fn is_table_scope(l : String) -> Bool {
-  l == "table" || l == "tbody" || l == "thead" || l == "tfoot" || l == "tr"
+  l == "table" || l == "tbody" || l == "thead" || l == "tfoot" || l == "tr" || l == "colgroup"
 }
 
 fn table_allows(scope : String, tag : String) -> Bool {
@@ -1134,7 +1151,7 @@ fn keep_ws(s : String) -> String {
 
 fn H::append_text(self : H, s : String) -> Unit {
   let cur = local_of(self.current().name).to_lower()
-  if cur == "frameset" || (cur == "html" && has_child_named(self.current(), "frameset")) {
+  if cur == "frameset" || self.frameset_document() {
     let ws = keep_ws(s)
     if ws.length() > 0 {
       self.append_node(@moonxml.Node::TextNode(ws))
@@ -1595,6 +1612,9 @@ fn H::parse_start_tag(self : H) -> Unit {
   if self.handle_in_select(raw_name) {
     return
   }
+  if self.body_closed && self.frameset_document() {
+    return
+  }
   // A second `html` start tag merges its attributes into the open one.
   if raw_name == "html" {
     if self.has_open("html") {
@@ -1612,6 +1632,12 @@ fn H::parse_start_tag(self : H) -> Unit {
         return
       }
       None => ()
+    }
+  }
+  // Nested forms are ignored.
+  if raw_name == "form" {
+    if self.has_open("form") {
+      return
     }
   }
   // A second `body` start tag only adds attributes it does not already have.

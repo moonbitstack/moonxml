@@ -159,8 +159,10 @@ fn normalize_document_impl(
       @moonxml.Node::TextNode(s) => {
         if frameset.is_some() && in_body {
           after_frameset.push(n)
+        } else if @text.is_blank(s) && not(in_body) && seen_head {
+          after_head.push(n)
         } else if @text.is_blank(s) && not(in_body) {
-          // formatting whitespace before body is not part of the tree
+          // formatting whitespace before head is not part of the tree
         } else {
           in_body = true
           body.append(n)
