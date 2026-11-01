@@ -127,7 +127,7 @@ Selectors Level 4's statically decidable part: type and universal selectors,
 ```moonbit
 pub struct DeepLinks {}
 
-impl Selector for DeepLinks with select(self, ctx, query) {
+impl Selector for DeepLinks with select(_self, ctx, query) {
   ignore(query)
   ctx.css("a").filter(fn(n) { n.is_element() })
 }
@@ -200,11 +200,21 @@ foster-parented before it, and leading head content (`title`, `meta`, `link`,
 forces HTML. `dumps(node)` writes one node.
 
 - **XML round-trip is byte-identical** for a well-formed document that is not
-  edited: attribute order and quoting, CDATA, comments, processing instructions,
-  the doctype and self-closing syntax all survive. One deliberate deviation:
-  character references are decoded (`&#65;` reads as `A` and writes as `A`).
+  edited: attribute order, CDATA, comments, processing instructions, the doctype
+  and self-closing syntax all survive. Three deliberate deviations: attribute
+  quoting is normalised to double quotes, a prefixed name is written as a default
+  `xmlns` declaration on the element that needs it, and character references are
+  decoded (`&#65;` reads as `A` and writes as `A`).
 - **HTML** has no byte-identity promise; its criterion is the fixpoint — parse,
-  serialize, parse, serialize gives the same bytes.
+  serialize, parse, serialize gives the same bytes. The writer does its part: a
+  doctype with identifiers gets its `PUBLIC`/`SYSTEM` keyword back, a leading
+  newline in `pre`/`textarea` is written twice so the parser eats only one, and
+  `noscript` that came from a raw-text parse is written unescaped.
+  `tests/html_fixpoint_test.mbt` checks the property over the whole corpus; the
+  sixty cases it excludes are trees no HTML source can express (a `plaintext`
+  element, a `<a>` inside a `<a>`, a fragment parsed in a raw-text context,
+  script text in the double-escaped state), and the exclusions are counted per
+  category in the test output rather than silently dropped.
 
 ## Reading a tree as events
 
@@ -233,7 +243,8 @@ pub(all) suberror Refused {
 }
 ```
 
-HTML never raises; it repairs.
+HTML never raises; it repairs, and counts what it repaired: `Document::repairs()`
+is empty for a clean document and reports the number otherwise.
 
 ## Not here yet
 

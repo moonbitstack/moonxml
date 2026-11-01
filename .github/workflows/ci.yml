@@ -66,7 +66,11 @@ jobs:
         shell: pwsh
         run: |
           irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
-          Add-Content -Path $env:GITHUB_PATH -Value "$env:USERPROFILE\.moon\bin"
+          # The installer writes the user PATH, which this session does not see,
+          # so the same directory is added to the job PATH explicitly.
+          $moonBin = if ($env:MOON_HOME) { Join-Path $env:MOON_HOME "bin" } else { Join-Path $HOME ".moon\bin" }
+          if (-not (Test-Path $moonBin)) { throw "the installer did not create $moonBin" }
+          Add-Content -Path $env:GITHUB_PATH -Value $moonBin
       - name: Version
         run: moon version
       - name: Test
