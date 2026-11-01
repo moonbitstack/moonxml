@@ -489,7 +489,16 @@ pub fn name_matches(el : Element, t : String) -> Bool {
     return true
   }
   if t.contains("{") == false {
-    return el.local_name() == t
+    let l = el.local_name()
+    if l == t {
+      return true
+    }
+    // Type selectors match HTML element names without regard to case. An
+    // element whose name is not all lowercase can only come from an XML parse,
+    // where names are compared exactly.
+    if l == l.to_lower() && l == t.to_lower() {
+      return true
+    }
   }
   false
 }
@@ -714,10 +723,18 @@ fn match_pseudo(el : Element, ps : Pseudo) -> Bool {
     Not(list) => matches_any_complex(el, list) == false
     Is(list) | Where(list) => matches_any_complex(el, list)
     NthChild(a, b, of) => {
+      // `of S` restricts the pseudo-class to elements matching S; a sibling
+      // that does not match is not counted and cannot match the formula.
+      if of.length() > 0 && not(matches_any_complex(el, of)) {
+        return false
+      }
       let (pos, total) = filtered_position(el, of)
       nth_matches(pos, total, a, b, false)
     }
     NthLastChild(a, b, of) => {
+      if of.length() > 0 && not(matches_any_complex(el, of)) {
+        return false
+      }
       let (pos, total) = filtered_position(el, of)
       nth_matches(pos, total, a, b, true)
     }
