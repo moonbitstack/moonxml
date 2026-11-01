@@ -663,6 +663,27 @@ fn parse_number_lit(p : XP) -> Double raise Refused {
       p.pos = p.pos + 1
     }
   }
+  if p.pos < p.n && (p.s[p.pos] == 'e' || p.s[p.pos] == 'E') {
+    // An exponent is an extension to the XPath 1.0 grammar that engines in use
+    // accept, and the corpus depends on it. It needs at least one digit after
+    // `e` and an optional sign, so it is only taken when the lookahead holds.
+    let mut q = p.pos + 1
+    if q < p.n && (p.s[q] == '+' || p.s[q] == '-') {
+      q = q + 1
+    }
+    if q < p.n && p.s[q] >= '0' && p.s[q] <= '9' {
+      sb.write_char('e')
+      p.pos = p.pos + 1
+      if p.s[p.pos] == '+' || p.s[p.pos] == '-' {
+        sb.write_char(p.s[p.pos])
+        p.pos = p.pos + 1
+      }
+      while p.pos < p.n && p.s[p.pos] >= '0' && p.s[p.pos] <= '9' {
+        sb.write_char(p.s[p.pos])
+        p.pos = p.pos + 1
+      }
+    }
+  }
   str_to_number(sb.to_string())
 }
 
@@ -679,7 +700,19 @@ fn nan() -> Double {
 }
 
 fn round_half_up(d : Double) -> Double {
-  (d + 0.5).floor()
+  let r = (d + 0.5).floor()
+  // `round(-0.1)` is negative zero, which is observable through `1 div`,
+  // and `0.0` would be the wrong sign.
+  if r == 0.0 && is_negative(d) {
+    -0.0
+  } else {
+    r
+  }
+}
+
+/// Whether `d` is negative, counting negative zero.
+fn is_negative(d : Double) -> Bool {
+  d < 0.0 || (d == 0.0 && 1.0 / d < 0.0)
 }
 
 fn i2d(i : Int) -> Double {
@@ -732,8 +765,15 @@ fn str_to_number(s : String) -> Double {
     }
     let mut ev = 0
     while i < n && cs[i] >= '0' && cs[i] <= '9' {
-      ev = ev * 10 + (Char::to_int(cs[i]) - Char::to_int('0'))
+      if ev < 100000 {
+        ev = ev * 10 + (Char::to_int(cs[i]) - Char::to_int('0'))
+      }
       i = i + 1
+    }
+    // Past a double's range the scale saturates: multiplying or dividing by ten
+    // another four hundred times only produces infinity or zero.
+    if ev > 400 {
+      ev = 400
     }
     let mut k = 0
     while k < ev {
@@ -840,13 +880,26 @@ fn xval_to_nodes(v : XVal) -> Array[Node] {
 // Axes
 // ---------------------------------------------------------------------------
 
+/// Every node in the tree in document order, starting with the children of the
+/// root node. The XML declaration is not a node of the data model — it is not a
+/// processing instruction a query can select — so it is skipped here.
 fn all_nodes(root : Element) -> Array[Node] {
   let out : Array[Node] = []
   for c in root.children {
+    if is_xml_declaration(c) {
+      continue
+    }
     out.push(c)
     collect_all(c, out)
   }
   out
+}
+
+fn is_xml_declaration(n : Node) -> Bool {
+  match n {
+    ProcessingInstructionNode(pi) => pi.target.to_lower() == "xml"
+    _ => false
+  }
 }
 
 fn collect_all(n : Node, out : Array[Node]) -> Unit {
@@ -903,7 +956,20 @@ fn sibling_nodes(el : Element, forward : Bool) -> Array[Node] {
   out
 }
 
+/// The nodes an axis reaches, with the XML declaration removed: it sits under
+/// the document node but is not a node of the data model, so no axis may
+/// return it.
 fn axis_nodes(node : Node, axis : Axis, root : Element) -> Array[Node] {
+  let out : Array[Node] = []
+  for n in axis_nodes_raw(node, axis, root) {
+    if not(is_xml_declaration(n)) {
+      out.push(n)
+    }
+  }
+  out
+}
+
+fn axis_nodes_raw(node : Node, axis : Axis, root : Element) -> Array[Node] {
   match axis {
     AxChild => node.node_children()
     AxDescendant => match node {
@@ -1050,12 +1116,16 @@ fn is_document_node(e : Element) -> Bool {
   e.name == "#document"
 }
 
-fn test_node(node : Node, nt : NodeTest) -> Bool {
+fn test_node(node : Node, nt : NodeTest, attr_axis : Bool) -> Bool {
   match nt {
     NameTest(nm) => match node {
       ElementNode(e) => not(is_document_node(e)) && name_matches(e, nm)
       AttributeNode(an, _) => {
-        if nm == "*" {
+        // An attribute is the principal node type of the attribute axis only,
+        // so `self::*` on an attribute selects nothing.
+        if not(attr_axis) {
+          false
+        } else if nm == "*" {
           true
         } else if an == nm {
           true
@@ -1112,18 +1182,47 @@ fn apply_predicates(nodes : Array[Node], preds : Array[Expr], root : Element) ->
   cur
 }
 
+/// The axes whose proximity order runs backwards through the document.
+fn is_reverse_axis(a : Axis) -> Bool {
+  match a {
+    AxAncestor | AxAncestorOrSelf | AxPreceding | AxPrecedingSibling => true
+    _ => false
+  }
+}
+
+fn reversed(nodes : Array[Node]) -> Array[Node] {
+  let out : Array[Node] = []
+  let mut i = nodes.length() - 1
+  while i >= 0 {
+    out.push(nodes[i])
+    i = i - 1
+  }
+  out
+}
+
 fn eval_step(node : Node, step : Step, root : Element) -> Array[Node] raise Refused {
   let base = axis_nodes(node, step.axis, root)
+  let attr_axis = match step.axis {
+    AxAttribute => true
+    _ => false
+  }
   let filtered : Array[Node] = []
   for b in base {
-    if test_node(b, step.test_kind) {
+    if test_node(b, step.test_kind, attr_axis) {
       filtered.push(b)
     }
   }
-  if step.predicates.length() > 0 {
+  // Position predicates count in axis order (the nearest ancestor is 1), but
+  // the node-set a step produces is in document order.
+  let result = if step.predicates.length() > 0 {
     apply_predicates(filtered, step.predicates, root)
   } else {
     filtered
+  }
+  if is_reverse_axis(step.axis) {
+    reversed(result)
+  } else {
+    result
   }
 }
 
@@ -1138,7 +1237,7 @@ fn fold_steps(start : Array[Node], steps : Array[Step], root : Element) -> Array
     }
     cur = dedup_nodes(out)
   }
-  cur
+  order_doc(cur, root)
 }
 
 // ---------------------------------------------------------------------------
@@ -1158,34 +1257,42 @@ fn preorder_index(all : Array[Node], n : Node) -> Int {
   -1
 }
 
-/// A union of two node-sets. XPath returns a node-set in document order, and a
-/// union is the operation that can produce one out of order, so the result is
-/// re-sorted by preorder position. Duplicates are removed by position, which is
-/// what makes them duplicates in the first place. Attribute nodes have no
-/// preorder position; they keep their relative order and sort after elements,
-/// which is as far as this tree model can place them.
-fn union_nodes(a : Array[Node], b : Array[Node], root : Element) -> Array[Node] {
+/// A node-set in document order, with duplicates removed by position.
+///
+/// XPath calls a node-set unordered, but every operation that produces one —
+/// a union, or a path whose steps fan out — has to hand the caller the nodes in
+/// document order, and the position predicates of an enclosing expression count
+/// in that order too. Attribute nodes have no preorder position; they keep their
+/// relative order and sort after elements, which is as far as this tree model
+/// can place them.
+fn order_doc(nodes : Array[Node], root : Element) -> Array[Node] {
   let all = all_nodes(root)
   let keys : Array[Int] = []
   let kept : Array[Node] = []
-  let groups : Array[Array[Node]] = [a, b]
-  for g in groups {
-    for n in g {
-      let k = preorder_index(all, n)
-      let mut dup = false
-      let mut i = 0
-      while i < keys.length() {
-        if keys[i] == k {
-          if k >= 0 || node_string_value(kept[i]) == node_string_value(n) {
-            dup = true
-          }
+  for n in nodes {
+    // The root node precedes every other node; an attribute follows its
+    // element and has no position of its own, which -1 marks.
+    let k = match n {
+      ElementNode(e) => if is_document_node(e) {
+        -2
+      } else {
+        preorder_index(all, n)
+      }
+      _ => preorder_index(all, n)
+    }
+    let mut dup = false
+    let mut i = 0
+    while i < keys.length() {
+      if keys[i] == k {
+        if k != -1 || node_string_value(kept[i]) == node_string_value(n) {
+          dup = true
         }
-        i = i + 1
       }
-      if not(dup) {
-        keys.push(k)
-        kept.push(n)
-      }
+      i = i + 1
+    }
+    if not(dup) {
+      keys.push(k)
+      kept.push(n)
     }
   }
   let out : Array[Node] = []
@@ -1193,7 +1300,7 @@ fn union_nodes(a : Array[Node], b : Array[Node], root : Element) -> Array[Node] 
   let mut i = 0
   while i < kept.length() {
     let k = keys[i]
-    let sort_key = if k < 0 {
+    let sort_key = if k == -1 {
       1 << 30
     } else {
       k
@@ -1207,6 +1314,18 @@ fn union_nodes(a : Array[Node], b : Array[Node], root : Element) -> Array[Node] 
     i = i + 1
   }
   out
+}
+
+/// A union of two node-sets, in document order.
+fn union_nodes(a : Array[Node], b : Array[Node], root : Element) -> Array[Node] {
+  let both : Array[Node] = []
+  for n in a {
+    both.push(n)
+  }
+  for n in b {
+    both.push(n)
+  }
+  order_doc(both, root)
 }
 
 fn eval_expr(e : Expr, c : XC) -> XVal raise Refused {
@@ -1520,7 +1639,8 @@ fn eval_fun(name : String, args : Array[Expr], c : XC) -> XVal raise Refused {
   } else if name == "false" {
     XVal::VBool(false)
   } else if name == "lang" {
-    XVal::VBool(false)
+    let want = xval_to_string(eval_expr(args[0], c)).to_lower()
+    XVal::VBool(lang_matches(c.node, want))
   } else if name == "number" {
     let v = if args.length() == 0 {
       XVal::VStr(context_string(c))
@@ -1543,6 +1663,48 @@ fn eval_fun(name : String, args : Array[Expr], c : XC) -> XVal raise Refused {
     XVal::VNum(round_half_up(xval_to_number(eval_expr(args[0], c))))
   } else {
     raise Refused::Unsupported(what="XPath function " + name + "()")
+  }
+}
+
+/// `lang()`: the nearest `xml:lang` on the node or an ancestor, matched as a
+/// language range (`en` matches `en-US`, and not the other way around).
+fn lang_matches(node : Node, want : String) -> Bool {
+  let mut cur : Node? = Some(node)
+  let mut found = false
+  let mut done = false
+  while not(done) {
+    match cur {
+      None => done = true
+      Some(n) => match n {
+        ElementNode(e) => match xml_lang(e) {
+          Some(value) => {
+            let tag = value.to_lower()
+            found = tag == want ||
+              (tag.length() > want.length() &&
+                tag.has_prefix(want) &&
+                char_at(tag, want.length()) == '-')
+            done = true
+          }
+          None => cur = match e.parent {
+            Some(p) => Some(ElementNode(p))
+            None => None
+          }
+        }
+        _ => done = true
+      }
+    }
+  }
+  found
+}
+
+/// The `xml:lang` attribute of an element, however the parser stored it.
+fn xml_lang(e : Element) -> String? {
+  match e.attr("{http://www.w3.org/XML/1998/namespace}lang") {
+    Some(v) => Some(v)
+    None => match e.attr("xml:lang") {
+      Some(v) => Some(v)
+      None => e.attr("lang")
+    }
   }
 }
 
