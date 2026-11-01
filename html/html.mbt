@@ -548,14 +548,8 @@ fn H::auto_close(self : H, tag : String) -> Unit {
   if closes_p(tag) {
     self.close_p()
   }
-  if tag == "li" {
-    self.pop_implied([])
-    self.pop_while_current("li")
-  }
-  if tag == "dt" || tag == "dd" {
-    self.pop_implied([])
-    self.pop_while_current("dt")
-    self.pop_while_current("dd")
+  if tag == "li" || tag == "dt" || tag == "dd" {
+    self.close_list_item(tag)
   }
   if tag == "option" {
     self.pop_while_current("option")
@@ -634,6 +628,16 @@ fn H::pop_through_head(self : H) -> Unit {
 }
 
 /// Insert a comment. After `</body>` it belongs to the `html` element.
+fn H::document_has_content(self : H, root : @moonxml.Element) -> Bool {
+  for c in root.children {
+    match c {
+      @moonxml.Node::DoctypeNode(_) => ()
+      _ => return true
+    }
+  }
+  false
+}
+
 fn H::push_comment(self : H, text : String) -> Unit {
   if self.body_closed {
     self.trailing_comments = self.trailing_comments + 1
@@ -779,6 +783,29 @@ fn H::stack_remove(self : H, el : @moonxml.Element) -> Unit {
 
 /// Pop the implied-end-tag elements (dd, dt, li, optgroup, option, p, rb, rp,
 /// rt, rtc) from the top of the stack.
+/// A `li`, `dd` or `dt` closes a list item of the same family, walking past
+/// `address`, `div` and `p` but stopping at any other special element.
+fn H::close_list_item(self : H, tag : String) -> Unit {
+  let mut i = self.stack.length() - 1
+  let mut found = -1
+  while i > 0 {
+    let l = local_of(self.stack[i].name).to_lower()
+    if l == "li" || l == "dd" || l == "dt" {
+      found = i
+      break
+    }
+    if is_special_el(l) && l != "address" && l != "div" && l != "p" {
+      break
+    }
+    i = i - 1
+  }
+  if found >= 0 {
+    while self.stack.length() > found {
+      self.pop()
+    }
+  }
+}
+
 fn H::pop_implied(self : H, keep : Array[String]) -> Unit {
   while self.stack.length() > 1 {
     let l = local_of(self.current().name).to_lower()
@@ -1023,8 +1050,38 @@ fn H::foster_text(self : H, s : String) -> Bool {
   }
 }
 
+fn has_child_named(el : @moonxml.Element, name : String) -> Bool {
+  for c in el.children {
+    match c {
+      @moonxml.Node::ElementNode(e) => if local_of(e.name).to_lower() == name {
+        return true
+      }
+      _ => ()
+    }
+  }
+  false
+}
+
+/// Only whitespace survives as text inside a frameset.
+fn keep_ws(s : String) -> String {
+  let sb = StringBuilder()
+  for c in s {
+    if @text.is_html_space(c) {
+      sb.write_char(c)
+    }
+  }
+  sb.to_string()
+}
+
 fn H::append_text(self : H, s : String) -> Unit {
   let cur = local_of(self.current().name).to_lower()
+  if cur == "frameset" || (cur == "html" && has_child_named(self.current(), "frameset")) {
+    let ws = keep_ws(s)
+    if ws.length() > 0 {
+      self.append_node(@moonxml.Node::TextNode(ws))
+    }
+    return
+  }
   if is_table_scope(cur) && not(@text.is_blank(s)) {
     if self.foster_text(s) {
       return
@@ -1055,7 +1112,8 @@ fn H::parse(self : H) -> @moonxml.Element {
     } else if self.starts_with_ci("<!doctype") {
       self.pos = self.pos + 9
       let dt = self.parse_doctype_html()
-      if not(self.body_closed) {
+      // A doctype after content has started is ignored.
+      if self.document_has_content(root) == false {
         root.append(@moonxml.Node::DoctypeNode(dt))
       }
     } else if self.starts_with("<?") {
