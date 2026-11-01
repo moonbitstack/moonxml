@@ -149,6 +149,16 @@ Each was a namespace question rather than a missing mode:
   only content was that character; html5lib labels the file "unsafe" precisely
   because the rule is subtle.
 
+## How this is verified
+
+Both corpora run inside `moon test`, with the floors asserted, and CI re-derives
+them from their upstreams before running so a stale fixture cannot pass. The
+pieces a corpus cannot see are covered by the suites added alongside it: the
+XPath and CSS construct matrices, serialization, the corpus-wide fixpoint
+property, XML well-formedness, the error paths, the tree invariants and the event
+stream. CI runs the same suite on three backends and three operating systems;
+the README lists the files and the jobs.
+
 ## Non-goals
 
 Scripting (`document.write`, scripting-enabled branches), and encoding sniffing
