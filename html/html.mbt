@@ -31,13 +31,15 @@ struct H {
   mut fragment_mode : Bool
   /// The scripting flag: with it on, `noscript` content is raw text.
   mut scripting : Bool
+  /// Local name of the fragment's context element, `""` for a document.
+  mut frag_context : String
   /// Elements that were foster-parented out of a table; they are body content
   /// even when their tag name looks like head content.
   fostered : Array[@moonxml.Element]
 }
 
 fn H::new(s : String) -> H {
-  { s: s.to_array(), n: s.length(), pos: 0, stack: [], afe: [], repairs: 0, frag_ns: "", body_closed: false, trailing_comments: 0, fragment_mode: false, scripting: false, fostered: [] }
+  { s: s.to_array(), n: s.length(), pos: 0, stack: [], afe: [], repairs: 0, frag_ns: "", body_closed: false, trailing_comments: 0, fragment_mode: false, scripting: false, frag_context: "", fostered: [] }
 }
 
 fn H::at_end(self : H) -> Bool {
@@ -712,6 +714,15 @@ fn H::push_comment(self : H, text : String) -> Unit {
 
 /// Append a node to the `html` element, or to the current node when no `html`
 /// element is open.
+/// Whether a head element has already been created.
+fn H::head_exists(self : H) -> Bool {
+  let container = match find_child_named(self.stack[0], "html") {
+    Some(h) => h
+    None => self.stack[0]
+  }
+  find_child_named(container, "head").is_some()
+}
+
 /// Whether the document being built has a frameset instead of a body.
 fn H::frameset_document(self : H) -> Bool {
   let container = match find_child_named(self.stack[0], "html") {
@@ -1492,7 +1503,7 @@ fn H::parse_end_tag(self : H) -> Unit {
     }
   }
   if name == "p" {
-    if self.p_in_scope() == false && (self.has_open("body") || self.body_has_content()) {
+    if self.p_in_scope() == false && self.current_child_ns() == "" && (self.has_open("body") || self.body_has_content()) {
       // The spec inserts an empty paragraph and closes it.
       let el = @moonxml.Element::new("p")
       self.append_node(@moonxml.Node::ElementNode(el))
@@ -1690,6 +1701,10 @@ fn H::parse_start_tag(self : H) -> Unit {
     if not(head_tag) {
       return
     }
+  }
+  // A second `head` start tag is ignored.
+  if raw_name == "head" && (self.has_open("head") || self.head_exists()) {
+    return
   }
   // A second `html` start tag merges its attributes into the open one.
   if raw_name == "html" {
@@ -2234,6 +2249,7 @@ fn loads_internal(text : String, fragment : Bool, context : String, scripting : 
   }
   let h = H::new(preprocess_h(text))
   h.fragment_mode = fragment
+  h.frag_context = if fragment { context_local(context).to_lower() } else { "" }
   h.scripting = scripting
   if fragment && not(is_integration_name(context_local(context).to_lower())) {
     if context.has_prefix("svg ") {
