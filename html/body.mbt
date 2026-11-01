@@ -701,7 +701,10 @@ fn H::step_foreign(self : H, tok : Tok) -> Bool {
         self.reconstruct()
       }
       self.insert_text(t)
-      if not(@text.is_blank(t)) {
+      // The frameset-ok flag is decided on the text with NUL removed, even
+      // though the NUL is inserted as U+FFFD: `<svg>\0</svg><frameset>` still
+      // lets the frameset replace the body.
+      if not(@text.is_blank(strip_nul(s))) {
         self.frameset_ok = false
       }
       true

@@ -116,11 +116,15 @@ fn H::pop(self : H) -> Unit {
   }
 }
 
+/// Pop until an HTML element with this name has been popped. Foreign elements
+/// that happen to share the name (`svg td`, `svg template`) do not count: the
+/// spec's end-tag rules are about the HTML element of that name.
 fn H::pop_until(self : H, name : String) -> Unit {
   while self.stack.length() > 1 {
     let l = self.cur_local()
+    let html = ns_of(self.cur().name) == ""
     self.pop()
-    if l == name {
+    if l == name && html {
       return
     }
   }
@@ -129,9 +133,10 @@ fn H::pop_until(self : H, name : String) -> Unit {
 fn H::pop_until_any(self : H, names : Array[String]) -> Unit {
   while self.stack.length() > 1 {
     let l = self.cur_local()
+    let html = ns_of(self.cur().name) == ""
     self.pop()
     for n in names {
-      if l == n {
+      if l == n && html {
         return
       }
     }
@@ -323,11 +328,12 @@ fn H::el_in_scope(self : H, el : @moonxml.Element, kind : Scope) -> Bool {
   false
 }
 
-/// Whether any element at all with this name is on the stack.
+/// Whether an HTML element with this name is on the stack. A foreign element
+/// that shares the name does not count.
 fn H::has_open(self : H, name : String) -> Bool {
   let mut i = 0
   while i < self.stack.length() {
-    if local_of(self.stack[i].name).to_lower() == name {
+    if local_of(self.stack[i].name).to_lower() == name && ns_of(self.stack[i].name) == "" {
       return true
     }
     i = i + 1

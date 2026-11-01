@@ -1,11 +1,10 @@
 # Task: full HTML parsing conformance
 
-Status: essentially done. The corpus is vendored and the runner measures a real
-pass rate: **1696/1700** cases (99.8%) as of the latest commit. The tree builder
-is a full insertion-mode state machine (P2), the adoption agency follows the
-specification (P3), foreign content and fragment parsing follow the
-integration-point rules (P4, P5). Four cases remain; they are listed under
-"Remaining" below.
+Status: done. The corpus is vendored and the runner measures a real pass rate:
+**1700/1700** cases as of the latest commit, with the floor asserted at 1700, so
+any regression fails the build. The tree builder is a full insertion-mode state
+machine (P2), the adoption agency follows the specification (P3), foreign content
+and fragment parsing follow the integration-point rules (P4, P5).
 
 Acceptance for "done": every `.dat` file under html5lib-tests/tree-construction
 passes, the tokenizer JSON tests pass, and the fragment cases pass, with a
@@ -127,19 +126,22 @@ the `noscript`/`template` rules).
 - **P6 (serializer)** — the runner's html5lib-format dump and the user-facing
   writer are separate; the latter is not part of the conformance measurement.
 
-## Remaining
+## The last five cases, and what they taught
 
-Four cases, all corner interactions rather than missing structure:
+Each was a namespace question rather than a missing mode:
 
 - `namespace-sensitivity.dat`: `<td><svg><td><foreignObject><span></td>Foo`.
-  html5lib closes the HTML cell when the foreign end tag search reaches an HTML
-  element; this parser matches the SVG-namespaced `td` first.
-- `plain-text-unsafe.dat` (two cases): `<svg>`, NUL, `</svg>`, `<frameset>`.
-  The corpus expects the frameset to replace the body, which means the U+FFFD
-  character token must not clear the frameset-ok flag. html5lib marks this file
-  "unsafe".
+  The cell's end tag must close the **HTML** `td`, not the SVG one that shares
+  the name. `pop_until` and `pop_until_any` now match HTML-namespaced elements
+  only.
 - `template.dat`: `<template><svg><foo><template><foreignObject><div></template>`
-  — an end tag that crosses the HTML/SVG namespace boundary inside a template.
+  — the same rule on `has_open`: a foreign `template` is not the template an end
+  tag closes.
+- `plain-text-unsafe.dat` (two cases): `<svg>`, NUL, `</svg>`, `<frameset>`.
+  The frameset-ok flag is decided on the text with NUL removed, even though the
+  NUL is inserted as U+FFFD. That is what lets the frameset replace a body whose
+  only content was that character; html5lib labels the file "unsafe" precisely
+  because the rule is subtle.
 
 ## Non-goals
 
