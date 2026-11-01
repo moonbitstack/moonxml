@@ -462,6 +462,7 @@ fn is_tag_name_char(c : Char) -> Bool {
 fn svg_adjust_tag(t : String) -> String {
   match t {
     "foreignobject" => "foreignObject"
+    "glyphref" => "glyphRef"
     "lineargradient" => "linearGradient"
     "radialgradient" => "radialGradient"
     "clippath" => "clipPath"
@@ -712,7 +713,15 @@ fn scan_comment(cs : Array[Char], start : Int) -> (String, Int) {
     }
     i = i + 1
   }
-  (slice_of(cs, start, n), n)
+  let mut out = slice_of(cs, start, n)
+  // An unterminated comment drops the `--` (or lone `-`) that was about to
+  // close it.
+  if out.has_suffix("--") {
+    out = out.substring(start=0, end=out.length() - 2)
+  } else if out.has_suffix("-") {
+    out = out.substring(start=0, end=out.length() - 1)
+  }
+  (out, n)
 }
 
 fn H::parse_doctype_html(self : H) -> String {

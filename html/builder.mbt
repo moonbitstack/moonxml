@@ -739,3 +739,20 @@ fn fragment_mode(ctx : @moonxml.Element) -> Mode {
   }
   MInBody
 }
+
+/// Split a character token into its leading HTML whitespace and the rest, so a
+/// mode can insert the whitespace where it belongs and reprocess the remainder.
+fn split_lead_ws(s : String) -> (String, String) {
+  let cs = s.to_array()
+  let mut i = 0
+  while i < cs.length() && @text.is_html_space(cs[i]) {
+    i = i + 1
+  }
+  if i == 0 {
+    ("", s)
+  } else if i == cs.length() {
+    (s, "")
+  } else {
+    (slice_of(cs, 0, i), slice_of(cs, i, cs.length()))
+  }
+}

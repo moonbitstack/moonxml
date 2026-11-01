@@ -220,6 +220,7 @@ fn H::scan_tag(self : H, is_end : Bool) -> Tok {
   }
   let attrs : Array[(String, String)] = []
   let mut self_closing = false
+  let mut terminated = false
   while true {
     while not(self.at_end()) && @text.is_html_space(self.peek()) {
       self.pos = self.pos + 1
@@ -230,12 +231,14 @@ fn H::scan_tag(self : H, is_end : Bool) -> Tok {
     let c = self.peek()
     if c == '>' {
       self.pos = self.pos + 1
+      terminated = true
       break
     }
     if c == '/' {
       if self.peek_at(1) == '>' {
         self.pos = self.pos + 2
         self_closing = true
+        terminated = true
         break
       }
       self.pos = self.pos + 1
@@ -284,6 +287,10 @@ fn H::scan_tag(self : H, is_end : Bool) -> Tok {
     if aname.length() > 0 && not(has_attr(attrs, aname)) {
       attrs.push((aname, avalue))
     }
+  }
+  if not(terminated) {
+    // End of input inside a tag: the token is dropped.
+    return Eof
   }
   if is_end {
     End(name)

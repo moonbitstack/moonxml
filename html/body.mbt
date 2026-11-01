@@ -428,9 +428,6 @@ fn H::close_list_item(self : H, t : String) -> Unit {
       self.pop_until(t)
       return
     }
-    if l == "li" && (t == "dd" || t == "dt") {
-      return
-    }
     if is_special_el(l) && l != "address" && l != "div" && l != "p" {
       return
     }
@@ -711,6 +708,11 @@ fn H::step_foreign(self : H, tok : Tok) -> Bool {
       // In foreign content NUL becomes U+FFFD rather than disappearing, but an
       // integration point still holds HTML, where it just goes away.
       let t = if self.at_integration_point() { strip_nul(s) } else { nul_to_fffd(s) }
+      if self.at_integration_point() {
+        // An integration point holds HTML, so formatting elements reconstruct
+        // here the way they do in body content.
+        self.reconstruct()
+      }
       self.insert_text(t)
       if not(@text.is_blank(t)) {
         self.frameset_ok = false

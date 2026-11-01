@@ -214,11 +214,21 @@ fn H::close_template(self : H) -> Unit {
 
 fn H::step_in_head(self : H, tok : Tok) -> Bool {
   match tok {
-    Chars(s) => if @text.is_blank(s) {
+    Chars(s) => if @text.is_blank(strip_nul(s)) {
       self.insert_text(s)
       false
     } else {
-      self.leave_head(tok)
+      // Whitespace that starts the run still belongs to head.
+      let (ws, rest) = split_lead_ws(s)
+      if ws.length() > 0 {
+        self.insert_text(ws)
+      }
+      self.pop()
+      self.mode = MAfterHead
+      if rest.length() > 0 {
+        self.dispatch(Chars(rest))
+      }
+      false
     }
     Comment(s) => {
       self.insert_comment(s)
@@ -366,12 +376,20 @@ fn is_head_content(t : String) -> Bool {
 
 fn H::step_after_head(self : H, tok : Tok) -> Bool {
   match tok {
-    Chars(s) => if @text.is_blank(s) {
+    Chars(s) => if @text.is_blank(strip_nul(s)) {
       self.insert_text(s)
       false
     } else {
+      // Whitespace stays between head and body; the rest starts the body.
+      let (ws, rest) = split_lead_ws(s)
+      if ws.length() > 0 {
+        self.insert_text(ws)
+      }
       self.make_body()
-      true
+      if rest.length() > 0 {
+        self.dispatch(Chars(rest))
+      }
+      false
     }
     Comment(s) => {
       self.insert_comment(s)
@@ -609,8 +627,10 @@ fn H::flush_table_text(self : H) -> Unit {
     return
   }
   if nonws {
+    // Non-whitespace table text is reprocessed by the in-body rules, which is
+    // what reconstructs formatting elements around it.
     self.foster = true
-    self.insert_text(s)
+    let _ = self.step_in_body(Chars(s))
     self.foster = false
   } else {
     self.insert_text(s)
@@ -707,7 +727,11 @@ fn H::step_in_column_group(self : H, tok : Tok) -> Bool {
       false
     }
     End(_) => self.column_group_anything(tok)
-    Eof => self.column_group_anything(tok)
+    Eof => if self.cur_local() == "colgroup" {
+      self.column_group_anything(tok)
+    } else {
+      self.step_in_body(tok)
+    }
   }
 }
 
@@ -715,10 +739,25 @@ fn H::column_group_anything(self : H, tok : Tok) -> Bool {
   if self.cur_local() != "colgroup" {
     return false
   }
-  self.pop()
-  self.mode = MInTable
-  let _ = tok
-  true
+  match tok {
+    Chars(s) => {
+      let (ws, rest) = split_lead_ws(s)
+      if ws.length() > 0 {
+        self.insert_text(ws)
+      }
+      self.pop()
+      self.mode = MInTable
+      if rest.length() > 0 {
+        self.dispatch(Chars(rest))
+      }
+      false
+    }
+    _ => {
+      self.pop()
+      self.mode = MInTable
+      true
+    }
+  }
 }
 
 fn H::step_in_table_body(self : H, tok : Tok) -> Bool {
@@ -985,16 +1024,23 @@ fn H::step_in_select(self : H, tok : Tok) -> Bool {
   }
 }
 
+fn is_select_table_tag(t : String) -> Bool {
+  if t == "table" || t == "caption" || t == "tbody" || t == "tfoot" || t == "thead" {
+    return true
+  }
+  t == "tr" || t == "td" || t == "th"
+}
+
 fn H::step_in_select_in_table(self : H, tok : Tok) -> Bool {
   match tok {
-    Start(t, _, _) => if is_table_part(t) {
+    Start(t, _, _) => if is_select_table_tag(t) {
       self.pop_until("select")
       self.reset_mode()
       true
     } else {
       self.step_in_select(tok)
     }
-    End(t) => if is_table_part(t) {
+    End(t) => if is_select_table_tag(t) {
       self.pop_until("select")
       self.reset_mode()
       true

@@ -119,44 +119,42 @@ fn H::adoption(self : H, subject : String) -> Unit {
     }
     let common = self.stack[si - 1]
     let mut bookmark = self.afe_index(fmt)
-    let mut node = fb
     let mut last = fb
     let mut inner = 0
-    while true {
-      inner = inner + 1
-      let ni = self.index_of(node) - 1
-      if ni < 0 {
-        break
-      }
-      node = self.stack[ni]
+    // Walk down the stack from the furthest block; the index moves with the
+    // removals, which is why it is an index and not an element reference.
+    let mut ni = self.index_of(fb) - 1
+    while ni >= 0 {
+      let node = self.stack[ni]
       if physical_equal(node, fmt) {
         break
       }
+      inner = inner + 1
       let ai = self.afe_index(node)
       if inner > 3 && ai >= 0 {
         let _ = self.afe.remove(ai)
         if ai < bookmark {
           bookmark = bookmark - 1
         }
+        ni = ni - 1
         continue
       }
       if ai < 0 {
-        self.remove_from_stack(node)
+        let _ = self.stack.remove(ni)
+        ni = ni - 1
         continue
       }
       // Clone the node, keeping its place in both lists.
       let cl = clone_shallow(node)
-      let ai2 = self.afe_index(node)
-      self.afe[ai2] = AFElement(cl)
-      let ni2 = self.index_of(node)
-      self.stack[ni2] = cl
-      node = cl
+      self.afe[ai] = AFElement(cl)
+      self.stack[ni] = cl
       if physical_equal(last, fb) {
-        bookmark = ai2 + 1
+        bookmark = ai + 1
       }
       let _ = last.remove()
-      node.append(@moonxml.Node::ElementNode(last))
-      last = node
+      cl.append(@moonxml.Node::ElementNode(last))
+      last = cl
+      ni = ni - 1
     }
     let _ = last.remove()
     self.append_at(common, last)
