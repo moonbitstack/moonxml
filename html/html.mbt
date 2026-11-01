@@ -21,9 +21,25 @@ struct H {
   mut pos : Int
   /// The content model the tokenizer is in; the tree builder switches it when
   /// it starts a `script`, `style`, `textarea` and so on.
-  mut tstate : TokState
-  /// The element name that ends the current raw-text state.
+  mut tstate : TState
+  /// The element name that ends the current raw-text state, and the tag name
+  /// the specification calls "the last start tag emitted".
   mut raw_tag : String
+  // Tokenizer scratch: the token being built.
+  mut tok_is_end : Bool
+  mut tok_name : String
+  mut tok_attrs : Array[(String, String)]
+  mut tok_sc : Bool
+  mut attr_name : String
+  mut attr_val : String
+  mut comment_data : String
+  mut temp : String
+  mut doctype_name : String?
+  mut doctype_pub : String?
+  mut doctype_sys : String?
+  mut doctype_quirks : Bool
+  mut data_buf : String
+  mut last_start_tag : String
   // Tree under construction.
   mut doc : @moonxml.Element
   stack : Array[@moonxml.Element]
@@ -52,12 +68,29 @@ struct H {
 }
 
 fn H::new(s : String) -> H {
+  // Count the array, not the string: `String::length` and the number of code
+  // units `to_array` produces differ outside the BMP.
+  let cs = s.to_array()
   {
-    s: s.to_array(),
-    n: s.length(),
+    s: cs,
+    n: cs.length(),
     pos: 0,
-    tstate: TsData,
+    tstate: StData,
     raw_tag: "",
+    tok_is_end: false,
+    tok_name: "",
+    tok_attrs: [],
+    tok_sc: false,
+    attr_name: "",
+    attr_val: "",
+    comment_data: "",
+    temp: "",
+    doctype_name: None,
+    doctype_pub: None,
+    doctype_sys: None,
+    doctype_quirks: false,
+    data_buf: "",
+    last_start_tag: "",
     doc: @moonxml.Element::new("#document"),
     stack: [],
     afe: [],
@@ -386,6 +419,64 @@ fn decode_entities_mode(s : String, in_attr : Bool) -> String {
   sb.to_string()
 }
 
+/// Read one character reference starting at `i` (which must be `&`).
+/// Returns the decoded text, the position after it, and whether one was read.
+/// `in_attr` selects the attribute-value rule for a legacy reference without a
+/// semicolon followed by `=` or an alphanumeric.
+fn H::read_char_ref(self : H, i : Int, in_attr : Bool) -> (String, Int, Bool) {
+  let n = self.n
+  let cs = self.s
+  if i + 1 >= n || cs[i] != '&' {
+    return ("", i, false)
+  }
+  if cs[i + 1] == '#' {
+    let (cp, next, ok) = read_char_ref(cs, i + 2, n)
+    if not(ok) {
+      return ("", i, false)
+    }
+    let cp_norm = if cp == 0x0D {
+      0x0A
+    } else {
+      cp
+    }
+    let safe = if cp_norm == 0 || cp_norm > 0x10FFFF || (cp_norm >= 0xD800 && cp_norm <= 0xDFFF) {
+      0xFFFD
+    } else {
+      map_c1(cp_norm)
+    }
+    return (@text.code_point_to_string(safe), next, true)
+  }
+  let mut j = i + 1
+  while j < n && is_ent_name_char(cs[j]) && j - i <= 33 {
+    j = j + 1
+  }
+  if j == i + 1 {
+    return ("", i, false)
+  }
+  if j < n && cs[j] == ';' {
+    match entity_value(slice_of(cs, i + 1, j + 1)) {
+      Some(v) => return (v, j + 1, true)
+      None => ()
+    }
+  }
+  let mut e = j
+  while e > i + 1 {
+    match entity_value(slice_of(cs, i + 1, e)) {
+      Some(v) => {
+        if in_attr && e < n {
+          let nx = cs[e]
+          if nx == '=' || is_ent_name_char(nx) {
+            return ("", i, false)
+          }
+        }
+        return (v, e, true)
+      }
+      None => e = e - 1
+    }
+  }
+  ("", i, false)
+}
+
 fn decode_entities(s : String) -> String {
   decode_entities_mode(s, false)
 }
@@ -700,37 +791,25 @@ fn scan_comment(cs : Array[Char], start : Int) -> (String, Int) {
   (out, n)
 }
 
-fn H::parse_doctype_html(self : H) -> String {
-  self.skip_ws_h()
-  let nstart = self.pos
-  while not(self.at_end()) && self.peek() != '>' && not(@text.is_html_space(self.peek())) {
-    self.pos = self.pos + 1
+/// Flatten a doctype the way the tree and the serializer show it: the name,
+/// then the public and system identifiers when either is present.
+fn doctype_info(name : String?, pub_id : String?, sys_id : String?) -> String {
+  let n = match name {
+    Some(v) => v
+    None => ""
   }
-  let name = slice_of(self.s, nstart, self.pos).to_lower()
-  self.skip_ws_h()
-  let mut pubid = ""
-  let mut sys = ""
-  if self.starts_with_ci("PUBLIC") {
-    self.pos = self.pos + 6
-    self.skip_ws_h()
-    pubid = self.read_quoted_or_empty()
-    self.skip_ws_h()
-    sys = self.read_quoted_or_empty()
-  } else if self.starts_with_ci("SYSTEM") {
-    self.pos = self.pos + 6
-    self.skip_ws_h()
-    sys = self.read_quoted_or_empty()
+  let p = match pub_id {
+    Some(v) => v
+    None => ""
   }
-  while not(self.at_end()) && self.peek() != '>' {
-    self.pos = self.pos + 1
+  let sy = match sys_id {
+    Some(v) => v
+    None => ""
   }
-  if not(self.at_end()) {
-    self.pos = self.pos + 1
-  }
-  if pubid == "" && sys == "" {
-    name
+  if p == "" && sy == "" {
+    n
   } else {
-    name + " \"" + pubid + "\" \"" + sys + "\""
+    n + " \"" + p + "\" \"" + sy + "\""
   }
 }
 
@@ -814,8 +893,8 @@ fn find_rawtext_end(cs : Array[Char], start : Int, n : Int, tag : String) -> Int
 /// The escaped and double-escaped states matter: after `<!--`, a `</script>`
 /// closes the element, but after `<!--<script>` it is text until `</script`
 /// puts the tokenizer back into the escaped state.
-fn find_script_end(cs : Array[Char], start : Int, n : Int) -> Int {
-  let tcs = "script".to_array()
+fn find_script_end(cs : Array[Char], start : Int, n : Int, tag : String) -> Int {
+  let tcs = tag.to_array()
   let mut i = start
   let mut st = 0
   let mut tag_start = -1
@@ -1053,19 +1132,19 @@ fn loads_internal(text : String, fragment : Bool, context : String, scripting : 
     if ns != "" {
       // A foreign context is never RCDATA: `svg title` is an SVG element.
     } else if local == "title" || local == "textarea" {
-      h.tstate = TsRcdata
+      h.tstate = StRcdata
       h.raw_tag = local
     } else if local == "style" || local == "xmp" || local == "iframe" || local == "noembed" || local == "noframes" {
-      h.tstate = TsRawtext
+      h.tstate = StRawtext
       h.raw_tag = local
     } else if local == "script" {
-      h.tstate = TsScript
+      h.tstate = StScriptData
       h.raw_tag = local
     } else if local == "plaintext" {
-      h.tstate = TsPlaintext
+      h.tstate = StPlaintext
       h.raw_tag = local
     } else if local == "noscript" && scripting {
-      h.tstate = TsRawtext
+      h.tstate = StRawtext
       h.raw_tag = local
     }
     if local == "template" {
@@ -1087,11 +1166,17 @@ fn loads_internal(text : String, fragment : Bool, context : String, scripting : 
 /// way a browser reads bytes. NUL goes on to the tokenizer, which drops it in
 /// data and replaces it with U+FFFD in raw text.
 fn preprocess_h(s : String) -> String {
+  preprocess_impl(s, true)
+}
+
+/// Normalise line endings; `strip_bom` decides whether a leading U+FEFF goes.
+/// The tokenizer view keeps it, because the corpus treats it as data.
+fn preprocess_impl(s : String, strip_bom : Bool) -> String {
   let cs = s.to_array()
   let n = cs.length()
   let sb = StringBuilder()
   let mut i = 0
-  if n > 0 && Char::to_int(cs[0]) == 0xFEFF {
+  if strip_bom && n > 0 && Char::to_int(cs[0]) == 0xFEFF {
     i = 1
   }
   while i < n {

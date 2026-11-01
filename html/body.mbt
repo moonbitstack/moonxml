@@ -207,7 +207,7 @@ fn H::start_in_body(
     self.close_p()
     let _ = self.insert_el("plaintext", a)
     self.raw_tag = "plaintext"
-    self.tstate = TsPlaintext
+    self.tstate = StPlaintext
     return false
   }
   if t == "button" {
@@ -303,7 +303,7 @@ fn H::start_in_body(
     return self.start_in_body("img", a, sc)
   }
   if t == "textarea" {
-    let _ = self.raw_element("textarea", a, TsRcdata)
+    let _ = self.raw_element("textarea", a, StRcdata)
     self.ignore_lf = true
     self.frameset_ok = false
     return false
@@ -312,20 +312,20 @@ fn H::start_in_body(
     self.close_p()
     self.reconstruct()
     self.frameset_ok = false
-    let _ = self.raw_element("xmp", a, TsRawtext)
+    let _ = self.raw_element("xmp", a, StRawtext)
     return false
   }
   if t == "iframe" {
     self.frameset_ok = false
-    let _ = self.raw_element("iframe", a, TsRawtext)
+    let _ = self.raw_element("iframe", a, StRawtext)
     return false
   }
   if t == "noembed" {
-    let _ = self.raw_element("noembed", a, TsRawtext)
+    let _ = self.raw_element("noembed", a, StRawtext)
     return false
   }
   if t == "noscript" && self.scripting {
-    let _ = self.raw_element("noscript", a, TsRawtext)
+    let _ = self.raw_element("noscript", a, StRawtext)
     return false
   }
   if t == "select" {

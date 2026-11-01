@@ -75,10 +75,13 @@ fn H::step_initial(self : H, tok : Tok) -> Bool {
       self.doc.append(@moonxml.Node::CommentNode(s))
       false
     }
-    Doctype(info) => {
-      let low = info.to_lower()
-      self.quirks = not(low == "html" || low.has_prefix("html "))
-      self.doc.append(@moonxml.Node::DoctypeNode(info))
+    Doctype(name, pub_id, sys_id, q) => {
+      let named = match name {
+        Some(v) => v
+        None => ""
+      }
+      self.quirks = q || named != "html"
+      self.doc.append(@moonxml.Node::DoctypeNode(doctype_info(name, pub_id, sys_id)))
       self.mode = MBeforeHtml
       false
     }
@@ -244,21 +247,21 @@ fn H::step_in_head(self : H, tok : Tok) -> Bool {
         let _ = self.insert_void(t, attrs)
         false
       } else if t == "title" {
-        let _ = self.raw_element(t, attrs, TsRcdata)
+        let _ = self.raw_element(t, attrs, StRcdata)
         false
       } else if t == "noframes" || t == "style" {
-        let _ = self.raw_element(t, attrs, TsRawtext)
+        let _ = self.raw_element(t, attrs, StRawtext)
         false
       } else if t == "noscript" {
         if self.scripting {
-          let _ = self.raw_element(t, attrs, TsRawtext)
+          let _ = self.raw_element(t, attrs, StRawtext)
         } else {
           let _ = self.insert_el("noscript", attrs)
           self.mode = MInHeadNoscript
         }
         false
       } else if t == "script" {
-        let _ = self.raw_element(t, attrs, TsScript)
+        let _ = self.raw_element(t, attrs, StScriptData)
         false
       } else if t == "template" {
         self.insert_template(attrs)
@@ -294,7 +297,7 @@ fn H::raw_element(
   self : H,
   tag : String,
   attrs : Array[(String, String)],
-  ts : TokState
+  ts : TState
 ) -> @moonxml.Element {
   let el = self.insert_el(tag, attrs)
   self.raw_tag = tag
