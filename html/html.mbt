@@ -264,10 +264,15 @@ fn decode_entities_mode(s : String, in_attr : Bool) -> String {
       if cs[i + 1] == '#' {
         let (cp, next, ok) = read_char_ref(cs, i + 2, n)
         if ok {
-          let safe = if cp == 0 || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF) {
+          let cp_norm = if cp == 0x0D {
+            0x0A
+          } else {
+            cp
+          }
+          let safe = if cp_norm == 0 || cp_norm > 0x10FFFF || (cp_norm >= 0xD800 && cp_norm <= 0xDFFF) {
             0xFFFD
           } else {
-            map_c1(cp)
+            map_c1(cp_norm)
           }
           sb.write_string(@text.code_point_to_string(safe))
           i = next
@@ -1977,8 +1982,8 @@ fn loads_internal(text : String, fragment : Bool, context : String, scripting : 
   doc
 }
 
-/// Input-stream preprocessing: drop a BOM and NUL, and normalise CRLF and CR
-/// to LF, the way a browser reads bytes.
+/// Input-stream preprocessing: drop a BOM and NUL, and normalise CRLF and CR to
+/// LF, the way a browser reads bytes.
 fn preprocess_h(s : String) -> String {
   let cs = s.to_array()
   let n = cs.length()
