@@ -176,8 +176,10 @@ reported as `Unsupported`, not dropped. Nesting is bounded by `depth` (default
 **HTML.** Void elements, optional end tags (`p`, `li`, `dt`/`dd`, table rows and
 cells, `option`), raw-text `script`/`style`, RCDATA `textarea`/`title`,
 comments, doctypes, and foreign content (`svg`, `math`, `foreignObject`) with
-SVG's camelCase tag and attribute names restored. Stray content inside a table
-is foster-parented before it, and leading head content (`title`, `meta`, `link`,
+SVG's camelCase tag and attribute names restored. Misnested formatting elements
+are repaired by the adoption agency algorithm, with the active formatting
+elements list and its reconstruction. Stray content inside a table is
+foster-parented before it, and leading head content (`title`, `meta`, `link`,
 `style`, `script`) is routed into `head`. Loose content is wrapped in
 `html`/`body`.
 
@@ -226,11 +228,12 @@ HTML never raises; it repairs.
 
 Stated plainly, because a library is defined as much by what it refuses:
 
-- **Full html5lib conformance.** The parser implements the common insertion
-  behaviours listed above, not every WHATWG insertion mode (adoption agency,
-  full foster parenting, the complete tree-construction algorithm). Its
-  behaviour matches browsers for ordinary documents, not for every adversarial
-  one.
+- **Full html5lib conformance.** The adoption agency and active formatting
+  elements are implemented, and the common insertion behaviours listed above are
+  present, but the parser does not yet run every WHATWG insertion mode (the full
+  table/caption/column-group/select/template modes, foreign-content breakout,
+  and spec fragment parsing). The remaining work, with an acceptance criterion
+  per phase, is in `tasks/html-full-conformance.md`.
 - **Complete W3C XPath/XSLT corpora.** XPath 1.0's core is implemented; XSLT,
   XPath 2.0+ and XQuery are out of scope.
 - **DTD validation and Schema.** The internal subset is read for entities and
@@ -254,6 +257,17 @@ and CSS, XPath axes and the core function library, CSS selectors and combinators
 XML round-trip byte fidelity, the internal subset (general and parameter
 entities, attribute defaults, depth and expansion limits), HTML tolerance and
 foreign content, and the event stream.
+
+## Roadmap
+
+The increments that take this from "works on ordinary documents" to "passes the
+corpora" are written down as task orders:
+
+- `tasks/html-full-conformance.md` — tokenizer state machine, every insertion
+  mode, foreign content, fragment parsing, and a committed html5lib fixture
+  harness that measures the pass rate.
+- `tasks/dtd-schema-xslt-xpath2.md` — DTD validation, XML Schema, XPath 2.0 and
+  XSLT 1.0/2.0, each with its W3C acceptance corpus.
 
 ## License
 

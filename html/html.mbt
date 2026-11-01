@@ -18,11 +18,12 @@ struct H {
   n : Int
   mut pos : Int
   stack : Array[@moonxml.Element]
+  afe : Array[AFEItem]
   mut repairs : Int
 }
 
 fn H::new(s : String) -> H {
-  { s: s.to_array(), n: s.length(), pos: 0, stack: [], repairs: 0 }
+  { s: s.to_array(), n: s.length(), pos: 0, stack: [], afe: [], repairs: 0 }
 }
 
 fn H::at_end(self : H) -> Bool {
@@ -542,6 +543,7 @@ fn H::parse(self : H) -> @moonxml.Element {
       }
       let raw = slice_of(self.s, start, self.pos)
       if raw.length() > 0 {
+        self.reconstruct()
         self.append_text(decode_entities(raw))
       }
     }
@@ -596,6 +598,10 @@ fn H::parse_end_tag(self : H) -> Unit {
   if not(self.at_end()) {
     self.pos = self.pos + 1
   }
+  if formatting_tag(name) {
+    self.adoption(name)
+    return
+  }
   // Pop to the matching open element, if any.
   let mut i = self.stack.length() - 1
   let mut found = false
@@ -608,7 +614,9 @@ fn H::parse_end_tag(self : H) -> Unit {
   }
   if found {
     while self.stack.length() - 1 >= i && self.stack.length() > 1 {
+      let top = self.current()
       self.pop()
+      self.afe_remove(top)
     }
   } else {
     self.repairs = self.repairs + 1
@@ -687,8 +695,9 @@ fn H::parse_start_tag(self : H) -> Unit {
       }
     }
   }
-  // Auto-closing for optional end tags.
+  // Auto-closing for optional end tags, then reconstruction.
   self.auto_close(raw_name)
+  self.reconstruct()
   // Namespace decision.
   let child_ns = self.current_child_ns()
   let ns = if raw_name == "svg" {
@@ -745,6 +754,9 @@ fn H::parse_start_tag(self : H) -> Unit {
     return
   }
   self.push(el)
+  if ns == "" && formatting_tag(raw_name) {
+    self.afe_add(el)
+  }
 }
 
 fn H::consume_rawtext(self : H, tag : String, decode : Bool) -> Unit {
