@@ -33,10 +33,6 @@ fn is_ascii_alpha(c : Char) -> Bool {
   (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
 }
 
-fn is_ascii_digit(c : Char) -> Bool {
-  c >= '0' && c <= '9'
-}
-
 /// Read one token. Returns `Eof` once the input is exhausted, and never
 /// returns an empty character token.
 fn H::next_token(self : H) -> Tok {

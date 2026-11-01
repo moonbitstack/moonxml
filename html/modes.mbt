@@ -51,15 +51,6 @@ fn H::step_mode(self : H, tok : Tok) -> Bool {
   }
 }
 
-fn is_end_tag_in(tag : String, names : Array[String]) -> Bool {
-  for n in names {
-    if tag == n {
-      return true
-    }
-  }
-  false
-}
-
 fn H::create_html(self : H, attrs : Array[(String, String)]) -> @moonxml.Element {
   let el = @moonxml.Element::with_attrs("html", attrs)
   self.doc.append(@moonxml.Node::ElementNode(el))

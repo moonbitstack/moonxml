@@ -55,36 +55,6 @@ enum Mode {
   MAfterAfterFrameset
 }
 
-/// The name of a mode, for diagnostics and for the tests that assert on mode
-/// transitions.
-fn mode_name(m : Mode) -> String {
-  match m {
-    MInitial => "initial"
-    MBeforeHtml => "before html"
-    MBeforeHead => "before head"
-    MInHead => "in head"
-    MInHeadNoscript => "in head noscript"
-    MAfterHead => "after head"
-    MInBody => "in body"
-    MText => "text"
-    MInTable => "in table"
-    MInTableText => "in table text"
-    MInCaption => "in caption"
-    MInColumnGroup => "in column group"
-    MInTableBody => "in table body"
-    MInRow => "in row"
-    MInCell => "in cell"
-    MInSelect => "in select"
-    MInSelectInTable => "in select in table"
-    MInTemplate => "in template"
-    MAfterBody => "after body"
-    MInFrameset => "in frameset"
-    MAfterFrameset => "after frameset"
-    MAfterAfterBody => "after after body"
-    MAfterAfterFrameset => "after after frameset"
-  }
-}
-
 /// Scope flavours. Every one of them stops at `html`, and the table one also
 /// stops at `table`.
 enum Scope {
@@ -98,10 +68,6 @@ enum Scope {
 // ---------------------------------------------------------------------------
 // Stack and insertion primitives
 // ---------------------------------------------------------------------------
-
-fn H::depth(self : H) -> Int {
-  self.stack.length()
-}
 
 /// The current node, or the document when the stack is empty.
 fn H::cur(self : H) -> @moonxml.Element {
@@ -143,20 +109,11 @@ fn H::adjusted_foreign(self : H) -> Bool {
   ns_of(self.cur().name) != ""
 }
 
-fn H::at_current(self : H, name : String) -> Bool {
-  self.stack.length() > 0 && self.cur_local() == name
-}
-
 fn H::pop(self : H) -> Unit {
   // The document element always stays: nothing pops past it.
   if self.stack.length() > 1 {
     let _ = self.stack.pop()
   }
-}
-
-/// Pop the current node, returning it.
-fn H::pop_el(self : H) -> @moonxml.Element? {
-  self.stack.pop()
 }
 
 fn H::pop_until(self : H, name : String) -> Unit {
@@ -301,10 +258,6 @@ fn H::insert_foreign(
   self.insert_node(@moonxml.Node::ElementNode(el))
   self.stack.push(el)
   el
-}
-
-fn H::pop_void(self : H) -> Unit {
-  self.pop()
 }
 
 // ---------------------------------------------------------------------------

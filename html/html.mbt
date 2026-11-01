@@ -1018,18 +1018,6 @@ pub fn loads_fragment(text : String, context? : String = "body") -> @moonxml.Doc
   loads_internal(text, true, context, false)
 }
 
-/// Elements whose foreign children are parsed as HTML.
-fn is_integration_name(l : String) -> Bool {
-  match l {
-    "foreignobject" | "desc" | "title" | "mi" | "mo" | "mn" | "ms" | "mtext" => true
-    _ => false
-  }
-}
-
-fn context_is_foreign(context : String) -> Bool {
-  context.has_prefix("svg ") || context.has_prefix("math ")
-}
-
 fn context_local(context : String) -> String {
   // `svg title` and `math ms` name an element in that namespace.
   if context.has_prefix("svg ") {

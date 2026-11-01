@@ -65,23 +65,13 @@ fn is_table_ignored_start(t : String) -> Bool {
   t == "tbody" || t == "td" || t == "tfoot" || t == "th" || t == "thead" || t == "tr"
 }
 
-fn H::merge_attrs_into(self : H, el : @moonxml.Element, attrs : Array[(String, String)]) -> Unit {
+/// Add the attributes `el` does not already carry.
+fn merge_attrs_into(el : @moonxml.Element, attrs : Array[(String, String)]) -> Unit {
   for pair in attrs {
     let (k, v) = pair
     if el.attr(k).is_none() {
       el.set_attr(k, v)
     }
-  }
-}
-
-fn H::merge_attrs_on_top(self : H, tag : String, attrs : Array[(String, String)]) -> Unit {
-  let mut i = 0
-  while i < self.stack.length() {
-    if local_of(self.stack[i].name).to_lower() == tag {
-      self.merge_attrs_into(self.stack[i], attrs)
-      return
-    }
-    i = i + 1
   }
 }
 
@@ -130,7 +120,7 @@ fn H::start_in_body(
   if t == "html" {
     if not(self.has_open("template")) {
       match self.html_element() {
-        Some(h) => self.merge_attrs_into(h, a)
+        Some(h) => merge_attrs_into(h, a)
         None => ()
       }
     }
@@ -148,7 +138,7 @@ fn H::start_in_body(
       return false
     }
     self.frameset_ok = false
-    self.merge_attrs_into(self.stack[1], a)
+    merge_attrs_into(self.stack[1], a)
     return false
   }
   if t == "frameset" {
