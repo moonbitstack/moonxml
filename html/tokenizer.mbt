@@ -96,23 +96,6 @@ fn is_space_h(c : Char) -> Bool {
   c == ' ' || c == '\t' || c == '\n' || c == '\u{0C}'
 }
 
-/// Append a character to a token buffer, mapping NUL to U+FFFD.
-fn push_repl(sb : Array[Char], c : Char) -> Unit {
-  if c == '\u{0}' {
-    sb.push('\u{FFFD}')
-  } else {
-    sb.push(c)
-  }
-}
-
-fn chars_of(a : Array[Char]) -> String {
-  let sb = StringBuilder()
-  for c in a {
-    sb.write_char(c)
-  }
-  sb.to_string()
-}
-
 fn lower_str(s : String) -> String {
   let sb = StringBuilder()
   for c in s {
@@ -211,10 +194,14 @@ fn H::next_token(self : H) -> Tok {
           return Chars("</")
         StRcdataEndTagName | StRawtextEndTagName | StScriptEndTagName | StScriptEscapedEndTagName =>
           return Chars("</" + self.temp)
-        StCommentStart | StCommentStartDash | StComment | StCommentLt | StCommentLtBang | StCommentEndDash | StCommentEnd | StCommentEndBang =>
+        StCommentStart | StCommentStartDash | StComment | StCommentLt | StCommentLtBang | StCommentLtBangDash | StCommentLtBangDashDash | StCommentEndDash | StCommentEnd | StCommentEndBang =>
           return Comment(self.comment_data)
         StBogusComment => return Comment(self.comment_data)
-        StDoctype | StBeforeDoctypeName | StDoctypeName | StAfterDoctypeName | StAfterDoctypePublicKeyword | StBeforeDoctypePublicId | StDoctypePublicIdDq | StDoctypePublicIdSq | StAfterDoctypePublicId | StBetweenDoctypeIds | StAfterDoctypeSystemKeyword | StBeforeDoctypeSystemId | StDoctypeSystemIdDq | StDoctypeSystemIdSq | StAfterDoctypeSystemId | StBogusDoctype =>
+        // A doctype cut short by end of input is never well formed, except in
+        // the bogus state, which has already decided.
+        StDoctype | StBeforeDoctypeName | StDoctypeName | StAfterDoctypeName | StAfterDoctypePublicKeyword | StBeforeDoctypePublicId | StDoctypePublicIdDq | StDoctypePublicIdSq | StAfterDoctypePublicId | StBetweenDoctypeIds | StAfterDoctypeSystemKeyword | StBeforeDoctypeSystemId | StDoctypeSystemIdDq | StDoctypeSystemIdSq | StAfterDoctypeSystemId =>
+          return Doctype(self.doctype_name, self.doctype_pub, self.doctype_sys, true)
+        StBogusDoctype =>
           return Doctype(
             self.doctype_name,
             self.doctype_pub,

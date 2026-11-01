@@ -22,10 +22,6 @@ enum Tok {
   Eof
 }
 
-fn is_ascii_alpha(c : Char) -> Bool {
-  (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-}
-
 fn has_attr(attrs : Array[(String, String)], name : String) -> Bool {
   for pair in attrs {
     let (k, _) = pair

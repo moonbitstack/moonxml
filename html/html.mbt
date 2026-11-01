@@ -150,15 +150,6 @@ fn H::peek(self : H) -> Char {
   }
 }
 
-fn H::peek_at(self : H, k : Int) -> Char {
-  let i = self.pos + k
-  if i < self.n {
-    self.s[i]
-  } else {
-    '\u{0}'
-  }
-}
-
 fn H::starts_with(self : H, lit : String) -> Bool {
   let l = lit.to_array()
   if self.pos + l.length() > self.n {
@@ -294,23 +285,30 @@ fn read_char_ref(cs : Array[Char], j : Int, n : Int) -> (Int, Int, Bool) {
   if k == dstart {
     return (0, j, false)
   }
-  let digits = slice_of(cs, dstart, k)
-  // A reference with too many digits is out of range; the spec turns it into
-  // U+FFFD rather than truncating it.
-  let cp = if k - dstart > 8 {
-    0x110000
-  } else {
-    if hex {
-      @text.parse_hex(digits)
-    } else {
-      @text.parse_dec(digits)
+  // Accumulate with a ceiling instead of parsing into an Int: a long run of
+  // digits (or a value such as &#x80000041;) would overflow, and the result is
+  // U+FFFD rather than an error.
+  let base = if hex { 16 } else { 10 }
+  let mut cp = 0
+  let mut d = dstart
+  while d < k {
+    if cp <= 0x10FFFF {
+      cp = cp * base + (if hex { hex_value_c(cs[d]) } else { Char::to_int(cs[d]) - 48 })
     }
-  }
-  if cp < 0 {
-    return (0, j, false)
+    d = d + 1
   }
   let next = if k < n && cs[k] == ';' { k + 1 } else { k }
   (cp, next, true)
+}
+
+fn hex_value_c(c : Char) -> Int {
+  if c >= '0' && c <= '9' {
+    Char::to_int(c) - 48
+  } else if c >= 'a' && c <= 'f' {
+    Char::to_int(c) - 87
+  } else {
+    Char::to_int(c) - 55
+  }
 }
 
 fn is_dec_digit_c(c : Char) -> Bool {
@@ -319,104 +317,6 @@ fn is_dec_digit_c(c : Char) -> Bool {
 
 fn is_hex_digit_c(c : Char) -> Bool {
   (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
-}
-
-/// Whether a legacy (semicolon-less) match may not be decoded here: in an
-/// attribute value, the reference is left alone when followed by `=` or an
-/// alphanumeric, so `?a=b&notc=1` keeps its query string.
-fn legacy_blocked(next : Char?) -> Bool {
-  match next {
-    Some(c) => c == '=' || is_ent_name_char(c)
-    None => false
-  }
-}
-
-/// Decode character references. `in_attr` selects the attribute-value rule for
-/// legacy references without a trailing semicolon.
-fn decode_entities_mode(s : String, in_attr : Bool) -> String {
-  let cs = s.to_array()
-  let n = cs.length()
-  let sb = StringBuilder()
-  let mut i = 0
-  while i < n {
-    let c = cs[i]
-    let mut done = false
-    if c == '&' && i + 1 < n {
-      if cs[i + 1] == '#' {
-        let (cp, next, ok) = read_char_ref(cs, i + 2, n)
-        if ok {
-          let cp_norm = if cp == 0x0D {
-            0x0A
-          } else {
-            cp
-          }
-          let safe = if cp_norm == 0 || cp_norm > 0x10FFFF || (cp_norm >= 0xD800 && cp_norm <= 0xDFFF) {
-            0xFFFD
-          } else {
-            map_c1(cp_norm)
-          }
-          sb.write_string(@text.code_point_to_string(safe))
-          i = next
-          done = true
-        }
-      }
-      if not(done) {
-        let mut j = i + 1
-        while j < n && is_ent_name_char(cs[j]) && j - i <= 33 {
-          j = j + 1
-        }
-        if j > i + 1 {
-          let has_semi = j < n && cs[j] == ';'
-          let mut hit = false
-          if has_semi {
-            match entity_value(slice_of(cs, i + 1, j + 1)) {
-              Some(v) => {
-                sb.write_string(v)
-                i = j + 1
-                hit = true
-              }
-              None => ()
-            }
-          }
-          // Longest match over the bare name run.
-          let mut e = j
-          while e > i + 1 && not(hit) {
-            match entity_value(slice_of(cs, i + 1, e)) {
-              Some(v) => {
-                let nextc = if e < n { Some(cs[e]) } else { None }
-                if in_attr && legacy_blocked(nextc) {
-                  // Leave the whole reference literal.
-                  sb.write_char('&')
-                  i = i + 1
-                  hit = true
-                } else {
-                  sb.write_string(v)
-                  i = e
-                  hit = true
-                }
-              }
-              None => ()
-            }
-            if not(hit) {
-              e = e - 1
-            }
-          }
-          if not(hit) {
-            sb.write_char('&')
-            i = i + 1
-            done = true
-          } else {
-            done = true
-          }
-        }
-      }
-    }
-    if not(done) {
-      sb.write_char(c)
-      i = i + 1
-    }
-  }
-  sb.to_string()
 }
 
 /// Read one character reference starting at `i` (which must be `&`).
@@ -434,17 +334,17 @@ fn H::read_char_ref(self : H, i : Int, in_attr : Bool) -> (String, Int, Bool) {
     if not(ok) {
       return ("", i, false)
     }
-    let cp_norm = if cp == 0x0D {
-      0x0A
-    } else {
-      cp
-    }
+    // A reference to CR stays CR: line-ending normalisation applies to the
+    // input stream, not to character references.
+    let cp_norm = cp
     let safe = if cp_norm == 0 || cp_norm > 0x10FFFF || (cp_norm >= 0xD800 && cp_norm <= 0xDFFF) {
       0xFFFD
     } else {
       map_c1(cp_norm)
     }
-    return (@text.code_point_to_string(safe), next, true)
+    // HTML keeps control characters that XML would refuse; the replacement
+    // above already handled NUL, surrogates and out-of-range values.
+    return (Char::from_int(safe).to_string(), next, true)
   }
   let mut j = i + 1
   while j < n && is_ent_name_char(cs[j]) && j - i <= 33 {
@@ -477,14 +377,6 @@ fn H::read_char_ref(self : H, i : Int, in_attr : Bool) -> (String, Int, Bool) {
   ("", i, false)
 }
 
-fn decode_entities(s : String) -> String {
-  decode_entities_mode(s, false)
-}
-
-fn decode_entities_attr(s : String) -> String {
-  decode_entities_mode(s, true)
-}
-
 /// NUL is ignored in ordinary text.
 fn strip_nul(s : String) -> String {
   if s.contains("\u{0}") == false {
@@ -515,23 +407,6 @@ fn nul_to_fffd(s : String) -> String {
   sb.to_string()
 }
 
-/// Read a tag name, skipping NUL the way the tokenizer does.
-fn H::read_tag_name(self : H) -> String {
-  let sb = StringBuilder()
-  while not(self.at_end()) {
-    let c = self.peek()
-    if c == '\u{0}' {
-      self.pos = self.pos + 1
-    } else if is_tag_name_char(c) || c == '<' {
-      sb.write_char(lower_char(c))
-      self.pos = self.pos + 1
-    } else {
-      break
-    }
-  }
-  sb.to_string()
-}
-
 fn slice_of(cs : Array[Char], start : Int, end : Int) -> String {
   let sb = StringBuilder()
   let mut i = start
@@ -545,10 +420,6 @@ fn slice_of(cs : Array[Char], start : Int, end : Int) -> String {
 // ---------------------------------------------------------------------------
 // Tag and attribute tables
 // ---------------------------------------------------------------------------
-
-fn is_tag_name_char(c : Char) -> Bool {
-  (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_' || c == ':' || c == '.'
-}
 
 fn svg_adjust_tag(t : String) -> String {
   match t {
@@ -766,31 +637,6 @@ fn keep_ws(s : String) -> String {
   sb.to_string()
 }
 
-fn scan_comment(cs : Array[Char], start : Int) -> (String, Int) {
-  let n = cs.length()
-  let mut i = start
-  while i + 2 < n {
-    if cs[i] == '-' && cs[i + 1] == '-' {
-      if cs[i + 2] == '>' {
-        return (slice_of(cs, start, i), i + 3)
-      }
-      if cs[i + 2] == '!' && i + 3 < n && cs[i + 3] == '>' {
-        return (slice_of(cs, start, i), i + 4)
-      }
-    }
-    i = i + 1
-  }
-  let mut out = slice_of(cs, start, n)
-  // An unterminated comment drops the `--` (or lone `-`) that was about to
-  // close it.
-  if out.has_suffix("--") {
-    out = out.substring(start=0, end=out.length() - 2)
-  } else if out.has_suffix("-") {
-    out = out.substring(start=0, end=out.length() - 1)
-  }
-  (out, n)
-}
-
 /// Flatten a doctype the way the tree and the serializer show it: the name,
 /// then the public and system identifiers when either is present.
 fn doctype_info(name : String?, pub_id : String?, sys_id : String?) -> String {
@@ -811,264 +657,6 @@ fn doctype_info(name : String?, pub_id : String?, sys_id : String?) -> String {
   } else {
     n + " \"" + p + "\" \"" + sy + "\""
   }
-}
-
-fn H::skip_ws_h(self : H) -> Unit {
-  while not(self.at_end()) && @text.is_html_space(self.peek()) {
-    self.pos = self.pos + 1
-  }
-}
-
-fn H::read_quoted_or_empty(self : H) -> String {
-  if self.at_end() {
-    return ""
-  }
-  let q = self.peek()
-  if q != '"' && q != '\'' {
-    return ""
-  }
-  self.pos = self.pos + 1
-  let start = self.pos
-  while not(self.at_end()) && self.peek() != q {
-    self.pos = self.pos + 1
-  }
-  let out = slice_of(self.s, start, self.pos)
-  if not(self.at_end()) {
-    self.pos = self.pos + 1
-  }
-  out
-}
-
-fn is_ascii_alpha_c(c : Char) -> Bool {
-  (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-}
-
-fn is_end_tag_delim(c : Char) -> Bool {
-  @text.is_html_space(c) || c == '/' || c == '>'
-}
-
-fn chars_ci_eq(name : Array[Char], lit : Array[Char]) -> Bool {
-  if name.length() != lit.length() {
-    return false
-  }
-  let mut i = 0
-  while i < lit.length() {
-    if lower_char(name[i]) != lower_char(lit[i]) {
-      return false
-    }
-    i = i + 1
-  }
-  true
-}
-
-/// Find the `</tag` that ends a RAWTEXT/RCDATA element. The name must be
-/// followed by whitespace, `/` or `>`, so `</style=` is text.
-fn find_rawtext_end(cs : Array[Char], start : Int, n : Int, tag : String) -> Int {
-  let tcs = tag.to_array()
-  let tlen = tcs.length()
-  let mut i = start
-  while i + 1 < n {
-    if cs[i] == '<' && cs[i + 1] == '/' {
-      if i + 2 + tlen < n {
-        let mut ok = true
-        let mut j = 0
-        while j < tlen {
-          if lower_char(cs[i + 2 + j]) != lower_char(tcs[j]) {
-            ok = false
-            break
-          }
-          j = j + 1
-        }
-        if ok && is_end_tag_delim(cs[i + 2 + tlen]) {
-          return i
-        }
-      }
-    }
-    i = i + 1
-  }
-  -1
-}
-
-/// Find where a `script` element's text ends, running the script-data states.
-/// The escaped and double-escaped states matter: after `<!--`, a `</script>`
-/// closes the element, but after `<!--<script>` it is text until `</script`
-/// puts the tokenizer back into the escaped state.
-fn find_script_end(cs : Array[Char], start : Int, n : Int, tag : String) -> Int {
-  let tcs = tag.to_array()
-  let mut i = start
-  let mut st = 0
-  let mut tag_start = -1
-  let mut name : Array[Char] = []
-  while i < n {
-    let c = cs[i]
-    let mut advanced = true
-    if st == 0 {
-      if c == '<' {
-        tag_start = i
-        st = 1
-      }
-    } else if st == 1 {
-      if c == '/' {
-        st = 2
-        name = []
-      } else if c == '!' {
-        st = 4
-      } else {
-        st = 0
-        advanced = false
-      }
-    } else if st == 2 {
-      if is_ascii_alpha_c(c) {
-        name = [c]
-        st = 3
-      } else {
-        st = 0
-        advanced = false
-      }
-    } else if st == 3 {
-      if is_ascii_alpha_c(c) {
-        name.push(c)
-      } else if is_end_tag_delim(c) {
-        if chars_ci_eq(name, tcs) {
-          return tag_start
-        }
-        st = 0
-        advanced = false
-      } else {
-        st = 0
-        advanced = false
-      }
-    } else if st == 4 {
-      if c == '-' {
-        st = 5
-      } else {
-        st = 0
-        advanced = false
-      }
-    } else if st == 5 {
-      if c == '-' {
-        st = 6
-      } else {
-        st = 0
-        advanced = false
-      }
-    } else if st == 6 {
-      if c == '-' {
-        st = 7
-      } else if c == '<' {
-        tag_start = i
-        st = 9
-      }
-    } else if st == 7 {
-      if c == '-' {
-        st = 8
-      } else if c == '<' {
-        tag_start = i
-        st = 9
-      } else {
-        st = 6
-      }
-    } else if st == 8 {
-      if c == '-' {
-        ()
-      } else if c == '<' {
-        tag_start = i
-        st = 9
-      } else if c == '>' {
-        st = 0
-      } else {
-        st = 6
-      }
-    } else if st == 9 {
-      if c == '/' {
-        st = 10
-        name = []
-      } else if is_ascii_alpha_c(c) {
-        name = [c]
-        st = 12
-      } else {
-        st = 6
-        advanced = false
-      }
-    } else if st == 10 {
-      if is_ascii_alpha_c(c) {
-        name = [c]
-        st = 11
-      } else {
-        st = 6
-        advanced = false
-      }
-    } else if st == 11 {
-      if is_ascii_alpha_c(c) {
-        name.push(c)
-      } else if is_end_tag_delim(c) {
-        if chars_ci_eq(name, tcs) {
-          return tag_start
-        }
-        st = 6
-        advanced = false
-      } else {
-        st = 6
-        advanced = false
-      }
-    } else if st == 12 {
-      if is_ascii_alpha_c(c) {
-        name.push(c)
-      } else if is_end_tag_delim(c) {
-        st = if chars_ci_eq(name, tcs) { 13 } else { 6 }
-      } else {
-        st = 6
-        advanced = false
-      }
-    } else if st == 13 {
-      if c == '-' {
-        st = 14
-      } else if c == '<' {
-        tag_start = i
-        st = 16
-      }
-    } else if st == 14 {
-      if c == '-' {
-        st = 15
-      } else if c == '<' {
-        tag_start = i
-        st = 16
-      } else {
-        st = 13
-      }
-    } else if st == 15 {
-      if c == '<' {
-        tag_start = i
-        st = 16
-      } else if c == '>' {
-        st = 0
-      } else if c != '-' {
-        st = 13
-      }
-    } else if st == 16 {
-      if c == '/' {
-        st = 17
-        name = []
-      } else {
-        st = 13
-        advanced = false
-      }
-    } else {
-      // 17: double escape end
-      if is_ascii_alpha_c(c) {
-        name.push(c)
-      } else if is_end_tag_delim(c) {
-        st = if chars_ci_eq(name, tcs) { 6 } else { 13 }
-      } else {
-        st = 13
-        advanced = false
-      }
-    }
-    if advanced {
-      i = i + 1
-    }
-  }
-  -1
 }
 
 // ---------------------------------------------------------------------------

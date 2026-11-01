@@ -74,7 +74,8 @@ fn dump_token(t : @html.Token) -> String {
       tok_join(parts)
     }
     @html.TokenDoctype(name~, public_id~, system_id~, force_quirks~) => {
-      let q = if force_quirks { "1" } else { "0" }
+      // The corpus records correctness, which is the inverse of force-quirks.
+      let q = if force_quirks { "0" } else { "1" }
       tok_join(["d" + tok_opt_char(name), tok_opt_char(public_id), tok_opt_char(system_id), q])
     }
   }
@@ -161,5 +162,5 @@ test "html5lib tokenizer conformance" {
     f = f + 1
   }
   // Ratchet: raise this as the tokenizer improves, never lower it.
-  assert_eq(pass >= 6584, true)
+  assert_eq(pass >= 7017, true)
 }

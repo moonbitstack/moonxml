@@ -38,10 +38,15 @@ jobs:
           tar xzf "$RUNNER_TEMP/h5/html5lib-1.1.tar.gz" -C "$RUNNER_TEMP/h5"
           diff -r "$RUNNER_TEMP/h5/html5lib-1.1/html5lib/tests/testdata/tree-construction" \
                   vendor/html5lib-tests/tree-construction
+      - name: Fetch the tokenizer corpus and verify the vendored copy
+        run: |
+          git clone --depth 1 https://github.com/html5lib/html5lib-tests "$RUNNER_TEMP/h5tests"
+          diff -r "$RUNNER_TEMP/h5tests/tokenizer" vendor/html5lib-tests/tokenizer
       - name: Verify generated fixtures are current
         run: |
           python scripts/gen_html5lib.py
-          git diff --exit-code tests/html5lib_cases.mbt
+          python scripts/gen_tokenizer_tests.py
+          git diff --exit-code tests/html5lib_cases.mbt tests/tokenizer_cases.mbt
       - name: Verify the entity table is current
         run: |
           python scripts/gen_entities.py

@@ -623,41 +623,6 @@ fn match_attr(el : Element, a : AttrSel) -> Bool {
   }
 }
 
-fn element_position(el : Element) -> Int {
-  match el.parent {
-    None => 1
-    Some(p) => {
-      let idx = el.index_in_parent()
-      let mut pos = 0
-      let mut i = 0
-      while i <= idx {
-        match p.children[i] {
-          ElementNode(_) => pos = pos + 1
-          _ => ()
-        }
-        i = i + 1
-      }
-      pos
-    }
-  }
-}
-
-fn element_count(el : Element) -> Int {
-  match el.parent {
-    None => 1
-    Some(p) => {
-      let mut count = 0
-      for c in p.children {
-        match c {
-          ElementNode(_) => count = count + 1
-          _ => ()
-        }
-      }
-      count
-    }
-  }
-}
-
 fn type_position(el : Element) -> Int {
   match el.parent {
     None => 1

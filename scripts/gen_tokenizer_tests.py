@@ -125,8 +125,12 @@ def parse_file(path: pathlib.Path):
     excluded = 0
     for test in data["tests"]:
         out = test["output"]
-        # Legacy processing instructions: see the module docstring.
-        if any(tok[0] == "ProcessingInstruction" for tok in out):
+        # Legacy processing instructions: see the module docstring. That
+        # covers both an explicit PI token and the empty output the old
+        # tokenizer produced for an unterminated `<?name`.
+        if any(tok[0] == "ProcessingInstruction" for tok in out) or (
+            not out and test["input"].startswith("<?")
+        ):
             excluded += 1
             continue
         inp = test["input"]

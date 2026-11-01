@@ -211,21 +211,24 @@ fn H::insert_text(self : H, s : String) -> Unit {
   if s.length() == 0 {
     return
   }
+  // A carriage return from a character reference is normalised the way one in
+  // the input stream is; the tokenizer keeps it so its own corpus sees it.
+  let text = if s.contains("\r") { cr_to_lf(s) } else { s }
   let (parent, idx) = self.location()
   if idx < 0 {
-    append_text_to(parent, s)
+    append_text_to(parent, text)
     return
   }
   if idx > 0 {
     match parent.children[idx - 1] {
       @moonxml.Node::TextNode(prev) => {
-        parent.children[idx - 1] = @moonxml.Node::TextNode(prev + s)
+        parent.children[idx - 1] = @moonxml.Node::TextNode(prev + text)
         return
       }
       _ => ()
     }
   }
-  parent.insert(idx, @moonxml.Node::TextNode(s))
+  parent.insert(idx, @moonxml.Node::TextNode(text))
 }
 
 fn H::insert_comment(self : H, s : String) -> Unit {
@@ -726,4 +729,16 @@ fn split_lead_ws(s : String) -> (String, String) {
   } else {
     (slice_of(cs, 0, i), slice_of(cs, i, cs.length()))
   }
+}
+
+fn cr_to_lf(s : String) -> String {
+  let sb = StringBuilder()
+  for c in s {
+    if c == '\r' {
+      sb.write_char('\n')
+    } else {
+      sb.write_char(c)
+    }
+  }
+  sb.to_string()
 }

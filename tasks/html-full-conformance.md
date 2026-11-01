@@ -1,8 +1,8 @@
 # Task: full HTML parsing conformance
 
-Status: done. The corpus is vendored and the runner measures a real pass rate:
-**1700/1700** cases as of the latest commit, with the floor asserted at 1700, so
-any regression fails the build. The tree builder is a full insertion-mode state
+Status: done. Both corpora are vendored and measured: tree construction
+**1700/1700**, tokenizer **7017/7017**, with both floors asserted, so any
+regression fails the build. The tree builder is a full insertion-mode state
 machine (P2), the adoption agency follows the specification (P3), foreign content
 and fragment parsing follow the integration-point rules (P4, P5).
 
@@ -105,11 +105,17 @@ the `noscript`/`template` rules).
 
 ## Landed
 
-- **P1 (tokenizer)** — token stream with the five content models (data, RCDATA,
-  RAWTEXT, script data, PLAINTEXT) and scanners for tags, attributes, comments,
-  doctypes, CDATA and character references, all driven by the tree builder.
-  NUL is handled per state: dropped in data, U+FFFD in raw text, comments and
-  foreign content.
+- **P1 (tokenizer)** — every state of the specification, in
+  `html/tokenizer.mbt`, with the tree builder switching the content model
+  between tokens. The token stream is exposed as `tokenize()`, and the
+  tokenizer corpus passes in full (7017 cases once the initial states are
+  expanded). NUL is handled per state: kept in data and CDATA, U+FFFD in raw
+  text, comments and foreign content. Two families of cases are excluded and
+  reported separately rather than counted: the legacy
+  `ProcessingInstruction` expectations (which contradict the same repository's
+  tree-construction corpus, where `<?COMMENT?>` is a comment) and the four
+  cases whose inputs are lone surrogates, which cannot be written to a UTF-8
+  source file.
 - **P2 (insertion modes)** — all twenty-three modes with an explicit `mode`
   variable, the transition table documented at the top of `html/builder.mbt`, and
   `reset_insertion_mode` walking the open-element stack appropriately. `Text`
