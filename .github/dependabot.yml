@@ -2,12 +2,11 @@ version: 2
 
 updates:
   # Keep the action versions in the workflows current; the CI itself has no
-  # other dependencies.
+  # other dependencies. The commit message prefix is left at its default, which
+  # is the form Dependabot validates most strictly.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
-    commit-message:
-      prefix: ""
     labels:
       - "ci"
