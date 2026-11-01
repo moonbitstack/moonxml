@@ -109,9 +109,15 @@ fn H::step_before_html(self : H, tok : Tok) -> Bool {
     Chars(s) => if @text.is_blank(s) {
       false
     } else {
+      let (_, rest) = split_lead_ws(s)
       let _ = self.create_html([])
       self.mode = MBeforeHead
-      true
+      if rest != s {
+        self.dispatch(Chars(rest))
+        false
+      } else {
+        true
+      }
     }
     Comment(s) => {
       self.doc.append(@moonxml.Node::CommentNode(s))
@@ -148,8 +154,14 @@ fn H::step_before_head(self : H, tok : Tok) -> Bool {
     Chars(s) => if @text.is_blank(s) {
       false
     } else {
+      let (_, rest) = split_lead_ws(s)
       self.make_head()
-      true
+      if rest != s {
+        self.dispatch(Chars(rest))
+        false
+      } else {
+        true
+      }
     }
     Comment(s) => {
       self.insert_comment(s)

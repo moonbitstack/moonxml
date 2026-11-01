@@ -566,8 +566,9 @@ fn H::reconstruct(self : H) -> Unit {
   while k < self.afe.length() {
     match self.afe[k] {
       AFElement(e) => {
+        // Insert through the normal path so foster parenting still applies.
         let c = clone_shallow(e)
-        self.cur().append(@moonxml.Node::ElementNode(c))
+        self.insert_node(@moonxml.Node::ElementNode(c))
         self.stack.push(c)
         self.afe[k] = AFElement(c)
       }
