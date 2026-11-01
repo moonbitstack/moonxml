@@ -6,6 +6,15 @@
 /// file performs that shaping after parsing, so the tree matches the shape the
 /// html5lib corpus expects without a full set of insertion modes.
 
+fn is_fostered(e : @moonxml.Element, fostered : Array[@moonxml.Element]) -> Bool {
+  for f in fostered {
+    if physical_equal(f, e) {
+      return true
+    }
+  }
+  false
+}
+
 fn is_blank_text(n : @moonxml.Node) -> Bool {
   match n {
     @moonxml.Node::TextNode(s) => @text.is_blank(s)
@@ -44,12 +53,29 @@ fn find_element_child(parent : @moonxml.Element, name : String) -> @moonxml.Elem
 /// element they stay at the document level, between `html` and `body` they sit
 /// inside `html` before `head`, and after body content they are body children.
 pub fn normalize_document(root : @moonxml.Element) -> Unit {
-  normalize_document_with(root, 0)
+  normalize_document_with_fostered(root, 0, [])
+}
+
+/// `fostered` lists elements moved out of a table; they count as body content.
+pub fn normalize_document_with_fostered(
+  root : @moonxml.Element,
+  trailing : Int,
+  fostered : Array[@moonxml.Element]
+) -> Unit {
+  normalize_document_impl(root, trailing, fostered)
 }
 
 /// `trailing` is how many comments the parser appended after `</body>`; they
 /// stay between `body` and the end of `html`.
 pub fn normalize_document_with(root : @moonxml.Element, trailing : Int) -> Unit {
+  normalize_document_impl(root, trailing, [])
+}
+
+fn normalize_document_impl(
+  root : @moonxml.Element,
+  trailing : Int,
+  fostered : Array[@moonxml.Element]
+) -> Unit {
   let existing = find_element_child(root, "html")
   let html = match existing {
     Some(e) => e
@@ -118,7 +144,7 @@ pub fn normalize_document_with(root : @moonxml.Element, trailing : Int) -> Unit 
         } else if l == "frameset" {
           frameset = Some(e)
           in_body = true
-        } else if is_head_element(n) && not(in_body) {
+        } else if is_head_element(n) && not(in_body) && not(is_fostered(e, fostered)) {
           append_head_child(head, n)
         } else {
           in_body = true

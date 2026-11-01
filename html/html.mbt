@@ -31,10 +31,13 @@ struct H {
   mut fragment_mode : Bool
   /// The scripting flag: with it on, `noscript` content is raw text.
   mut scripting : Bool
+  /// Elements that were foster-parented out of a table; they are body content
+  /// even when their tag name looks like head content.
+  fostered : Array[@moonxml.Element]
 }
 
 fn H::new(s : String) -> H {
-  { s: s.to_array(), n: s.length(), pos: 0, stack: [], afe: [], repairs: 0, frag_ns: "", body_closed: false, trailing_comments: 0, fragment_mode: false, scripting: false }
+  { s: s.to_array(), n: s.length(), pos: 0, stack: [], afe: [], repairs: 0, frag_ns: "", body_closed: false, trailing_comments: 0, fragment_mode: false, scripting: false, fostered: [] }
 }
 
 fn H::at_end(self : H) -> Bool {
@@ -527,7 +530,7 @@ fn H::close_p(self : H) -> Unit {
       found = i
       break
     }
-    if l == "table" || l == "td" || l == "th" || l == "button" || l == "html" || l == "caption" || l == "template" {
+    if l == "table" || l == "td" || l == "th" || l == "button" || l == "html" || l == "caption" || l == "template" || l == "applet" || l == "marquee" || l == "object" {
       break
     }
     // A `p` outside a `svg`/`math` subtree is not in scope for HTML content
@@ -700,7 +703,7 @@ fn H::p_in_scope(self : H) -> Bool {
     if l == "p" {
       return true
     }
-    if l == "table" || l == "td" || l == "th" || l == "button" || l == "html" || l == "caption" || l == "template" {
+    if l == "table" || l == "td" || l == "th" || l == "button" || l == "html" || l == "caption" || l == "template" || l == "applet" || l == "marquee" || l == "object" {
       return false
     }
     if ns_of(self.stack[i].name) != "" {
@@ -1684,6 +1687,7 @@ fn H::parse_start_tag(self : H) -> Unit {
   let scope = local_of(self.current().name).to_lower()
   let foster = is_table_scope(scope) && not(table_allows(scope, raw_name))
   if foster {
+    self.fostered.push(el)
     match self.find_table() {
       Some(t) => {
         let _ = t.insert_before(@moonxml.Node::ElementNode(el))
@@ -2063,7 +2067,7 @@ fn loads_internal(text : String, fragment : Bool, context : String, scripting : 
   }
   let root = h.parse()
   if fragment == false {
-    normalize_document_with(root, h.trailing_comments)
+    normalize_document_with_fostered(root, h.trailing_comments, h.fostered)
   }
   let doc = @moonxml.Document::from_root(root, @moonxml.Flavour::Html)
   if h.repairs > 0 {
