@@ -161,7 +161,7 @@ doc.css("h1").wrap("div").set_text("title")
 |:--|:--|:--|
 | dialect | XML 1.0 + Namespaces 1.0, with the internal subset | WHATWG HTML, tolerant |
 | malformed | raises `Refused::Malformed(at, why)` | repairs silently |
-| entry | `loads(text)`, `load(bytes)`, `loads_fragment(text)`, `scan(text, sink)` | `loads(text)`, `load(bytes)`, `loads_fragment(text, context="body")` |
+| entry | `loads(text)`, `load(bytes)`, `loads_fragment(text)`, `scan(text, sink)` | `loads(text)`, `load(bytes)`, `loads_fragment(text, context="body")`, `tokenize(text, state=, last_start_tag=)` |
 | entities | the five predefined, numeric, internal general and parameter entities | the named table documents use, numeric |
 | namespaces | `xmlns` resolved to `{uri}local` | foreign content (`svg`, `math`) namespaced |
 
