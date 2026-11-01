@@ -227,3 +227,32 @@ test "fragment: a table part in a body context is ignored" {
   assert_eq(doc.css("td").length(), 0)
   assert_eq(doc.root().text(), "x")
 }
+
+// --- namespace-sensitive end tags -----------------------------------------
+
+test "foreign: an end tag closes the HTML namesake, not the foreign one" {
+  // The cell's `</td>` must close the HTML `td` even though an `svg td` sits
+  // above it, which is what sends `Foo` back out to the body.
+  let doc = @html.loads("<table><tr><td><svg><td><foreignObject><span></td>Foo")
+  assert_eq(doc.css("body").text(), "Foo")
+  assert_eq(doc.css("table").text(), "")
+  assert_eq(doc.css("svg td").length(), 1)
+  let svg_td = doc.css("svg td").items[0].as_element().unwrap()
+  assert_eq(svg_td.namespace_uri(), "http://www.w3.org/2000/svg")
+}
+
+test "foreign: an end tag closes the HTML template, not a foreign namesake" {
+  // The SVG `template` stays in the tree, but `</template>` pops everything
+  // above and including the HTML one, so the trailing div lands in the body.
+  let doc = @html.loads("<template><svg><foo><template><foreignObject><div></template><div>")
+  assert_eq(doc.css("template").length(), 2)
+  assert_eq(doc.css("foreignObject div").length(), 1)
+  assert_eq(doc.css("body > div").length(), 1)
+}
+
+test "foreign: a frameset still replaces a body whose text was only NUL" {
+  let doc = @html.loads("<svg>\u{0}</svg><frameset></frameset>")
+  assert_eq(doc.css("frameset").length(), 1)
+  assert_eq(doc.css("body").length(), 0)
+  assert_eq(doc.css("svg").length(), 0)
+}
