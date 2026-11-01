@@ -198,9 +198,11 @@ pub(open) trait Sink {
 }
 ```
 
-`Document::events(sink)` streams a finished tree; `@xml.scan(text, sink)` streams
-a document. A caller counting tags or writing rows to a database implements
-`Sink` once and never builds a tree they do not need.
+`Document::events(sink)` emits a finished tree's events; `@xml.scan(text, sink)`
+emits a parsed document's events. A caller counting tags or writing rows to a
+database implements `Sink` once and never hand-walks a tree. (Today `scan`
+materialises the tree before emitting; true tokenizer-level streaming is future
+work — see below.)
 
 ## Errors
 
@@ -236,6 +238,9 @@ Stated plainly, because a library is defined as much by what it refuses:
 - **Encoding detection.** UTF-8 in, UTF-8 out; a leading BOM is stripped.
 - **Scripting.** `document.write` and scripting-enabled branches are out; this
   is the testable posture.
+- **Tokenizer-level streaming for `scan`.** `@xml.scan` currently parses to a
+  tree and walks it; the events are correct, but a very large document is not
+  consumed incrementally yet.
 
 ## Tests
 
