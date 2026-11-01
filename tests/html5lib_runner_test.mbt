@@ -10,6 +10,36 @@ fn indent(sb : StringBuilder, depth : Int) -> Unit {
   }
 }
 
+/// Lexicographic order over UTF-16 code units, like the corpus expects.
+fn cmp_str(a : String, b : String) -> Int {
+  let ca = a.to_array()
+  let cb = b.to_array()
+  let n = if ca.length() < cb.length() {
+    ca.length()
+  } else {
+    cb.length()
+  }
+  let mut i = 0
+  while i < n {
+    let x = Char::to_int(ca[i])
+    let y = Char::to_int(cb[i])
+    if x < y {
+      return -1
+    }
+    if x > y {
+      return 1
+    }
+    i = i + 1
+  }
+  if ca.length() < cb.length() {
+    -1
+  } else if ca.length() > cb.length() {
+    1
+  } else {
+    0
+  }
+}
+
 fn sort_attrs(a : Array[(String, String)]) -> Array[(String, String)] {
   let out = a.copy()
   let n = out.length()
@@ -20,7 +50,8 @@ fn sort_attrs(a : Array[(String, String)]) -> Array[(String, String)] {
     while j >= 0 {
       let (k, _) = out[j]
       let (ck, _) = cur
-      if k > ck {
+      // Sort by name code units; the builtin String comparison is length-first.
+      if cmp_str(k, ck) > 0 {
         out[j + 1] = out[j]
         j = j - 1
       } else {
@@ -169,5 +200,5 @@ test "html5lib conformance" {
     f = f + 1
   }
   // Ratchet: raise this as the parser improves, never lower it.
-  assert_eq(pass >= 1375, true)
+  assert_eq(pass >= 1390, true)
 }

@@ -445,32 +445,64 @@ fn svg_adjust_tag(t : String) -> String {
 
 fn svg_adjust_attr(n : String) -> String {
   match n {
-    "viewbox" => "viewBox"
-    "preserveaspectratio" => "preserveAspectRatio"
-    "gradientunits" => "gradientUnits"
-    "gradienttransform" => "gradientTransform"
-    "patternunits" => "patternUnits"
-    "patterncontentunits" => "patternContentUnits"
-    "patterntransform" => "patternTransform"
-    "clippathunits" => "clipPathUnits"
-    "markerwidth" => "markerWidth"
-    "markerheight" => "markerHeight"
-    "markerunits" => "markerUnits"
-    "refx" => "refX"
-    "refy" => "refY"
-    "textlength" => "textLength"
-    "lengthadjust" => "lengthAdjust"
-    "spreadmethod" => "spreadMethod"
-    "maskunits" => "maskUnits"
-    "maskcontentunits" => "maskContentUnits"
-    "filterunits" => "filterUnits"
-    "primitiveunits" => "primitiveUnits"
     "attributename" => "attributeName"
     "attributetype" => "attributeType"
     "basefrequency" => "baseFrequency"
+    "baseprofile" => "baseProfile"
+    "calcmode" => "calcMode"
+    "clippathunits" => "clipPathUnits"
+    "diffuseconstant" => "diffuseConstant"
+    "edgemode" => "edgeMode"
+    "filterunits" => "filterUnits"
+    "filterres" => "filterRes"
+    "glyphref" => "glyphRef"
+    "gradienttransform" => "gradientTransform"
+    "gradientunits" => "gradientUnits"
+    "kernelmatrix" => "kernelMatrix"
+    "kernelunitlength" => "kernelUnitLength"
+    "keypoints" => "keyPoints"
+    "keysplines" => "keySplines"
+    "keytimes" => "keyTimes"
+    "lengthadjust" => "lengthAdjust"
+    "limitingconeangle" => "limitingConeAngle"
+    "markerheight" => "markerHeight"
+    "markerunits" => "markerUnits"
+    "markerwidth" => "markerWidth"
+    "maskcontentunits" => "maskContentUnits"
+    "maskunits" => "maskUnits"
     "numoctaves" => "numOctaves"
+    "pathlength" => "pathLength"
+    "patterncontentunits" => "patternContentUnits"
+    "patterntransform" => "patternTransform"
+    "patternunits" => "patternUnits"
+    "pointsatx" => "pointsAtX"
+    "pointsaty" => "pointsAtY"
+    "pointsatz" => "pointsAtZ"
+    "preservealpha" => "preserveAlpha"
+    "preserveaspectratio" => "preserveAspectRatio"
+    "primitiveunits" => "primitiveUnits"
+    "refx" => "refX"
+    "refy" => "refY"
+    "repeatcount" => "repeatCount"
+    "repeatdur" => "repeatDur"
+    "requiredextensions" => "requiredExtensions"
+    "requiredfeatures" => "requiredFeatures"
+    "specularconstant" => "specularConstant"
+    "specularexponent" => "specularExponent"
+    "spreadmethod" => "spreadMethod"
+    "startoffset" => "startOffset"
     "stddeviation" => "stdDeviation"
     "stitchtiles" => "stitchTiles"
+    "surfacescale" => "surfaceScale"
+    "systemlanguage" => "systemLanguage"
+    "tablevalues" => "tableValues"
+    "targetx" => "targetX"
+    "targety" => "targetY"
+    "textlength" => "textLength"
+    "viewbox" => "viewBox"
+    "viewtarget" => "viewTarget"
+    "xchannelselector" => "xChannelSelector"
+    "ychannelselector" => "yChannelSelector"
     "zoomandpan" => "zoomAndPan"
     _ => n
   }
@@ -1628,7 +1660,7 @@ fn H::parse_start_tag(self : H) -> Unit {
     }
   }
   if raw_name == "frameset" {
-    if self.template_index() >= 0 || self.body_has_content() {
+    if self.template_index() >= 0 || self.body_has_content() || self.fragment_mode {
       return
     }
   }
@@ -1660,7 +1692,7 @@ fn H::parse_start_tag(self : H) -> Unit {
   let cur_ns = ns_of(self.current().name)
   let cur_local = local_of(self.current().name).to_lower()
   let at_integration = cur_local == "foreignobject" || cur_local == "desc" || cur_local == "title" || cur_local == "mtext" || cur_local == "mi" || cur_local == "mo" || cur_local == "mn" || cur_local == "ms" || cur_local == "annotation-xml"
-  if cur_ns != "" && not(at_integration) && is_html_breakout(raw_name) {
+  if cur_ns != "" && not(at_integration) && self.frag_ns == "" && is_html_breakout(raw_name) {
     while self.stack.length() > 1 && ns_of(self.current().name) != "" {
       self.pop()
     }
