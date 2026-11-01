@@ -104,6 +104,20 @@ fn H::afe_index(self : H, el : @moonxml.Element) -> Int {
   -1
 }
 
+fn H::afe_find_by_name(self : H, name : String) -> @moonxml.Element? {
+  let mut i = self.afe.length() - 1
+  while i >= 0 {
+    match self.afe[i] {
+      AFElement(e) => if local_of(e.name).to_lower() == name {
+        return Some(e)
+      }
+      AFMarker => ()
+    }
+    i = i - 1
+  }
+  None
+}
+
 fn H::afe_has(self : H, el : @moonxml.Element) -> Bool {
   self.afe_index(el) >= 0
 }

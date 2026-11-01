@@ -20,10 +20,12 @@ struct H {
   stack : Array[@moonxml.Element]
   afe : Array[AFEItem]
   mut repairs : Int
+  /// Namespace of the fragment's context element, `""` for HTML or a document.
+  mut frag_ns : String
 }
 
 fn H::new(s : String) -> H {
-  { s: s.to_array(), n: s.length(), pos: 0, stack: [], afe: [], repairs: 0 }
+  { s: s.to_array(), n: s.length(), pos: 0, stack: [], afe: [], repairs: 0, frag_ns: "" }
 }
 
 fn H::at_end(self : H) -> Bool {
@@ -151,110 +153,183 @@ fn ns_of(name : String) -> String {
 // Entities
 // ---------------------------------------------------------------------------
 
-fn named_entity(name : String) -> String? {
-  if name == "amp" { return Some("&") }
-  if name == "lt" { return Some("<") }
-  if name == "gt" { return Some(">") }
-  if name == "quot" { return Some("\"") }
-  if name == "apos" { return Some("'") }
-  if name == "nbsp" { return Some("\u{A0}") }
-  if name == "copy" { return Some("\u{A9}") }
-  if name == "reg" { return Some("\u{AE}") }
-  if name == "trade" { return Some("\u{2122}") }
-  if name == "hellip" { return Some("\u{2026}") }
-  if name == "mdash" { return Some("\u{2014}") }
-  if name == "ndash" { return Some("\u{2013}") }
-  if name == "lsquo" { return Some("\u{2018}") }
-  if name == "rsquo" { return Some("\u{2019}") }
-  if name == "ldquo" { return Some("\u{201C}") }
-  if name == "rdquo" { return Some("\u{201D}") }
-  if name == "laquo" { return Some("\u{AB}") }
-  if name == "raquo" { return Some("\u{BB}") }
-  if name == "times" { return Some("\u{D7}") }
-  if name == "divide" { return Some("\u{F7}") }
-  if name == "euro" { return Some("\u{20AC}") }
-  if name == "pound" { return Some("\u{A3}") }
-  if name == "yen" { return Some("\u{A5}") }
-  if name == "cent" { return Some("\u{A2}") }
-  if name == "sect" { return Some("\u{A7}") }
-  if name == "deg" { return Some("\u{B0}") }
-  if name == "plusmn" { return Some("\u{B1}") }
-  if name == "micro" { return Some("\u{B5}") }
-  if name == "para" { return Some("\u{B6}") }
-  if name == "middot" { return Some("\u{B7}") }
-  if name == "bull" { return Some("\u{2022}") }
-  if name == "larr" { return Some("\u{2190}") }
-  if name == "rarr" { return Some("\u{2192}") }
-  if name == "uarr" { return Some("\u{2191}") }
-  if name == "darr" { return Some("\u{2193}") }
-  None
+fn is_ent_name_char(c : Char) -> Bool {
+  (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
 }
 
-fn decode_entities(s : String) -> String {
+/// Windows-1252 replacements the spec applies to numeric references in the
+/// C1 range.
+fn map_c1(cp : Int) -> Int {
+  match cp {
+    0x80 => 0x20AC
+    0x82 => 0x201A
+    0x83 => 0x0192
+    0x84 => 0x201E
+    0x85 => 0x2026
+    0x86 => 0x2020
+    0x87 => 0x2021
+    0x88 => 0x02C6
+    0x89 => 0x2030
+    0x8A => 0x0160
+    0x8B => 0x2039
+    0x8C => 0x0152
+    0x8E => 0x017D
+    0x91 => 0x2018
+    0x92 => 0x2019
+    0x93 => 0x201C
+    0x94 => 0x201D
+    0x95 => 0x2022
+    0x96 => 0x2013
+    0x97 => 0x2014
+    0x98 => 0x02DC
+    0x99 => 0x2122
+    0x9A => 0x0161
+    0x9B => 0x203A
+    0x9C => 0x0153
+    0x9E => 0x017E
+    0x9F => 0x0178
+    _ => cp
+  }
+}
+
+/// Read a numeric character reference body starting after `&#`. Returns the
+/// code point, the index after it, and whether anything was read.
+fn read_char_ref(cs : Array[Char], j : Int, n : Int) -> (Int, Int, Bool) {
+  let hex = j < n && (cs[j] == 'x' || cs[j] == 'X')
+  let dstart = if hex { j + 1 } else { j }
+  let mut k = dstart
+  while k < n && (if hex { is_hex_digit_c(cs[k]) } else { is_dec_digit_c(cs[k]) }) {
+    k = k + 1
+  }
+  if k == dstart {
+    return (0, j, false)
+  }
+  let digits = slice_of(cs, dstart, k)
+  // A reference with too many digits is out of range; the spec turns it into
+  // U+FFFD rather than truncating it.
+  let cp = if k - dstart > 8 {
+    0x110000
+  } else {
+    if hex {
+      @text.parse_hex(digits)
+    } else {
+      @text.parse_dec(digits)
+    }
+  }
+  if cp < 0 {
+    return (0, j, false)
+  }
+  let next = if k < n && cs[k] == ';' { k + 1 } else { k }
+  (cp, next, true)
+}
+
+fn is_dec_digit_c(c : Char) -> Bool {
+  c >= '0' && c <= '9'
+}
+
+fn is_hex_digit_c(c : Char) -> Bool {
+  (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
+}
+
+/// Whether a legacy (semicolon-less) match may not be decoded here: in an
+/// attribute value, the reference is left alone when followed by `=` or an
+/// alphanumeric, so `?a=b&notc=1` keeps its query string.
+fn legacy_blocked(next : Char?) -> Bool {
+  match next {
+    Some(c) => c == '=' || is_ent_name_char(c)
+    None => false
+  }
+}
+
+/// Decode character references. `in_attr` selects the attribute-value rule for
+/// legacy references without a trailing semicolon.
+fn decode_entities_mode(s : String, in_attr : Bool) -> String {
   let cs = s.to_array()
   let n = cs.length()
   let sb = StringBuilder()
   let mut i = 0
   while i < n {
     let c = cs[i]
-    if c == '&' {
-      let mut j = i + 1
-      if j < n && cs[j] == '#' {
-        j = j + 1
-        let hex = j < n && (cs[j] == 'x' || cs[j] == 'X')
-        if hex {
-          j = j + 1
-        }
-        let dstart = j
-        while j < n && cs[j] != ';' && j - dstart < 8 {
-          j = j + 1
-        }
-        if j < n && cs[j] == ';' {
-          let digits = slice_of(cs, dstart, j)
-          let cp = if hex {
-            @text.parse_hex(digits)
+    let mut done = false
+    if c == '&' && i + 1 < n {
+      if cs[i + 1] == '#' {
+        let (cp, next, ok) = read_char_ref(cs, i + 2, n)
+        if ok {
+          let safe = if cp == 0 || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF) {
+            0xFFFD
           } else {
-            @text.parse_dec(digits)
+            map_c1(cp)
           }
-          if cp >= 0 {
-            sb.write_string(@text.code_point_to_string(cp))
-            i = j + 1
-          } else {
-            sb.write_char(c)
-            i = i + 1
-          }
-        } else {
-          sb.write_char(c)
-          i = i + 1
-        }
-      } else {
-        let nstart = j
-        while j < n && cs[j] != ';' && j - nstart < 32 {
-          j = j + 1
-        }
-        if j < n && cs[j] == ';' {
-          let nm = slice_of(cs, nstart, j)
-          match named_entity(nm) {
-            Some(rep) => {
-              sb.write_string(rep)
-              i = j + 1
-            }
-            None => {
-              sb.write_char(c)
-              i = i + 1
-            }
-          }
-        } else {
-          sb.write_char(c)
-          i = i + 1
+          sb.write_string(@text.code_point_to_string(safe))
+          i = next
+          done = true
         }
       }
-    } else {
+      if not(done) {
+        let mut j = i + 1
+        while j < n && is_ent_name_char(cs[j]) && j - i <= 33 {
+          j = j + 1
+        }
+        if j > i + 1 {
+          let has_semi = j < n && cs[j] == ';'
+          let mut hit = false
+          if has_semi {
+            match entity_value(slice_of(cs, i + 1, j + 1)) {
+              Some(v) => {
+                sb.write_string(v)
+                i = j + 1
+                hit = true
+              }
+              None => ()
+            }
+          }
+          // Longest match over the bare name run.
+          let mut e = j
+          while e > i + 1 && not(hit) {
+            match entity_value(slice_of(cs, i + 1, e)) {
+              Some(v) => {
+                let nextc = if e < n { Some(cs[e]) } else { None }
+                if in_attr && legacy_blocked(nextc) {
+                  // Leave the whole reference literal.
+                  sb.write_char('&')
+                  i = i + 1
+                  hit = true
+                } else {
+                  sb.write_string(v)
+                  i = e
+                  hit = true
+                }
+              }
+              None => ()
+            }
+            if not(hit) {
+              e = e - 1
+            }
+          }
+          if not(hit) {
+            sb.write_char('&')
+            i = i + 1
+            done = true
+          } else {
+            done = true
+          }
+        }
+      }
+    }
+    if not(done) {
       sb.write_char(c)
       i = i + 1
     }
   }
   sb.to_string()
+}
+
+fn decode_entities(s : String) -> String {
+  decode_entities_mode(s, false)
+}
+
+fn decode_entities_attr(s : String) -> String {
+  decode_entities_mode(s, true)
 }
 
 fn slice_of(cs : Array[Char], start : Int, end : Int) -> String {
@@ -370,6 +445,20 @@ fn svg_adjust_attr(n : String) -> String {
   }
 }
 
+/// MathML's one camelCase attribute.
+fn adjust_attrs_math(attrs : Array[(String, String)]) -> Array[(String, String)] {
+  let out : Array[(String, String)] = []
+  for pair in attrs {
+    let (n, v) = pair
+    if n == "definitionurl" {
+      out.push(("definitionURL", v))
+    } else {
+      out.push((n, v))
+    }
+  }
+  out
+}
+
 fn adjust_attrs_svg(attrs : Array[(String, String)]) -> Array[(String, String)] {
   let out : Array[(String, String)] = []
   for pair in attrs {
@@ -379,23 +468,17 @@ fn adjust_attrs_svg(attrs : Array[(String, String)]) -> Array[(String, String)] 
   out
 }
 
+/// Start tags that close an open `p` element (WHATWG "in body", the block set).
 fn closes_p(t : String) -> Bool {
-  if t == "address" || t == "article" || t == "aside" || t == "blockquote" {
-    return true
+  match t {
+    "address" | "article" | "aside" | "blockquote" | "center" | "details" |
+    "dialog" | "dir" | "div" | "dl" | "fieldset" | "figcaption" | "figure" |
+    "footer" | "form" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "header" |
+    "hgroup" | "hr" | "listing" | "main" | "menu" | "nav" | "ol" | "p" |
+    "plaintext" | "pre" | "search" | "section" | "summary" | "table" | "ul" |
+    "xmp" => true
+    _ => false
   }
-  if t == "div" || t == "dl" || t == "fieldset" || t == "footer" {
-    return true
-  }
-  if t == "form" || t == "h1" || t == "h2" || t == "h3" || t == "h4" {
-    return true
-  }
-  if t == "h5" || t == "h6" || t == "header" || t == "hr" {
-    return true
-  }
-  if t == "nav" || t == "ol" || t == "p" || t == "pre" || t == "section" {
-    return true
-  }
-  t == "table" || t == "ul"
 }
 
 fn H::pop_while_current(self : H, tag : String) -> Unit {
@@ -404,9 +487,33 @@ fn H::pop_while_current(self : H, tag : String) -> Unit {
   }
 }
 
+/// Close the nearest open `p`, popping anything inside it. Formatting elements
+/// are left in the active list, so the reconstruction step reopens them in the
+/// new paragraph.
+fn H::close_p(self : H) -> Unit {
+  let mut i = self.stack.length() - 1
+  let mut found = -1
+  while i > 0 {
+    let l = local_of(self.stack[i].name).to_lower()
+    if l == "p" {
+      found = i
+      break
+    }
+    if l == "table" || l == "td" || l == "th" || l == "button" || l == "html" || l == "caption" || l == "template" {
+      break
+    }
+    i = i - 1
+  }
+  if found >= 0 {
+    while self.stack.length() > found {
+      self.pop()
+    }
+  }
+}
+
 fn H::auto_close(self : H, tag : String) -> Unit {
   if closes_p(tag) {
-    self.pop_while_current("p")
+    self.close_p()
   }
   if tag == "li" {
     self.pop_while_current("li")
@@ -441,10 +548,62 @@ fn H::auto_close(self : H, tag : String) -> Unit {
     self.pop_while_current("button")
   }
   if tag == "rb" || tag == "rtc" {
+    self.close_p()
     self.pop_while_in(["rb", "rt", "rp", "rtc"])
   }
   if tag == "rt" || tag == "rp" {
+    self.close_p()
     self.pop_while_in(["rb", "rt", "rp"])
+  }
+}
+
+fn H::pop_through_head(self : H) -> Unit {
+  let mut i = self.stack.length() - 1
+  let mut found = -1
+  while i > 0 {
+    if local_of(self.stack[i].name).to_lower() == "head" {
+      found = i
+      break
+    }
+    i = i - 1
+  }
+  if found >= 0 {
+    while self.stack.length() > found {
+      self.pop()
+    }
+  }
+}
+
+fn H::template_index(self : H) -> Int {
+  let mut i = self.stack.length() - 1
+  while i >= 0 {
+    if local_of(self.stack[i].name).to_lower() == "template" {
+      return i
+    }
+    i = i - 1
+  }
+  -1
+}
+
+fn H::has_open(self : H, name : String) -> Bool {
+  let mut i = 0
+  while i < self.stack.length() {
+    if local_of(self.stack[i].name).to_lower() == name {
+      return true
+    }
+    i = i + 1
+  }
+  false
+}
+
+fn H::stack_remove(self : H, el : @moonxml.Element) -> Unit {
+  let mut i = 0
+  while i < self.stack.length() {
+    if physical_equal(self.stack[i], el) {
+      let _ = self.stack.remove(i)
+      break
+    }
+    i = i + 1
   }
 }
 
@@ -626,12 +785,34 @@ fn H::parse(self : H) -> @moonxml.Element {
   while not(self.at_end()) {
     if self.starts_with("<!--") {
       self.pos = self.pos + 4
-      let (text, nextpos) = scan_comment(self.s, self.pos)
-      self.pos = nextpos
-      self.append_node(@moonxml.Node::CommentNode(text))
+      // `<!-->` and `<!--->` are empty comments.
+      if not(self.at_end()) && self.peek() == '>' {
+        self.pos = self.pos + 1
+        self.append_node(@moonxml.Node::CommentNode(""))
+      } else if self.starts_with("->") {
+        self.pos = self.pos + 2
+        self.append_node(@moonxml.Node::CommentNode(""))
+      } else {
+        let (text, nextpos) = scan_comment(self.s, self.pos)
+        self.pos = nextpos
+        self.append_node(@moonxml.Node::CommentNode(text))
+      }
     } else if self.starts_with_ci("<!doctype") {
       self.pos = self.pos + 9
       root.append(@moonxml.Node::DoctypeNode(self.parse_doctype_html()))
+    } else if self.starts_with("<?") {
+      // A processing-instruction lookalike becomes a bogus comment.
+      self.pos = self.pos + 1
+      let start = self.pos
+      while not(self.at_end()) && self.peek() != '>' {
+        self.pos = self.pos + 1
+      }
+      let text = slice_of(self.s, start, self.pos)
+      if not(self.at_end()) {
+        self.pos = self.pos + 1
+      }
+      self.repairs = self.repairs + 1
+      self.append_node(@moonxml.Node::CommentNode(text))
     } else if self.starts_with("</") {
       self.parse_end_tag()
     } else if self.starts_with("<!") {
@@ -790,12 +971,21 @@ fn H::parse_end_tag(self : H) -> Unit {
     self.adoption(name)
     return
   }
-  // Pop to the matching open element, if any.
+  // Walk up to the matching open element. A special element (a block, a
+  // button, a cell) blocks the search: `</span>` never reaches past a button.
   let mut i = self.stack.length() - 1
   let mut found = false
-  while i >= 0 {
-    if local_of(self.stack[i].name).to_lower() == name {
+  while i > 0 {
+    let l = local_of(self.stack[i].name).to_lower()
+    if l == name {
       found = true
+      break
+    }
+    // An end tag never reaches out of the template it is inside.
+    if l == "template" && name != "template" {
+      break
+    }
+    if is_special_el(l) && not(explicit_end_rule(name)) {
       break
     }
     i = i - 1
@@ -808,6 +998,43 @@ fn H::parse_end_tag(self : H) -> Unit {
     }
   } else {
     self.repairs = self.repairs + 1
+  }
+}
+
+/// End tags with a dedicated rule: they pop through anything, so the
+/// special-element stop in the generic path does not apply to them.
+fn explicit_end_rule(l : String) -> Bool {
+  match l {
+    "body" | "html" | "head" | "p" | "div" | "li" | "dd" | "dt" | "ol" | "ul" |
+    "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "form" | "button" | "address" |
+    "article" | "aside" | "blockquote" | "center" | "details" | "dialog" |
+    "dir" | "dl" | "fieldset" | "figcaption" | "figure" | "footer" | "header" |
+    "hgroup" | "main" | "menu" | "nav" | "pre" | "listing" | "section" |
+    "summary" | "search" | "applet" | "marquee" | "object" | "br" | "table" |
+    "tbody" | "thead" | "tfoot" | "tr" | "td" | "th" | "caption" | "colgroup" |
+    "select" | "option" | "optgroup" | "template" | "script" | "style" |
+    "title" | "textarea" | "noscript" | "iframe" | "noframes" | "frameset" |
+    "frame" | "xmp" | "plaintext" | "sarcasm" => true
+    _ => false
+  }
+}
+
+/// The WHATWG "special" element category: end tags do not look past one.
+fn is_special_el(l : String) -> Bool {
+  match l {
+    "address" | "applet" | "area" | "article" | "aside" | "base" | "basefont" |
+    "bgsound" | "blockquote" | "body" | "br" | "button" | "caption" | "center" |
+    "col" | "colgroup" | "dd" | "details" | "dir" | "div" | "dl" | "dt" |
+    "embed" | "fieldset" | "figcaption" | "figure" | "footer" | "form" |
+    "frame" | "frameset" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "head" |
+    "header" | "hgroup" | "hr" | "html" | "iframe" | "img" | "input" |
+    "keygen" | "li" | "link" | "listing" | "main" | "marquee" | "menu" |
+    "meta" | "nav" | "noembed" | "noframes" | "noscript" | "object" | "ol" |
+    "p" | "param" | "plaintext" | "pre" | "script" | "search" | "section" |
+    "select" | "source" | "style" | "summary" | "table" | "tbody" | "td" |
+    "template" | "textarea" | "tfoot" | "th" | "thead" | "title" | "tr" |
+    "track" | "ul" | "wbr" | "xmp" => true
+    _ => false
   }
 }
 
@@ -866,7 +1093,7 @@ fn H::parse_start_tag(self : H) -> Unit {
           while not(self.at_end()) && self.peek() != q {
             self.pos = self.pos + 1
           }
-          avalue = decode_entities(slice_of(self.s, vstart, self.pos))
+          avalue = decode_entities_attr(slice_of(self.s, vstart, self.pos))
           if not(self.at_end()) {
             self.pos = self.pos + 1
           }
@@ -875,7 +1102,7 @@ fn H::parse_start_tag(self : H) -> Unit {
           while not(self.at_end()) && @text.is_html_space(self.peek()) == false && self.peek() != '>' {
             self.pos = self.pos + 1
           }
-          avalue = decode_entities(slice_of(self.s, vstart, self.pos))
+          avalue = decode_entities_attr(slice_of(self.s, vstart, self.pos))
         }
       }
       if aname.length() > 0 {
@@ -886,6 +1113,34 @@ fn H::parse_start_tag(self : H) -> Unit {
   // In-select handling comes first: most tags are ignored there.
   if self.handle_in_select(raw_name) {
     return
+  }
+  // A body tag while head is still open closes head.
+  if raw_name == "body" {
+    self.pop_through_head()
+  }
+  // A heading start tag closes an open heading.
+  if raw_name == "h1" || raw_name == "h2" || raw_name == "h3" || raw_name == "h4" || raw_name == "h5" || raw_name == "h6" {
+    self.pop_while_in(["h1", "h2", "h3", "h4", "h5", "h6"])
+  }
+  // Frames outside a frameset are ignored, and inside a template they are
+  // ignored too.
+  if raw_name == "frame" || raw_name == "frameset" {
+    if self.template_index() >= 0 || raw_name == "frame" {
+      if self.template_index() >= 0 || self.has_open("frameset") == false {
+        return
+      }
+    }
+  }
+  // A second `a` runs the adoption agency for the first, then forgets it.
+  if raw_name == "a" {
+    match self.afe_find_by_name("a") {
+      Some(old) => {
+        self.adoption("a")
+        self.afe_remove(old)
+        self.stack_remove(old)
+      }
+      None => ()
+    }
   }
   // Auto-closing for optional end tags, then reconstruction.
   self.auto_close(raw_name)
@@ -901,8 +1156,24 @@ fn H::parse_start_tag(self : H) -> Unit {
       self.pop()
     }
   }
-  // Namespace decision.
-  let child_ns = self.current_child_ns()
+  // `mglyph` and `malignmark` are MathML even in HTML content.
+  if raw_name == "mglyph" || raw_name == "malignmark" {
+    if self.current_child_ns() == "" {
+      let mel = @moonxml.Element::with_attrs("{" + math_ns + "}" + raw_name, adjust_attrs_math(attrs))
+      self.append_node(@moonxml.Node::ElementNode(mel))
+      if self_closing == false {
+        self.push(mel)
+      }
+      return
+    }
+  }
+  // Namespace decision. A foreign fragment context supplies the namespace for
+  // everything that is not an HTML breakout tag.
+  let child_ns = if self.frag_ns != "" && self.stack.length() <= 1 {
+    self.frag_ns
+  } else {
+    self.current_child_ns()
+  }
   let ns = if raw_name == "svg" {
     svg_ns
   } else if raw_name == "math" {
@@ -922,6 +1193,8 @@ fn H::parse_start_tag(self : H) -> Unit {
   }
   let final_attrs = if ns == svg_ns {
     adjust_attrs_svg(attrs)
+  } else if ns == math_ns {
+    adjust_attrs_math(attrs)
   } else {
     attrs
   }
@@ -962,32 +1235,249 @@ fn H::parse_start_tag(self : H) -> Unit {
   }
 }
 
-fn H::consume_rawtext(self : H, tag : String, decode : Bool) -> Unit {
-  let close_marker = "</" + tag
-  let mut i = self.pos
-  let mut found = -1
-  while i + close_marker.length() <= self.n {
-    let mut ok = true
-    let mut j = 0
-    while j < close_marker.length() {
-      if lower_char(self.s[i + j]) != lower_char(close_marker.to_array()[j]) {
-        ok = false
-        break
-      }
-      j = j + 1
-    }
-    if ok {
-      found = i
-      break
+fn is_ascii_alpha_c(c : Char) -> Bool {
+  (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+}
+
+fn is_end_tag_delim(c : Char) -> Bool {
+  @text.is_html_space(c) || c == '/' || c == '>'
+}
+
+fn chars_ci_eq(name : Array[Char], lit : Array[Char]) -> Bool {
+  if name.length() != lit.length() {
+    return false
+  }
+  let mut i = 0
+  while i < lit.length() {
+    if lower_char(name[i]) != lower_char(lit[i]) {
+      return false
     }
     i = i + 1
   }
-  let end = if found < 0 {
-    self.n
-  } else {
-    found
+  true
+}
+
+/// Find the `</tag` that ends a RAWTEXT/RCDATA element. The name must be
+/// followed by whitespace, `/` or `>`, so `</style=` is text.
+fn find_rawtext_end(cs : Array[Char], start : Int, n : Int, tag : String) -> Int {
+  let tcs = tag.to_array()
+  let tlen = tcs.length()
+  let mut i = start
+  while i + 1 < n {
+    if cs[i] == '<' && cs[i + 1] == '/' {
+      if i + 2 + tlen < n {
+        let mut ok = true
+        let mut j = 0
+        while j < tlen {
+          if lower_char(cs[i + 2 + j]) != lower_char(tcs[j]) {
+            ok = false
+            break
+          }
+          j = j + 1
+        }
+        if ok && is_end_tag_delim(cs[i + 2 + tlen]) {
+          return i
+        }
+      }
+    }
+    i = i + 1
   }
-  let raw = slice_of(self.s, self.pos, end)
+  -1
+}
+
+/// Find where a `script` element's text ends, running the script-data states.
+/// The escaped and double-escaped states matter: after `<!--`, a `</script>`
+/// closes the element, but after `<!--<script>` it is text until `</script`
+/// puts the tokenizer back into the escaped state.
+fn find_script_end(cs : Array[Char], start : Int, n : Int) -> Int {
+  let tcs = "script".to_array()
+  let mut i = start
+  let mut st = 0
+  let mut tag_start = -1
+  let mut name : Array[Char] = []
+  while i < n {
+    let c = cs[i]
+    let mut advanced = true
+    if st == 0 {
+      if c == '<' {
+        tag_start = i
+        st = 1
+      }
+    } else if st == 1 {
+      if c == '/' {
+        st = 2
+        name = []
+      } else if c == '!' {
+        st = 4
+      } else {
+        st = 0
+        advanced = false
+      }
+    } else if st == 2 {
+      if is_ascii_alpha_c(c) {
+        name = [c]
+        st = 3
+      } else {
+        st = 0
+        advanced = false
+      }
+    } else if st == 3 {
+      if is_ascii_alpha_c(c) {
+        name.push(c)
+      } else if is_end_tag_delim(c) {
+        if chars_ci_eq(name, tcs) {
+          return tag_start
+        }
+        st = 0
+        advanced = false
+      } else {
+        st = 0
+        advanced = false
+      }
+    } else if st == 4 {
+      if c == '-' {
+        st = 5
+      } else {
+        st = 0
+        advanced = false
+      }
+    } else if st == 5 {
+      if c == '-' {
+        st = 6
+      } else {
+        st = 0
+        advanced = false
+      }
+    } else if st == 6 {
+      if c == '-' {
+        st = 7
+      } else if c == '<' {
+        tag_start = i
+        st = 9
+      }
+    } else if st == 7 {
+      if c == '-' {
+        st = 8
+      } else if c == '<' {
+        tag_start = i
+        st = 9
+      } else {
+        st = 6
+      }
+    } else if st == 8 {
+      if c == '-' {
+        ()
+      } else if c == '<' {
+        tag_start = i
+        st = 9
+      } else if c == '>' {
+        st = 6
+      } else {
+        st = 6
+      }
+    } else if st == 9 {
+      if c == '/' {
+        st = 10
+        name = []
+      } else if is_ascii_alpha_c(c) {
+        name = [c]
+        st = 12
+      } else {
+        st = 6
+        advanced = false
+      }
+    } else if st == 10 {
+      if is_ascii_alpha_c(c) {
+        name = [c]
+        st = 11
+      } else {
+        st = 6
+        advanced = false
+      }
+    } else if st == 11 {
+      if is_ascii_alpha_c(c) {
+        name.push(c)
+      } else if is_end_tag_delim(c) {
+        if chars_ci_eq(name, tcs) {
+          return tag_start
+        }
+        st = 6
+        advanced = false
+      } else {
+        st = 6
+        advanced = false
+      }
+    } else if st == 12 {
+      if is_ascii_alpha_c(c) {
+        name.push(c)
+      } else if is_end_tag_delim(c) {
+        st = if chars_ci_eq(name, tcs) { 13 } else { 6 }
+      } else {
+        st = 6
+        advanced = false
+      }
+    } else if st == 13 {
+      if c == '-' {
+        st = 14
+      } else if c == '<' {
+        tag_start = i
+        st = 16
+      }
+    } else if st == 14 {
+      if c == '-' {
+        st = 15
+      } else if c == '<' {
+        tag_start = i
+        st = 16
+      } else {
+        st = 13
+      }
+    } else if st == 15 {
+      if c == '<' {
+        tag_start = i
+        st = 16
+      } else if c == '>' {
+        st = 13
+      } else if c != '-' {
+        st = 13
+      }
+    } else if st == 16 {
+      if c == '/' {
+        st = 17
+        name = []
+      } else {
+        st = 13
+        advanced = false
+      }
+    } else {
+      // 17: double escape end
+      if is_ascii_alpha_c(c) {
+        name.push(c)
+      } else if is_end_tag_delim(c) {
+        st = if chars_ci_eq(name, tcs) { 6 } else { 13 }
+      } else {
+        st = 13
+        advanced = false
+      }
+    }
+    if advanced {
+      i = i + 1
+    }
+  }
+  -1
+}
+
+fn H::consume_rawtext(self : H, tag : String, decode : Bool) -> Unit {
+  let n = self.n
+  let end = if tag == "script" {
+    find_script_end(self.s, self.pos, n)
+  } else if tag == "plaintext" {
+    -1
+  } else {
+    find_rawtext_end(self.s, self.pos, n, tag)
+  }
+  let text_end = if end < 0 { n } else { end }
+  let raw = slice_of(self.s, self.pos, text_end)
   if raw.length() > 0 {
     let text = if decode {
       decode_entities(raw)
@@ -996,16 +1486,15 @@ fn H::consume_rawtext(self : H, tag : String, decode : Bool) -> Unit {
     }
     self.append_node(@moonxml.Node::TextNode(text))
   }
-  if found < 0 {
-    self.pos = self.n
+  if end < 0 {
+    self.pos = n
   } else {
-    // Consume the end tag.
-    self.pos = found
-    let mut k = found + close_marker.length()
-    while k < self.n && self.s[k] != '>' {
+    self.pos = end
+    let mut k = end + 2
+    while k < n && self.s[k] != '>' {
       k = k + 1
     }
-    self.pos = if k < self.n { k + 1 } else { self.n }
+    self.pos = if k < n { k + 1 } else { n }
   }
 }
 
@@ -1028,6 +1517,18 @@ pub fn loads_fragment(text : String, context? : String = "body") -> @moonxml.Doc
   loads_internal(text, true, context)
 }
 
+/// Elements whose foreign children are parsed as HTML.
+fn is_integration_name(l : String) -> Bool {
+  match l {
+    "foreignobject" | "desc" | "title" | "mi" | "mo" | "mn" | "ms" | "mtext" => true
+    _ => false
+  }
+}
+
+fn context_is_foreign(context : String) -> Bool {
+  context.has_prefix("svg ") || context.has_prefix("math ")
+}
+
 fn context_local(context : String) -> String {
   if context.has_prefix("svg ") || context.has_prefix("math ") {
     context.substring(start=4, end=context.length())
@@ -1037,7 +1538,7 @@ fn context_local(context : String) -> String {
 }
 
 fn loads_internal(text : String, fragment : Bool, context : String) -> @moonxml.Document {
-  if fragment {
+  if fragment && not(context_is_foreign(context)) {
     let cl = context_local(context)
     if cl == "textarea" || cl == "title" {
       let root = @moonxml.Element::new("#document")
@@ -1051,6 +1552,13 @@ fn loads_internal(text : String, fragment : Bool, context : String) -> @moonxml.
     }
   }
   let h = H::new(strip_bom_h(text))
+  if fragment && not(is_integration_name(context_local(context))) {
+    if context.has_prefix("svg ") {
+      h.frag_ns = svg_ns
+    } else if context.has_prefix("math ") {
+      h.frag_ns = math_ns
+    }
+  }
   let root = h.parse()
   if fragment == false {
     normalize_document(root)

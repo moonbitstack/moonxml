@@ -42,5 +42,9 @@ jobs:
         run: |
           python scripts/gen_html5lib.py
           git diff --exit-code tests/html5lib_cases.mbt
+      - name: Verify the entity table is current
+        run: |
+          python scripts/gen_entities.py
+          git diff --exit-code html/entities.mbt
       - name: Conformance rate
         run: moon test

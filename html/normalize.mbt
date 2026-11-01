@@ -39,9 +39,17 @@ fn find_element_child(parent : @moonxml.Element, name : String) -> @moonxml.Elem
 
 /// Shape `root` into a document: one `html`, a `head`, and a `body` or
 /// `frameset`, with head content routed and formatting whitespace dropped.
+///
+/// Comments are placed by where the tokenizer met them: before the `html`
+/// element they stay at the document level, between `html` and `body` they sit
+/// inside `html` before `head`, and after body content they are body children.
 pub fn normalize_document(root : @moonxml.Element) -> Unit {
   let existing = find_element_child(root, "html")
-  // Gather the nodes to redistribute.
+  let html = match existing {
+    Some(e) => e
+    None => @moonxml.Element::new("html")
+  }
+  // Nodes to redistribute, in source order.
   let source : Array[@moonxml.Node] = []
   if existing.is_none() {
     for c in root.children {
@@ -51,20 +59,18 @@ pub fn normalize_document(root : @moonxml.Element) -> Unit {
       }
     }
   } else {
-    let html = existing.unwrap()
     for c in html.children {
       source.push(c)
     }
     html.set_children([])
   }
-  let html = match existing {
-    Some(e) => e
-    None => @moonxml.Element::new("html")
-  }
   let head = @moonxml.Element::new("head")
   let body = @moonxml.Element::new("body")
   let mut frameset : @moonxml.Element? = None
-  let pre : Array[@moonxml.Node] = []
+  // Comments before `head`, kept as `html` children when `html` already existed.
+  let before_head : Array[@moonxml.Node] = []
+  // Document-level comments, only possible when `html` had to be synthesized.
+  let doc_level : Array[@moonxml.Node] = []
   let mut in_body = false
   for n in source {
     match n {
@@ -104,8 +110,10 @@ pub fn normalize_document(root : @moonxml.Element) -> Unit {
       @moonxml.Node::CommentNode(_) => {
         if in_body {
           body.append(n)
+        } else if existing.is_some() {
+          before_head.push(n)
         } else {
-          pre.push(n)
+          doc_level.push(n)
         }
       }
       _ => {
@@ -114,23 +122,28 @@ pub fn normalize_document(root : @moonxml.Element) -> Unit {
       }
     }
   }
-  html.set_children([])
-  html.append(@moonxml.Node::ElementNode(head))
+  let shaped : Array[@moonxml.Node] = []
+  for c in before_head {
+    shaped.push(c)
+  }
+  shaped.push(@moonxml.Node::ElementNode(head))
   match frameset {
-    Some(f) => html.append(@moonxml.Node::ElementNode(f))
-    None => html.append(@moonxml.Node::ElementNode(body))
+    Some(f) => shaped.push(@moonxml.Node::ElementNode(f))
+    None => shaped.push(@moonxml.Node::ElementNode(body))
   }
-  // Keep doctypes at the document level, then the html element.
-  let keep : Array[@moonxml.Node] = []
-  for c in root.children {
-    match c {
-      @moonxml.Node::DoctypeNode(_) => keep.push(c)
-      _ => ()
+  html.set_children(shaped)
+  if existing.is_none() {
+    let keep : Array[@moonxml.Node] = []
+    for c in root.children {
+      match c {
+        @moonxml.Node::DoctypeNode(_) => keep.push(c)
+        _ => ()
+      }
     }
+    for c in doc_level {
+      keep.push(c)
+    }
+    keep.push(@moonxml.Node::ElementNode(html))
+    root.set_children(keep)
   }
-  for c in pre {
-    keep.push(c)
-  }
-  keep.push(@moonxml.Node::ElementNode(html))
-  root.set_children(keep)
 }
