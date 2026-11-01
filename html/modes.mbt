@@ -469,6 +469,7 @@ fn is_table_scope_tag(l : String) -> Bool {
 fn H::step_in_table(self : H, tok : Tok) -> Bool {
   match tok {
     Chars(s) => {
+      let s = strip_nul(s)
       let l = self.cur_local()
       if is_table_scope_tag(l) {
         self.pending_text = s

@@ -431,7 +431,7 @@ fn H::read_tag_name(self : H) -> String {
     let c = self.peek()
     if c == '\u{0}' {
       self.pos = self.pos + 1
-    } else if is_tag_name_char(c) {
+    } else if is_tag_name_char(c) || c == '<' {
       sb.write_char(lower_char(c))
       self.pos = self.pos + 1
     } else {

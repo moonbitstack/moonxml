@@ -88,9 +88,10 @@ fn H::merge_attrs_on_top(self : H, tag : String, attrs : Array[(String, String)]
 fn H::step_in_body(self : H, tok : Tok) -> Bool {
   match tok {
     Chars(s) => {
+      let t = strip_nul(s)
       self.reconstruct()
-      self.insert_text(s)
-      if not(@text.is_blank(s)) {
+      self.insert_text(t)
+      if not(@text.is_blank(t)) {
         self.frameset_ok = false
       }
       false
@@ -580,6 +581,21 @@ fn is_mathml_text_ip(l : String) -> Bool {
   l == "mi" || l == "mo" || l == "mn" || l == "ms" || l == "mtext"
 }
 
+/// Whether the current node takes HTML content (a MathML text integration
+/// point, or an SVG/HTML integration point).
+fn H::at_integration_point(self : H) -> Bool {
+  let cur = self.cur()
+  let ns = ns_of(cur.name)
+  if ns == "" {
+    return false
+  }
+  let l = local_of(cur.name).to_lower()
+  if ns == math_ns && is_mathml_text_ip(l) {
+    return true
+  }
+  self.is_html_ip(cur)
+}
+
 fn H::is_html_ip(self : H, el : @moonxml.Element) -> Bool {
   let ns = ns_of(el.name)
   let l = local_of(el.name).to_lower()
@@ -692,8 +708,11 @@ fn H::break_out_foreign(self : H) -> Bool {
 fn H::step_foreign(self : H, tok : Tok) -> Bool {
   match tok {
     Chars(s) => {
-      self.insert_text(s)
-      if not(@text.is_blank(s)) {
+      // In foreign content NUL becomes U+FFFD rather than disappearing, but an
+      // integration point still holds HTML, where it just goes away.
+      let t = if self.at_integration_point() { strip_nul(s) } else { nul_to_fffd(s) }
+      self.insert_text(t)
+      if not(@text.is_blank(t)) {
         self.frameset_ok = false
       }
       true

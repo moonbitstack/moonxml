@@ -77,7 +77,7 @@ fn H::next_token(self : H) -> Tok {
     }
     if self.pos > start {
       let raw = slice_of(self.s, start, self.pos)
-      return Chars(decode_entities(strip_nul(raw)))
+      return Chars(decode_entities(raw))
     }
     // At a `<`. Which construct it opens decides the token.
     if self.starts_with("<!--") {
