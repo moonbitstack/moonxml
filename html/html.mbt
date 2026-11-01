@@ -1003,6 +1003,18 @@ fn H::handle_in_select(self : H, tag : String) -> Bool {
     return false
   }
   if is_table_tag(tag) {
+    // A select fostered out of a table lets table tags through to the table.
+    let mut i = self.stack.length() - 1
+    while i >= 0 {
+      if local_of(self.stack[i].name).to_lower() == "select" {
+        if self.is_fostered_el(self.stack[i]) {
+          self.pop_through_select()
+          return false
+        }
+        break
+      }
+      i = i - 1
+    }
     return true
   }
   true
@@ -1870,6 +1882,9 @@ fn H::parse_start_tag(self : H) -> Unit {
   }
   if is_rcdata_tag(raw_name) && ns == "" {
     self.push(el)
+    if raw_name == "textarea" {
+      self.skip_leading_newline()
+    }
     self.consume_rawtext(raw_name, true)
     self.pop()
     return
