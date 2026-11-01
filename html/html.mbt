@@ -608,6 +608,7 @@ fn H::auto_close(self : H, tag : String) -> Unit {
     self.close_p()
   }
   if tag == "li" || tag == "dt" || tag == "dd" {
+    self.close_p()
     self.close_list_item(tag)
   }
   if tag == "option" || tag == "optgroup" {
@@ -1248,6 +1249,9 @@ fn H::parse(self : H) -> @moonxml.Element {
       }
       self.repairs = self.repairs + 1
       self.append_node(@moonxml.Node::CommentNode(text))
+    } else if self.starts_with("</") && self.pos + 2 >= self.n {
+      // A trailing `</` is dropped.
+      self.pos = self.n
     } else if self.starts_with("</") && not(is_ascii_alpha_c(self.peek_at(2))) {
       // `</` with no tag name: a bogus comment, like `</ tttt>`.
       self.pos = self.pos + 2
@@ -1659,8 +1663,11 @@ fn H::parse_start_tag(self : H) -> Unit {
   if self.handle_in_select(raw_name) {
     return
   }
-  if self.body_closed && self.frameset_document() && raw_name != "noframes" && raw_name != "html" {
-    return
+  if self.body_closed && self.frameset_document() {
+    let head_tag = raw_name == "noframes" || raw_name == "meta" || raw_name == "link" || raw_name == "base" || raw_name == "title" || raw_name == "style" || raw_name == "script" || raw_name == "html"
+    if not(head_tag) {
+      return
+    }
   }
   // A second `html` start tag merges its attributes into the open one.
   if raw_name == "html" {
