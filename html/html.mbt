@@ -1808,6 +1808,39 @@ fn H::parse_start_tag(self : H) -> Unit {
       None => ()
     }
   }
+  // A new cell closes the open one, and a row closes an open caption.
+  if raw_name == "td" || raw_name == "th" {
+    let mut i = self.stack.length() - 1
+    while i > 0 {
+      let l = local_of(self.stack[i].name).to_lower()
+      if l == "td" || l == "th" {
+        while self.stack.length() > i {
+          self.pop()
+        }
+        break
+      }
+      if l == "table" || l == "caption" {
+        break
+      }
+      i = i - 1
+    }
+  }
+  if raw_name == "tr" || raw_name == "tbody" || raw_name == "thead" || raw_name == "tfoot" || raw_name == "td" || raw_name == "th" {
+    let mut i = self.stack.length() - 1
+    while i > 0 {
+      let l = local_of(self.stack[i].name).to_lower()
+      if l == "caption" {
+        while self.stack.length() > i {
+          self.pop()
+        }
+        break
+      }
+      if l == "table" {
+        break
+      }
+      i = i - 1
+    }
+  }
   // A table part belongs to the table, not to an element fostered out of it.
   if raw_name == "tr" || raw_name == "td" || raw_name == "th" || raw_name == "tbody" || raw_name == "thead" || raw_name == "tfoot" || raw_name == "caption" || raw_name == "colgroup" || raw_name == "col" {
     while self.stack.length() > 1 && self.is_fostered_el(self.current()) {
