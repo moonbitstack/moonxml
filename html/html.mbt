@@ -1002,8 +1002,7 @@ fn H::handle_in_select(self : H, tag : String) -> Bool {
     return false
   }
   if is_table_tag(tag) {
-    self.pop_through_select()
-    return false
+    return true
   }
   true
 }
@@ -1488,6 +1487,10 @@ fn H::parse_end_tag(self : H) -> Unit {
     if l == "template" && name != "template" {
       break
     }
+    // Nor does it reach out of foreign content.
+    if ns_of(self.stack[i].name) != "" {
+      break
+    }
     if is_special_el(l) && not(explicit_end_rule(name)) {
       break
     }
@@ -1715,6 +1718,10 @@ fn H::parse_start_tag(self : H) -> Unit {
     self.push(el)
     self.consume_rawtext("noscript", false)
     self.pop()
+    return
+  }
+  // A table part with no table around it is ignored.
+  if (raw_name == "col" || raw_name == "caption" || raw_name == "tbody" || raw_name == "thead" || raw_name == "tfoot" || raw_name == "colgroup") && self.has_open("table") == false {
     return
   }
   // In a fragment, html/head/body tags are just text.
