@@ -4,3 +4,6 @@ target/
 *.wasm
 *.mbti
 .workbuddy/
+
+# local corpus debugging aid
+tests/h5_diag_test.mbt
