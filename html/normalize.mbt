@@ -6,6 +6,19 @@
 /// file performs that shaping after parsing, so the tree matches the shape the
 /// html5lib corpus expects without a full set of insertion modes.
 
+fn norm_is_head_element(n : @moonxml.Node) -> Bool {
+  match n {
+    @moonxml.Node::ElementNode(e) => {
+      let l = local_of(e.name).to_lower()
+      if l == "title" || l == "meta" || l == "link" || l == "base" || l == "basefont" || l == "bgsound" {
+        return true
+      }
+      l == "style" || l == "script" || l == "noscript" || l == "template" || l == "noframes"
+    }
+    _ => false
+  }
+}
+
 fn is_fostered(e : @moonxml.Element, fostered : Array[@moonxml.Element]) -> Bool {
   for f in fostered {
     if physical_equal(f, e) {
@@ -149,7 +162,7 @@ fn normalize_document_impl(
         } else if l == "frameset" {
           frameset = Some(e)
           in_body = true
-        } else if is_head_element(n) && not(in_body) && not(is_fostered(e, fostered)) {
+        } else if norm_is_head_element(n) && not(in_body) && not(is_fostered(e, fostered)) {
           append_head_child(head, n)
         } else {
           in_body = true
