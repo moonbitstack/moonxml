@@ -101,14 +101,44 @@ jobs:
         run: |
           git clone --depth 1 "$UPSTREAM" "$RUNNER_TEMP/h5tests"
           diff -r "$RUNNER_TEMP/h5tests/tokenizer" vendor/html5lib-tests/tokenizer
+      - name: Verify the XPath corpus matches libxml2
+        run: |
+          curl -fsSL "https://github.com/GNOME/libxml2/archive/refs/heads/master.tar.gz" \
+            -o "$RUNNER_TEMP/libxml2.tar.gz"
+          mkdir -p "$RUNNER_TEMP/libxml2"
+          tar xzf "$RUNNER_TEMP/libxml2.tar.gz" -C "$RUNNER_TEMP/libxml2" --strip-components=1
+          diff -r "$RUNNER_TEMP/libxml2/test/XPath/expr" vendor/xpath-tests/expr
+          diff -r "$RUNNER_TEMP/libxml2/test/XPath/docs" vendor/xpath-tests/docs
+          diff -r "$RUNNER_TEMP/libxml2/test/XPath/tests" vendor/xpath-tests/tests
+          diff -r "$RUNNER_TEMP/libxml2/result/XPath/expr" vendor/xpath-tests/result-expr
+          diff -r "$RUNNER_TEMP/libxml2/result/XPath/tests" vendor/xpath-tests/result-tests
+      # Only the `.xml` files of the WPT directory are vendored, so the check
+      # compares the ones we keep rather than the directory as a whole.
+      - name: Verify the CSS selectors corpus matches web-platform-tests
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse \
+            https://github.com/web-platform-tests/wpt "$RUNNER_TEMP/wpt"
+          git -C "$RUNNER_TEMP/wpt" sparse-checkout set css/selectors/old-tests
+          upstream="$RUNNER_TEMP/wpt/css/selectors/old-tests"
+          for f in "$upstream"/*.xml; do
+            name=$(basename "$f")
+            cmp -s "$f" "vendor/css-selectors/old-tests/$name" || { echo "differs: $name"; exit 1; }
+          done
+          vendored=$(ls vendor/css-selectors/old-tests/*.xml | wc -l)
+          tested=$(ls "$upstream"/*.xml | wc -l)
+          echo "vendored $vendored of $tested"
       - name: Regenerate the fixtures and the entity table
         run: |
           python3 scripts/gen_html5lib.py
           python3 scripts/gen_tokenizer_tests.py
           python3 scripts/gen_entities.py
+          python3 scripts/gen_xpath_cases.py
+          python3 scripts/gen_css_selector_cases.py
       - name: The committed fixtures are the generated ones
         run: |
-          git diff --exit-code -- tests/html5lib_cases.mbt tests/tokenizer_cases.mbt html/entities.mbt
+          git diff --exit-code -- \
+            tests/html5lib_cases.mbt tests/tokenizer_cases.mbt html/entities.mbt \
+            tests/xpath_cases.mbt tests/css_selector_cases.mbt
       - name: Corpus rates
         run: |
           # The summary is written whether or not the tests pass, and the step
@@ -119,7 +149,7 @@ jobs:
           {
             echo "### html5lib conformance"
             echo '```'
-            grep -aE 'html5lib (tree-construction|tokenizer):|fixpoint:' "$RUNNER_TEMP/test.log"
+            grep -aE 'html5lib (tree-construction|tokenizer):|fixpoint:|libxml2 xpath:|w3c css selectors:' "$RUNNER_TEMP/test.log"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           exit "$status"

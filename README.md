@@ -301,8 +301,23 @@ The corpora run as part of the same `moon test` invocation:
 - **Tokenizer** — `vendor/html5lib-tests/tokenizer`, 7017 cases once the initial
   states are expanded, fixtures from `scripts/gen_tokenizer_tests.py`, runner
   `tests/tokenizer_runner_test.mbt`. Current rate: **7017/7017**.
+- **XPath** — `vendor/xpath-tests`, libxml2's corpus: 326 expressions, thirteen
+  of them against a document, each with libxml2's result (a boolean, a number, a
+  string, or a node-set described by its size and the kind and name of each
+  top-level node). Fixtures from `scripts/gen_xpath_cases.py`, runner
+  `tests/xpath_conformance_test.mbt`. Current rate: **311/326**. The fifteen
+  that fail are listed in the runner: the namespace axis, ancestor walks from an
+  attribute, six `mixedpat` cases that assume libxml2's context node, and two
+  `string()` formats.
+- **CSS selectors** — `vendor/css-selectors`, the W3C CSS3 Selectors Test Suite
+  from web-platform-tests' `css/selectors/old-tests`: 292 files, of which 99
+  carry a machine-readable assertion for a rule that paints lime, giving 116
+  cases. Fixtures from `scripts/gen_css_selector_cases.py`, runner
+  `tests/css_selector_conformance_test.mbt`. Current rate: **70/116**; sixteen
+  of the failures are `prefix|name` selectors, which this engine refuses because
+  it keeps no `@namespace` map.
 
-Both runners assert a ratchet floor, so a regression fails the build rather than
+Every runner asserts a ratchet floor, so a regression fails the build rather than
 lowering the number quietly.
 
 ## Continuous integration
@@ -318,9 +333,12 @@ lowering the number quietly.
   `js` and `native` backends. The three backends matter here: the parsers index
   into arrays of UTF-16 code units, and a backend that disagrees about string
   length would show up as a corpus failure rather than as a mystery bug.
-- **conformance** — verifies both vendored corpora against their upstreams,
-  regenerates the fixtures and the entity table and fails if they differ from the
-  committed copies, then measures the rates and writes them to the job summary.
+- **conformance** — verifies all four vendored corpora against their upstreams
+  (html5lib from the 1.1 sdist and from its repository, libxml2 from a source
+  tarball, web-platform-tests through a sparse checkout of the one directory),
+  regenerates the five fixture files and the entity table and fails if they
+  differ from the committed copies, then measures the rates and writes them to
+  the job summary.
 
 `.github/workflows/upstream.yml` runs weekly against html5lib master: it replaces
 the vendored corpora with upstream's, regenerates the fixtures and runs the

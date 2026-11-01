@@ -51,7 +51,10 @@ test "css: a malformed selector is a query error" {
     "p:nth-child(",
     "p:nth-child(2n+)",
     "p:not(",
-    "*|div",
+    // A namespace prefix without a declaration is refused as unsupported, so
+    // these are the malformed shapes that remain.
+    "|",
+    "||p",
   ]
   for q in bad {
     if css_error(doc, q) == "accepted" {
@@ -66,6 +69,9 @@ test "css: a pseudo-class the engine does not know is refused as unsupported" {
   assert_eq(css_error(doc, "p:hover"), "unsupported")
   assert_eq(css_error(doc, "p:visited"), "unsupported")
   assert_eq(css_error(doc, "p:has(+ p"), "bad-query")
+  // `div|` names a prefix with nothing after it: that is a namespace feature,
+  // which is unsupported rather than malformed.
+  assert_eq(css_error(doc, "div|"), "unsupported")
 }
 
 /// A selector a caller can register: picks the paragraphs of the context.

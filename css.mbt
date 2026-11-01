@@ -224,8 +224,34 @@ fn parse_compound(p : P) -> Compound raise Refused {
     universal = true
     any = true
     p.pos = p.pos + 1
+    if !p.at_end() && p.peek() == '|' && p.peek_at(1) != '=' {
+      // `*|local` is "any namespace"; it is answerable without a namespace map.
+      p.pos = p.pos + 1
+      universal = false
+      if p.peek() == '*' {
+        p.pos = p.pos + 1
+        tag = Some("*|*")
+      } else {
+        tag = Some("*|" + p.parse_ident())
+      }
+    }
+  } else if c0 == '|' {
+    // `|local` is "no namespace".
+    p.pos = p.pos + 1
+    any = true
+    if p.peek() == '*' {
+      p.pos = p.pos + 1
+      tag = Some("|*")
+    } else {
+      tag = Some("|" + p.parse_ident())
+    }
   } else if ident_start(c0) {
-    tag = Some(p.parse_ident())
+    let name = p.parse_ident()
+    if !p.at_end() && p.peek() == '|' && p.peek_at(1) != '=' {
+      // A prefix needs the `@namespace` map this engine does not keep.
+      raise Refused::Unsupported(what="a namespace prefix in a type selector")
+    }
+    tag = Some(name)
     any = true
   }
   while true {
@@ -261,7 +287,24 @@ fn parse_compound(p : P) -> Compound raise Refused {
 
 fn parse_attr(p : P) -> AttrSel raise Refused {
   p.skip_ws()
-  let name = p.parse_ident()
+  let mut name = ""
+  if p.peek() == '*' && p.peek_at(1) == '|' {
+    p.pos = p.pos + 2
+    if p.peek() == '*' {
+      p.pos = p.pos + 1
+      name = "*|*"
+    } else {
+      name = "*|" + p.parse_ident()
+    }
+  } else if p.peek() == '|' {
+    p.pos = p.pos + 1
+    name = "|" + p.parse_ident()
+  } else {
+    name = p.parse_ident()
+    if !p.at_end() && p.peek() == '|' && p.peek_at(1) != '=' {
+      raise Refused::Unsupported(what="a namespace prefix in an attribute selector")
+    }
+  }
   p.skip_ws()
   let mut op = ""
   let mut value = ""
@@ -531,6 +574,29 @@ pub fn name_matches(el : Element, t : String) -> Bool {
 /// XML document it is not. The flavour is the document's, not the element's,
 /// which is why it is a parameter here rather than a property of `el`.
 fn name_matches_in(el : Element, t : String, ci : Bool) -> Bool {
+  // `*|local` matches the local name in any namespace, `|local` only in none.
+  if t.has_prefix("*|") {
+    let local = t.substring(start=2, end=t.length())
+    if local == "*" {
+      return true
+    }
+    return if ci {
+      el.local_name().to_lower() == local.to_lower()
+    } else {
+      el.local_name() == local
+    }
+  }
+  if t.has_prefix("|") {
+    if el.namespace_uri() != "" {
+      return false
+    }
+    let local = t.substring(start=1, end=t.length())
+    return if ci {
+      el.local_name().to_lower() == local.to_lower()
+    } else {
+      el.local_name() == local
+    }
+  }
   if name_matches(el, t) {
     return true
   }
@@ -636,8 +702,64 @@ fn match_compound(el : Element, comp : Compound, ci : Bool) -> Bool {
   true
 }
 
+/// The local part of an attribute name, which may be a Clark name.
+fn attr_local(name : String) -> String {
+  let cs = name.to_array()
+  let mut close = -1
+  let mut i = 0
+  while i < cs.length() {
+    if cs[i] == '}' {
+      close = i
+    }
+    i = i + 1
+  }
+  if close < 0 {
+    return name
+  }
+  let sb = StringBuilder()
+  let mut k = close + 1
+  while k < cs.length() {
+    sb.write_char(cs[k])
+    k = k + 1
+  }
+  sb.to_string()
+}
+
+/// The value of the attribute a selector names, honouring `*|name` (any
+/// namespace) and `|name` (no namespace).
+fn attr_lookup(el : Element, name : String) -> String? {
+  if name.has_prefix("*|") {
+    let local = name.substring(start=2, end=name.length())
+    if local == "*" {
+      if el.attrs.length() > 0 {
+        let (_, v) = el.attrs[0]
+        return Some(v)
+      }
+      return None
+    }
+    for pair in el.attrs {
+      let (k, v) = pair
+      if attr_local(k) == local {
+        return Some(v)
+      }
+    }
+    return None
+  }
+  if name.has_prefix("|") {
+    let local = name.substring(start=1, end=name.length())
+    for pair in el.attrs {
+      let (k, v) = pair
+      if k == local {
+        return Some(v)
+      }
+    }
+    return None
+  }
+  el.attr(name)
+}
+
 fn match_attr(el : Element, a : AttrSel) -> Bool {
-  let v = el.attr(a.name)
+  let v = attr_lookup(el, a.name)
   match a.op {
     "" => v.is_some()
     "=" => v == Some(a.value)

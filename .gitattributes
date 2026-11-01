@@ -14,3 +14,4 @@
 *.png binary
 *.wasm binary
 *.gz binary
+vendor/css-selectors/old-tests/*.xml -text
