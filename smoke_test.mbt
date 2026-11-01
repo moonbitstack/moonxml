@@ -1,0 +1,23 @@
+test "core smoke" {
+  let doc = Document::new(Flavour::Xml)
+  let html = Element::new("html")
+  doc.root.append(ElementNode(html))
+  let body = Element::new("body")
+  html.append(ElementNode(body))
+  let p = Element::with_attrs("p", [("class", "x"), ("id", "first")])
+  body.append(ElementNode(p))
+  p.set_text("hello")
+  let a = Element::with_attrs("a", [("href", "/x")])
+  body.append(ElementNode(a))
+  a.set_text("link")
+
+  assert_eq(doc.css("p").length(), 1)
+  assert_eq(doc.css("p.x").length(), 1)
+  assert_eq(doc.css("p").text(), "hello")
+  assert_eq(doc.xpath("//p").length(), 1)
+  assert_eq(doc.xpath("//a/@href").length(), 1)
+  assert_eq(doc.xpath("//a/@href").text(), "/x")
+  assert_eq(doc.xpath("//p/text()").text(), "hello")
+  assert_eq(doc.by_id("first").length(), 1)
+  assert_eq(doc.dumps(), "<html><body><p class=\"x\" id=\"first\">hello</p><a href=\"/x\">link</a></body></html>")
+}

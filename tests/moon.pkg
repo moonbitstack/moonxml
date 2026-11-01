@@ -1,0 +1,6 @@
+import {
+  "moonbitstack/moonxml",
+  "moonbitstack/moonxml/event",
+  "moonbitstack/moonxml/html",
+  "moonbitstack/moonxml/xml",
+}
