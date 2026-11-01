@@ -481,6 +481,9 @@ fn svg_adjust_tag(t : String) -> String {
 fn svg_adjust_attr(n : String) -> String {
   match n {
     "attributename" => "attributeName"
+    "contentscripttype" => "contentScriptType"
+    "contentstyletype" => "contentStyleType"
+    "externalresourcesrequired" => "externalResourcesRequired"
     "attributetype" => "attributeType"
     "basefrequency" => "baseFrequency"
     "baseprofile" => "baseProfile"
@@ -489,7 +492,6 @@ fn svg_adjust_attr(n : String) -> String {
     "diffuseconstant" => "diffuseConstant"
     "edgemode" => "edgeMode"
     "filterunits" => "filterUnits"
-    "filterres" => "filterRes"
     "glyphref" => "glyphRef"
     "gradienttransform" => "gradientTransform"
     "gradientunits" => "gradientUnits"
@@ -672,7 +674,7 @@ fn H::auto_close(self : H, tag : String) -> Unit {
     self.pop_while_in(["colgroup"])
   }
   if tag == "button" {
-    self.pop_while_current("button")
+    self.pop_through_scope("button")
   }
   if tag == "rb" || tag == "rtc" {
     self.close_p()
@@ -971,6 +973,23 @@ fn H::pop_implied(self : H, keep : Array[String]) -> Unit {
     } else {
       break
     }
+  }
+}
+
+/// Pop through an open element of this name, wherever it is in scope.
+fn H::pop_through_scope(self : H, name : String) -> Unit {
+  let mut i = self.stack.length() - 1
+  while i > 0 {
+    if local_of(self.stack[i].name).to_lower() == name {
+      while self.stack.length() > i {
+        self.pop()
+      }
+      return
+    }
+    if is_special_el(local_of(self.stack[i].name).to_lower()) && local_of(self.stack[i].name).to_lower() != "p" && local_of(self.stack[i].name).to_lower() != "div" {
+      return
+    }
+    i = i - 1
   }
 }
 
@@ -1790,7 +1809,7 @@ fn H::parse_start_tag(self : H) -> Unit {
     return
   }
   // A table part with no table around it is ignored.
-  if (raw_name == "col" || raw_name == "caption" || raw_name == "tbody" || raw_name == "thead" || raw_name == "tfoot" || raw_name == "colgroup") && self.has_open("table") == false {
+  if (raw_name == "col" || raw_name == "caption" || raw_name == "tbody" || raw_name == "thead" || raw_name == "tfoot" || raw_name == "colgroup") && self.has_open("table") == false && self.template_index() < 0 {
     return
   }
   // In a fragment, html/head/body tags are just text.
