@@ -476,6 +476,30 @@ fn svg_adjust_attr(n : String) -> String {
   }
 }
 
+let xlink_ns_h : String = "http://www.w3.org/1999/xlink"
+let xml_ns_h : String = "http://www.w3.org/XML/1998/namespace"
+let xmlns_ns_h : String = "http://www.w3.org/2000/xmlns/"
+
+/// Foreign attributes keep their namespace: `xlink:href` becomes a Clark name.
+fn adjust_attrs_foreign(attrs : Array[(String, String)]) -> Array[(String, String)] {
+  let out : Array[(String, String)] = []
+  for pair in attrs {
+    let (n, v) = pair
+    if n == "xmlns" {
+      out.push(("{" + xmlns_ns_h + "}xmlns", v))
+    } else if n.has_prefix("xlink:") {
+      out.push(("{" + xlink_ns_h + "}" + n.substring(start=6, end=n.length()), v))
+    } else if n.has_prefix("xml:") {
+      out.push(("{" + xml_ns_h + "}" + n.substring(start=4, end=n.length()), v))
+    } else if n.has_prefix("xmlns:") {
+      out.push(("{" + xmlns_ns_h + "}" + n.substring(start=6, end=n.length()), v))
+    } else {
+      out.push(pair)
+    }
+  }
+  out
+}
+
 /// MathML's one camelCase attribute.
 fn adjust_attrs_math(attrs : Array[(String, String)]) -> Array[(String, String)] {
   let out : Array[(String, String)] = []
@@ -1677,9 +1701,9 @@ fn H::parse_start_tag(self : H) -> Unit {
     "{" + ns + "}" + adjusted
   }
   let final_attrs = if ns == svg_ns {
-    adjust_attrs_svg(attrs)
+    adjust_attrs_foreign(adjust_attrs_svg(attrs))
   } else if ns == math_ns {
-    adjust_attrs_math(attrs)
+    adjust_attrs_foreign(adjust_attrs_math(attrs))
   } else {
     attrs
   }

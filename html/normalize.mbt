@@ -99,6 +99,9 @@ fn normalize_document_impl(
   let head = @moonxml.Element::new("head")
   let body = @moonxml.Element::new("body")
   let mut frameset : @moonxml.Element? = None
+  // A `head`/`body` that was already in the input keeps its attributes.
+  let mut head_out : @moonxml.Element? = None
+  let mut body_out : @moonxml.Element? = None
   // Comments before `head`, kept as `html` children when `html` already existed.
   let before_head : Array[@moonxml.Node] = []
   // Comments met after `head` but before `body`.
@@ -128,6 +131,7 @@ fn normalize_document_impl(
         let l = local_of(e.name).to_lower()
         if l == "head" {
           seen_head = true
+          head_out = Some(e)
           let kids = e.children.copy()
           e.set_children([])
           for k in kids {
@@ -135,6 +139,7 @@ fn normalize_document_impl(
           }
         } else if l == "body" {
           seen_body = true
+          body_out = Some(e)
           let kids = e.children.copy()
           e.set_children([])
           for k in kids {
@@ -191,13 +196,25 @@ fn normalize_document_impl(
   for c in before_head {
     shaped.push(c)
   }
-  shaped.push(@moonxml.Node::ElementNode(head))
+  match head_out {
+    Some(h) => {
+      h.set_children(head.children.copy())
+      shaped.push(@moonxml.Node::ElementNode(h))
+    }
+    None => shaped.push(@moonxml.Node::ElementNode(head))
+  }
   for c in after_head {
     shaped.push(c)
   }
   match frameset {
     Some(f) => shaped.push(@moonxml.Node::ElementNode(f))
-    None => shaped.push(@moonxml.Node::ElementNode(body))
+    None => match body_out {
+      Some(b) => {
+        b.set_children(body.children.copy())
+        shaped.push(@moonxml.Node::ElementNode(b))
+      }
+      None => shaped.push(@moonxml.Node::ElementNode(body))
+    }
   }
   for c in after_frameset {
     shaped.push(c)

@@ -33,6 +33,19 @@ fn sort_attrs(a : Array[(String, String)]) -> Array[(String, String)] {
   out
 }
 
+/// The corpus prints a namespaced attribute as `prefix local`.
+fn attr_name_for_dump(k : String) -> String {
+  if k.has_prefix("{http://www.w3.org/1999/xlink}") {
+    "xlink " + k.substring(start=30, end=k.length())
+  } else if k.has_prefix("{http://www.w3.org/XML/1998/namespace}") {
+    "xml " + k.substring(start=38, end=k.length())
+  } else if k.has_prefix("{http://www.w3.org/2000/xmlns/}") {
+    "xmlns " + k.substring(start=31, end=k.length())
+  } else {
+    k
+  }
+}
+
 fn dump_node(n : @moonxml.Node, depth : Int, sb : StringBuilder) -> Unit {
   match n {
     @moonxml.Node::ElementNode(e) => {
@@ -46,7 +59,12 @@ fn dump_node(n : @moonxml.Node, depth : Int, sb : StringBuilder) -> Unit {
       }
       indent(sb, depth)
       sb.write_string("<" + desig + e.local_name() + ">\n")
-      for pair in sort_attrs(e.attrs) {
+      let named : Array[(String, String)] = []
+      for pair in e.attrs {
+        let (k, v) = pair
+        named.push((attr_name_for_dump(k), v))
+      }
+      for pair in sort_attrs(named) {
         let (k, v) = pair
         indent(sb, depth + 1)
         sb.write_string(k + "=\"" + v + "\"\n")
@@ -151,5 +169,5 @@ test "html5lib conformance" {
     f = f + 1
   }
   // Ratchet: raise this as the parser improves, never lower it.
-  assert_eq(pass >= 1371, true)
+  assert_eq(pass >= 1375, true)
 }
