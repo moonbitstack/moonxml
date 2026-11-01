@@ -1170,6 +1170,16 @@ fn append_text_to(el : @moonxml.Element, s : String) -> Unit {
   el.append(@moonxml.Node::TextNode(s))
 }
 
+/// Whether this element was fostered out of a table.
+fn H::is_fostered_el(self : H, el : @moonxml.Element) -> Bool {
+  for f in self.fostered {
+    if physical_equal(f, el) {
+      return true
+    }
+  }
+  false
+}
+
 fn has_child_named(el : @moonxml.Element, name : String) -> Bool {
   for c in el.children {
     match c {
@@ -1771,6 +1781,12 @@ fn H::parse_start_tag(self : H) -> Unit {
       None => ()
     }
   }
+  // A table part belongs to the table, not to an element fostered out of it.
+  if raw_name == "tr" || raw_name == "td" || raw_name == "th" || raw_name == "tbody" || raw_name == "thead" || raw_name == "tfoot" || raw_name == "caption" || raw_name == "colgroup" || raw_name == "col" {
+    while self.stack.length() > 1 && self.is_fostered_el(self.current()) {
+      self.pop()
+    }
+  }
   // Auto-closing for optional end tags, then reconstruction.
   self.auto_close(raw_name)
   self.implied_table_wrappers(raw_name)
@@ -2311,10 +2327,10 @@ fn is_head_element(n : @moonxml.Node) -> Bool {
   match n {
     @moonxml.Node::ElementNode(e) => {
       let l = local_of(e.name).to_lower()
-      if l == "title" || l == "meta" || l == "link" || l == "base" {
+      if l == "title" || l == "meta" || l == "link" || l == "base" || l == "basefont" || l == "bgsound" {
         return true
       }
-      l == "style" || l == "script" || l == "noscript" || l == "template"
+      l == "style" || l == "script" || l == "noscript" || l == "template" || l == "noframes"
     }
     _ => false
   }
