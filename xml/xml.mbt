@@ -242,7 +242,16 @@ fn X::parse_document(self : X, fragment : Bool) -> @moonxml.Document raise @moon
   if self.starts_with("<?xml") {
     let after = self.peek_at(5)
     if after == ' ' || after == '\t' || after == '\r' || after == '\n' || after == '?' {
-      root.append(@moonxml.Node::ProcessingInstructionNode(self.parse_pi_node()))
+      // The declaration is the one processing instruction whose target is the
+      // reserved name `xml`; it is read here so that `parse_pi_node` can refuse
+      // the name everywhere else.
+      self.pos = self.pos + 5
+      let decl = trim_end_ws(self.read_until("?>"))
+      root.append(
+        @moonxml.Node::ProcessingInstructionNode(
+          @moonxml.ProcessingInstruction::new("xml", decl),
+        ),
+      )
       self.skip_ws()
     }
   }
@@ -289,12 +298,22 @@ fn X::parse_document(self : X, fragment : Bool) -> @moonxml.Document raise @moon
 
 fn X::parse_comment(self : X) -> String raise @moonxml.Refused {
   self.expect("<!--", "expected comment")
-  self.read_until("-->")
+  let data = self.read_until("-->")
+  // Comment data may not contain `--`, and may not end with `-`, because either
+  // would make the end of the comment ambiguous.
+  if data.contains("--") || data.has_suffix("-") {
+    self.fail("'--' is not allowed inside a comment")
+  }
+  data
 }
 
 fn X::parse_pi_node(self : X) -> @moonxml.ProcessingInstruction raise @moonxml.Refused {
   self.expect("<?", "expected processing instruction")
   let target = self.read_name()
+  // `xml` is reserved for the declaration, which may only appear at the start.
+  if target.to_lower() == "xml" {
+    self.fail("the XML declaration is only allowed at the start of the document")
+  }
   let data = self.read_until("?>")
   @moonxml.ProcessingInstruction::new(target, trim_end_ws(data))
 }
@@ -715,6 +734,11 @@ fn X::parse_element(self : X, scope : Array[(String, String)]) -> @moonxml.Eleme
       continue
     }
     let rk = resolve_name(k, new_scope, true)
+    // Two prefixes bound to the same namespace make two spellings of one
+    // attribute, which is not well-formed either.
+    if el.attr(rk).is_some() {
+      self.fail("duplicate attribute " + rk)
+    }
     el.attrs.push((rk, v))
   }
   // Apply attribute defaults from the internal subset.
