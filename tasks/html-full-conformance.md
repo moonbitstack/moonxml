@@ -1,7 +1,7 @@
 # Task: full HTML parsing conformance
 
 Status: in progress. The corpus is vendored and the runner measures a real pass
-rate: **1112/1700** cases (65.4%) as of the latest commit. The parser implements
+rate: **1205/1700** cases (70.9%) as of the latest commit. The parser implements
 the common insertion behaviours and the real adoption agency algorithm, but is
 not yet 100% of the corpus. This file is the incremental plan to get there.
 

@@ -22,10 +22,15 @@ struct H {
   mut repairs : Int
   /// Namespace of the fragment's context element, `""` for HTML or a document.
   mut frag_ns : String
+  /// Set once `</body>` or `</html>` has been seen; later comments belong to
+  /// the `html` element, not to the body.
+  mut body_closed : Bool
+  /// How many comments were appended after `</body>`.
+  mut trailing_comments : Int
 }
 
 fn H::new(s : String) -> H {
-  { s: s.to_array(), n: s.length(), pos: 0, stack: [], afe: [], repairs: 0, frag_ns: "" }
+  { s: s.to_array(), n: s.length(), pos: 0, stack: [], afe: [], repairs: 0, frag_ns: "", body_closed: false, trailing_comments: 0 }
 }
 
 fn H::at_end(self : H) -> Bool {
@@ -502,6 +507,11 @@ fn H::close_p(self : H) -> Unit {
     if l == "table" || l == "td" || l == "th" || l == "button" || l == "html" || l == "caption" || l == "template" {
       break
     }
+    // A `p` outside a `svg`/`math` subtree is not in scope for HTML content
+    // inside it.
+    if ns_of(self.stack[i].name) != "" {
+      break
+    }
     i = i - 1
   }
   if found >= 0 {
@@ -516,9 +526,11 @@ fn H::auto_close(self : H, tag : String) -> Unit {
     self.close_p()
   }
   if tag == "li" {
+    self.pop_implied([])
     self.pop_while_current("li")
   }
   if tag == "dt" || tag == "dd" {
+    self.pop_implied([])
     self.pop_while_current("dt")
     self.pop_while_current("dd")
   }
@@ -574,6 +586,115 @@ fn H::pop_through_head(self : H) -> Unit {
   }
 }
 
+/// Insert a comment. After `</body>` it belongs to the `html` element.
+fn H::push_comment(self : H, text : String) -> Unit {
+  if self.body_closed {
+    self.trailing_comments = self.trailing_comments + 1
+    self.append_to_html(@moonxml.Node::CommentNode(text))
+  } else {
+    self.append_node(@moonxml.Node::CommentNode(text))
+  }
+}
+
+/// Append a node to the `html` element, or to the current node when no `html`
+/// element is open.
+fn H::append_to_html(self : H, node : @moonxml.Node) -> Unit {
+  let mut i = self.stack.length() - 1
+  while i > 0 {
+    if local_of(self.stack[i].name).to_lower() == "html" {
+      self.stack[i].append(node)
+      return
+    }
+    i = i - 1
+  }
+  self.append_node(node)
+}
+
+fn find_child_named(parent : @moonxml.Element, name : String) -> @moonxml.Element? {
+  for c in parent.children {
+    match c {
+      @moonxml.Node::ElementNode(e) => if local_of(e.name).to_lower() == name {
+        return Some(e)
+      }
+      _ => ()
+    }
+  }
+  None
+}
+
+/// Add attributes that `el` does not already carry.
+fn H::merge_attrs_onto(self : H, tag : String, attrs : Array[(String, String)]) -> Unit {
+  let mut i = self.stack.length() - 1
+  while i > 0 {
+    if local_of(self.stack[i].name).to_lower() == tag {
+      let el = self.stack[i]
+      for pair in attrs {
+        let (k, v) = pair
+        if el.attr(k).is_none() {
+          el.set_attr(k, v)
+        }
+      }
+      return
+    }
+    i = i - 1
+  }
+}
+
+/// Whether a `p` is open in button scope.
+fn H::p_in_scope(self : H) -> Bool {
+  let mut i = self.stack.length() - 1
+  while i > 0 {
+    let l = local_of(self.stack[i].name).to_lower()
+    if l == "p" {
+      return true
+    }
+    if l == "table" || l == "td" || l == "th" || l == "button" || l == "html" || l == "caption" || l == "template" {
+      return false
+    }
+    if ns_of(self.stack[i].name) != "" {
+      return false
+    }
+    i = i - 1
+  }
+  false
+}
+
+/// Whether the open body already holds something, which makes a `frameset` start
+/// tag ignorable.
+fn H::body_has_content(self : H) -> Bool {
+  let mut i = self.stack.length() - 1
+  while i > 0 {
+    let l = local_of(self.stack[i].name).to_lower()
+    if l == "body" {
+      return self.stack[i].children.length() > 0
+    }
+    i = i - 1
+  }
+  // No body element yet: content at the document level counts, except head
+  // content, which is still waiting to be routed into `head`.
+  let container = match find_child_named(self.stack[0], "html") {
+    Some(h) => h
+    None => self.stack[0]
+  }
+  for c in container.children {
+    match c {
+      @moonxml.Node::ElementNode(e) => {
+        let l = local_of(e.name).to_lower()
+        if l == "head" || l == "title" || l == "meta" || l == "link" || l == "style" || l == "script" || l == "base" || l == "template" || l == "noscript" {
+          continue
+        }
+        return true
+      }
+      @moonxml.Node::TextNode(t) => if not(@text.is_blank(t)) {
+        return true
+      }
+      @moonxml.Node::CommentNode(_) => ()
+      _ => return true
+    }
+  }
+  false
+}
+
 fn H::template_index(self : H) -> Int {
   let mut i = self.stack.length() - 1
   while i >= 0 {
@@ -604,6 +725,26 @@ fn H::stack_remove(self : H, el : @moonxml.Element) -> Unit {
       break
     }
     i = i + 1
+  }
+}
+
+/// Pop the implied-end-tag elements (dd, dt, li, optgroup, option, p, rb, rp,
+/// rt, rtc) from the top of the stack.
+fn H::pop_implied(self : H, keep : Array[String]) -> Unit {
+  while self.stack.length() > 1 {
+    let l = local_of(self.current().name).to_lower()
+    let implied = l == "dd" || l == "dt" || l == "li" || l == "optgroup" || l == "option" || l == "p" || l == "rb" || l == "rp" || l == "rt" || l == "rtc"
+    let mut kept = false
+    for k in keep {
+      if l == k {
+        kept = true
+      }
+    }
+    if implied && not(kept) {
+      self.pop()
+    } else {
+      break
+    }
   }
 }
 
@@ -730,7 +871,27 @@ fn is_html_breakout(t : String) -> Bool {
 }
 
 fn H::append_node(self : H, node : @moonxml.Node) -> Unit {
-  self.current().append(node)
+  let cur = self.current()
+  // A DOM never keeps two adjacent text nodes: merge, and drop empty ones.
+  match node {
+    @moonxml.Node::TextNode(t) => {
+      if t.length() == 0 {
+        return
+      }
+      let n = cur.children.length()
+      if n > 0 {
+        match cur.children[n - 1] {
+          @moonxml.Node::TextNode(prev) => {
+            cur.children[n - 1] = @moonxml.Node::TextNode(prev + t)
+            return
+          }
+          _ => ()
+        }
+      }
+      cur.append(node)
+    }
+    _ => cur.append(node)
+  }
 }
 
 fn is_table_scope(l : String) -> Bool {
@@ -764,15 +925,60 @@ fn H::find_table(self : H) -> @moonxml.Element? {
   None
 }
 
+/// Insert fostered text just before the table, merging with the text node
+/// already there so a DOM never holds two adjacent text nodes.
+fn H::foster_text(self : H, s : String) -> Bool {
+  match self.find_table() {
+    Some(t) => match t.parent {
+      Some(p) => {
+        let kids = p.children
+        let mut idx = -1
+        let mut i = 0
+        while i < kids.length() {
+          match kids[i] {
+            @moonxml.Node::ElementNode(e) => if physical_equal(e, t) {
+              idx = i
+              break
+            }
+            _ => ()
+          }
+          i = i + 1
+        }
+        if idx < 0 {
+          return false
+        }
+        if idx > 0 {
+          match kids[idx - 1] {
+            @moonxml.Node::TextNode(prev) => {
+              kids[idx - 1] = @moonxml.Node::TextNode(prev + s)
+              return true
+            }
+            _ => ()
+          }
+        }
+        let next : Array[@moonxml.Node] = []
+        let mut j = 0
+        while j < kids.length() {
+          if j == idx {
+            next.push(@moonxml.Node::TextNode(s))
+          }
+          next.push(kids[j])
+          j = j + 1
+        }
+        p.set_children(next)
+        true
+      }
+      None => false
+    }
+    None => false
+  }
+}
+
 fn H::append_text(self : H, s : String) -> Unit {
   let cur = local_of(self.current().name).to_lower()
   if is_table_scope(cur) && not(@text.is_blank(s)) {
-    match self.find_table() {
-      Some(t) => {
-        let _ = t.insert_before(@moonxml.Node::TextNode(s))
-        return
-      }
-      None => ()
+    if self.foster_text(s) {
+      return
     }
   }
   self.append_node(@moonxml.Node::TextNode(s))
@@ -788,14 +994,14 @@ fn H::parse(self : H) -> @moonxml.Element {
       // `<!-->` and `<!--->` are empty comments.
       if not(self.at_end()) && self.peek() == '>' {
         self.pos = self.pos + 1
-        self.append_node(@moonxml.Node::CommentNode(""))
+        self.push_comment("")
       } else if self.starts_with("->") {
         self.pos = self.pos + 2
-        self.append_node(@moonxml.Node::CommentNode(""))
+        self.push_comment("")
       } else {
         let (text, nextpos) = scan_comment(self.s, self.pos)
         self.pos = nextpos
-        self.append_node(@moonxml.Node::CommentNode(text))
+        self.push_comment(text)
       }
     } else if self.starts_with_ci("<!doctype") {
       self.pos = self.pos + 9
@@ -815,6 +1021,24 @@ fn H::parse(self : H) -> @moonxml.Element {
       self.append_node(@moonxml.Node::CommentNode(text))
     } else if self.starts_with("</") {
       self.parse_end_tag()
+    } else if self.starts_with("<![CDATA[") && ns_of(self.current().name) != "" {
+      // A CDATA section is text inside `svg`/`math`; in HTML it is a bogus
+      // comment.
+      self.pos = self.pos + 9
+      let start = self.pos
+      let mut end = self.n
+      let mut after = self.n
+      let mut i = start
+      while i + 2 < self.n {
+        if self.s[i] == ']' && self.s[i + 1] == ']' && self.s[i + 2] == '>' {
+          end = i
+          after = i + 3
+          break
+        }
+        i = i + 1
+      }
+      self.append_node(@moonxml.Node::TextNode(slice_of(self.s, start, end)))
+      self.pos = after
     } else if self.starts_with("<!") {
       // Bogus markup: treat as a comment up to '>'.
       self.pos = self.pos + 2
@@ -967,9 +1191,25 @@ fn H::parse_end_tag(self : H) -> Unit {
   if not(self.at_end()) {
     self.pos = self.pos + 1
   }
+  if name == "body" || name == "html" {
+    self.body_closed = true
+  }
   if formatting_tag(name) {
     self.adoption(name)
     return
+  }
+  if is_heading(name) {
+    if self.pop_heading(name) {
+      return
+    }
+  }
+  if name == "p" {
+    if self.p_in_scope() == false {
+      // The spec inserts an empty paragraph and closes it.
+      let el = @moonxml.Element::new("p")
+      self.append_node(@moonxml.Node::ElementNode(el))
+      return
+    }
   }
   // Walk up to the matching open element. A special element (a block, a
   // button, a cell) blocks the search: `</span>` never reaches past a button.
@@ -1017,6 +1257,38 @@ fn explicit_end_rule(l : String) -> Bool {
     "frame" | "xmp" | "plaintext" | "sarcasm" => true
     _ => false
   }
+}
+
+fn is_heading(l : String) -> Bool {
+  l == "h1" || l == "h2" || l == "h3" || l == "h4" || l == "h5" || l == "h6"
+}
+
+/// `</h2>` closes the nearest open heading, even when the names differ.
+fn H::pop_heading(self : H, name : String) -> Bool {
+  let mut i = self.stack.length() - 1
+  let mut found = -1
+  while i > 0 {
+    let l = local_of(self.stack[i].name).to_lower()
+    if l == name {
+      found = i
+      break
+    }
+    if is_heading(l) {
+      found = i
+      break
+    }
+    if l == "template" || l == "table" || l == "td" || l == "th" || l == "html" {
+      break
+    }
+    i = i - 1
+  }
+  if found < 0 {
+    return false
+  }
+  while self.stack.length() > found {
+    self.pop()
+  }
+  true
 }
 
 /// The WHATWG "special" element category: end tags do not look past one.
@@ -1114,6 +1386,25 @@ fn H::parse_start_tag(self : H) -> Unit {
   if self.handle_in_select(raw_name) {
     return
   }
+  // A second `html` start tag merges its attributes into the open one.
+  if raw_name == "html" {
+    if self.has_open("html") {
+      self.merge_attrs_onto("html", attrs)
+      return
+    }
+    match find_child_named(self.stack[0], "html") {
+      Some(h) => {
+        for pair in attrs {
+          let (k, v) = pair
+          if h.attr(k).is_none() {
+            h.set_attr(k, v)
+          }
+        }
+        return
+      }
+      None => ()
+    }
+  }
   // A body tag while head is still open closes head.
   if raw_name == "body" {
     self.pop_through_head()
@@ -1125,10 +1416,8 @@ fn H::parse_start_tag(self : H) -> Unit {
   // Frames outside a frameset are ignored, and inside a template they are
   // ignored too.
   if raw_name == "frame" || raw_name == "frameset" {
-    if self.template_index() >= 0 || raw_name == "frame" {
-      if self.template_index() >= 0 || self.has_open("frameset") == false {
-        return
-      }
+    if self.template_index() >= 0 || raw_name == "frame" || self.body_has_content() {
+      return
     }
   }
   // A second `a` runs the adoption agency for the first, then forgets it.
@@ -1551,7 +1840,7 @@ fn loads_internal(text : String, fragment : Bool, context : String) -> @moonxml.
       return @moonxml.Document::from_root(root, @moonxml.Flavour::Html)
     }
   }
-  let h = H::new(strip_bom_h(text))
+  let h = H::new(preprocess_h(text))
   if fragment && not(is_integration_name(context_local(context))) {
     if context.has_prefix("svg ") {
       h.frag_ns = svg_ns
@@ -1561,13 +1850,41 @@ fn loads_internal(text : String, fragment : Bool, context : String) -> @moonxml.
   }
   let root = h.parse()
   if fragment == false {
-    normalize_document(root)
+    normalize_document_with(root, h.trailing_comments)
   }
   let doc = @moonxml.Document::from_root(root, @moonxml.Flavour::Html)
   if h.repairs > 0 {
     doc.repairs.note("html parser repaired " + h.repairs.to_string() + " token(s)")
   }
   doc
+}
+
+/// Input-stream preprocessing: drop a BOM, drop NUL, and normalise CRLF and CR
+/// to LF, the way a browser reads bytes.
+fn preprocess_h(s : String) -> String {
+  let cs = s.to_array()
+  let n = cs.length()
+  let sb = StringBuilder()
+  let mut i = 0
+  if n > 0 && Char::to_int(cs[0]) == 0xFEFF {
+    i = 1
+  }
+  while i < n {
+    let c = cs[i]
+    if c == '\u{0}' {
+      i = i + 1
+    } else if c == '\r' {
+      sb.write_char('\n')
+      if i + 1 < n && cs[i + 1] == '\n' {
+        i = i + 1
+      }
+      i = i + 1
+    } else {
+      sb.write_char(c)
+      i = i + 1
+    }
+  }
+  sb.to_string()
 }
 
 fn strip_bom_h(s : String) -> String {

@@ -44,6 +44,12 @@ fn find_element_child(parent : @moonxml.Element, name : String) -> @moonxml.Elem
 /// element they stay at the document level, between `html` and `body` they sit
 /// inside `html` before `head`, and after body content they are body children.
 pub fn normalize_document(root : @moonxml.Element) -> Unit {
+  normalize_document_with(root, 0)
+}
+
+/// `trailing` is how many comments the parser appended after `</body>`; they
+/// stay between `body` and the end of `html`.
+pub fn normalize_document_with(root : @moonxml.Element, trailing : Int) -> Unit {
   let existing = find_element_child(root, "html")
   let html = match existing {
     Some(e) => e
@@ -69,20 +75,38 @@ pub fn normalize_document(root : @moonxml.Element) -> Unit {
   let mut frameset : @moonxml.Element? = None
   // Comments before `head`, kept as `html` children when `html` already existed.
   let before_head : Array[@moonxml.Node] = []
+  // Comments met after `head` but before `body`.
+  let after_head : Array[@moonxml.Node] = []
+  // Comments that follow the body element.
+  let after_body : Array[@moonxml.Node] = []
   // Document-level comments, only possible when `html` had to be synthesized.
   let doc_level : Array[@moonxml.Node] = []
+  let mut seen_element = existing.is_some()
+  let mut seen_head = false
+  let mut seen_body = false
   let mut in_body = false
+  let mut comment_index = 0
+  let mut comment_total = 0
+  for c in source {
+    match c {
+      @moonxml.Node::CommentNode(_) => comment_total = comment_total + 1
+      _ => ()
+    }
+  }
   for n in source {
     match n {
       @moonxml.Node::ElementNode(e) => {
+        seen_element = true
         let l = local_of(e.name).to_lower()
         if l == "head" {
+          seen_head = true
           let kids = e.children.copy()
           e.set_children([])
           for k in kids {
             append_head_child(head, k)
           }
         } else if l == "body" {
+          seen_body = true
           let kids = e.children.copy()
           e.set_children([])
           for k in kids {
@@ -108,10 +132,15 @@ pub fn normalize_document(root : @moonxml.Element) -> Unit {
         }
       }
       @moonxml.Node::CommentNode(_) => {
-        if in_body {
-          body.append(n)
-        } else if existing.is_some() {
+        comment_index = comment_index + 1
+        if comment_index > comment_total - trailing {
+          after_body.push(n)
+        } else if seen_head {
+          after_head.push(n)
+        } else if seen_element {
           before_head.push(n)
+        } else if in_body {
+          body.append(n)
         } else {
           doc_level.push(n)
         }
@@ -127,6 +156,9 @@ pub fn normalize_document(root : @moonxml.Element) -> Unit {
     shaped.push(c)
   }
   shaped.push(@moonxml.Node::ElementNode(head))
+  for c in after_head {
+    shaped.push(c)
+  }
   match frameset {
     Some(f) => shaped.push(@moonxml.Node::ElementNode(f))
     None => shaped.push(@moonxml.Node::ElementNode(body))
