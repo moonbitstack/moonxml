@@ -1077,7 +1077,9 @@ fn loads_internal(text : String, fragment : Bool, context : String, scripting : 
     h.context = Some(ctx)
     h.frameset_ok = false
     // A fragment starts in the content model its context element implies.
-    if local == "title" || local == "textarea" {
+    if ns != "" {
+      // A foreign context is never RCDATA: `svg title` is an SVG element.
+    } else if local == "title" || local == "textarea" {
       h.tstate = TsRcdata
       h.raw_tag = local
     } else if local == "style" || local == "xmp" || local == "iframe" || local == "noembed" || local == "noframes" {

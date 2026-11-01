@@ -160,9 +160,9 @@ fn H::pop_el(self : H) -> @moonxml.Element? {
 }
 
 fn H::pop_until(self : H, name : String) -> Unit {
-  while self.stack.length() > 0 {
+  while self.stack.length() > 1 {
     let l = self.cur_local()
-    let _ = self.stack.pop()
+    self.pop()
     if l == name {
       return
     }
@@ -170,9 +170,9 @@ fn H::pop_until(self : H, name : String) -> Unit {
 }
 
 fn H::pop_until_any(self : H, names : Array[String]) -> Unit {
-  while self.stack.length() > 0 {
+  while self.stack.length() > 1 {
     let l = self.cur_local()
-    let _ = self.stack.pop()
+    self.pop()
     for n in names {
       if l == n {
         return
@@ -190,7 +190,9 @@ fn H::pop_until_index(self : H, idx : Int) -> Unit {
 /// Where a node goes: the current node, or — while foster parenting — the spot
 /// just before the table. The index is `-1` for "append".
 fn H::location(self : H) -> (@moonxml.Element, Int) {
-  if not(self.foster) {
+  // Foster parenting only displaces content that would otherwise land inside a
+  // table part; anything already outside the table stays where it is.
+  if not(self.foster) || not(is_table_scope_tag(self.cur_local())) {
     return (self.cur(), -1)
   }
   let mut ti = -1
@@ -203,10 +205,16 @@ fn H::location(self : H) -> (@moonxml.Element, Int) {
     i = i - 1
   }
   if ti < 0 {
-    if self.stack.length() > 0 {
-      return (self.stack[0], -1)
+    // No table to foster before: the node still belongs beside the current one,
+    // which is how template content collects stray table parts.
+    let cur = self.cur()
+    if cur.parent.is_some() {
+      match cur.parent {
+        Some(p) => return (p, -1)
+        None => ()
+      }
     }
-    return (self.doc, -1)
+    return (cur, -1)
   }
   let table = self.stack[ti]
   match table.parent {
@@ -584,6 +592,12 @@ fn H::reset_mode(self : H) -> Unit {
   let mut last = false
   while true {
     if idx == 0 {
+      if self.fragment {
+        // A fragment's root stands in for the context element, which the spec
+        // would have reached with `last` already true.
+        self.mode = MInBody
+        return
+      }
       last = true
     }
     let node = self.stack[idx]

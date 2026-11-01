@@ -21,6 +21,25 @@ fn is_block_start(t : String) -> Bool {
   t == "p" || t == "section" || t == "summary" || t == "ul" || t == "search"
 }
 
+/// The block elements whose end tag closes them through the generic rule. It
+/// differs from the start-tag list: `p`, `form`, `li`, `dd`, `dt` and the
+/// headings each have their own end-tag rule.
+fn is_block_end(t : String) -> Bool {
+  if t == "address" || t == "article" || t == "aside" || t == "blockquote" || t == "button" {
+    return true
+  }
+  if t == "center" || t == "details" || t == "dialog" || t == "dir" || t == "div" {
+    return true
+  }
+  if t == "dl" || t == "fieldset" || t == "figcaption" || t == "figure" || t == "footer" {
+    return true
+  }
+  if t == "header" || t == "hgroup" || t == "listing" || t == "main" || t == "menu" {
+    return true
+  }
+  t == "nav" || t == "ol" || t == "pre" || t == "section" || t == "summary" || t == "ul"
+}
+
 fn is_heading_tag(t : String) -> Bool {
   t == "h1" || t == "h2" || t == "h3" || t == "h4" || t == "h5" || t == "h6"
 }
@@ -29,7 +48,7 @@ fn is_formatting_tag(t : String) -> Bool {
   if t == "b" || t == "big" || t == "code" || t == "em" || t == "font" || t == "i" {
     return true
   }
-  if t == "nobr" || t == "s" || t == "small" || t == "strike" || t == "strong" {
+  if t == "s" || t == "small" || t == "strike" || t == "strong" {
     return true
   }
   t == "tt" || t == "u"
@@ -83,7 +102,21 @@ fn H::step_in_body(self : H, tok : Tok) -> Bool {
     Doctype(_) => false
     Start(t, a, sc) => self.start_in_body(t, a, sc)
     End(t) => self.end_in_body(t)
-    Eof => false
+    Eof => {
+      // An open template has to close before the document does, and closing it
+      // resumes the mode the template interrupted.
+      if self.has_open("template") {
+        self.pop_until("template")
+        self.afe_clear_to_marker()
+        if self.template_modes.length() > 0 {
+          let _ = self.template_modes.pop()
+        }
+        self.reset_mode()
+        true
+      } else {
+        false
+      }
+    }
   }
 }
 
@@ -371,12 +404,11 @@ fn H::start_in_body(
   if is_table_ignored_start(t) {
     return false
   }
+  // A self-closing flag on a non-void HTML element is a parse error and is
+  // otherwise ignored: the element stays open.
+  let _ = sc
   self.reconstruct()
-  let el = self.insert_el(t, a)
-  if sc {
-    self.pop()
-    let _ = el
-  }
+  let _ = self.insert_el(t, a)
   false
 }
 
@@ -424,7 +456,7 @@ fn H::end_in_body(self : H, t : String) -> Bool {
     self.mode = MAfterBody
     return true
   }
-  if is_block_start(t) {
+  if is_block_end(t) {
     if not(self.has_in_scope(t, ScDefault)) {
       return false
     }
@@ -613,24 +645,48 @@ fn has_any_attr(a : Array[(String, String)], names : Array[String]) -> Bool {
   false
 }
 
-/// Pop out of foreign content back to HTML content, then let the insertion
-/// mode handle the token.
-fn H::break_out_foreign(self : H) -> Unit {
+/// Pop out of foreign content back to HTML content. Returns false when the
+/// content could not be left, which happens in a fragment whose context is a
+/// plain foreign element: that context cannot be popped, so the tag stays
+/// foreign.
+fn H::break_out_foreign(self : H) -> Bool {
+  // In a fragment whose context is a plain foreign element there is no HTML
+  // content to break out to: the whole fragment is foreign.
+  if self.fragment {
+    match self.context {
+      Some(c) => {
+        if ns_of(c.name) != "" {
+          let cl = local_of(c.name).to_lower()
+          if not(is_mathml_text_ip(cl)) && not(self.is_html_ip(c)) {
+            return false
+          }
+        }
+      }
+      None => ()
+    }
+  }
   while self.stack.length() > 1 {
     let cur = self.cur()
     let ns = ns_of(cur.name)
     if ns == "" {
-      return
+      return true
     }
     let l = local_of(cur.name).to_lower()
-    if is_mathml_text_ip(l) {
-      return
-    }
-    if self.is_html_ip(cur) {
-      return
+    if is_mathml_text_ip(l) || self.is_html_ip(cur) {
+      return true
     }
     self.pop()
   }
+  if self.fragment {
+    let a = self.adjusted()
+    if ns_of(a.name) != "" {
+      let l = local_of(a.name).to_lower()
+      if not(is_mathml_text_ip(l)) && not(self.is_html_ip(a)) {
+        return false
+      }
+    }
+  }
+  true
 }
 
 fn H::step_foreign(self : H, tok : Tok) -> Bool {
@@ -650,8 +706,9 @@ fn H::step_foreign(self : H, tok : Tok) -> Bool {
     Start(t, a, sc) => {
       let breakout = is_html_breakout(t) || (t == "font" && has_any_attr(a, ["color", "face", "size"]))
       if breakout {
-        self.break_out_foreign()
-        return false
+        if self.break_out_foreign() {
+          return false
+        }
       }
       let ns = self.adjusted_ns()
       if ns == svg_ns {
@@ -679,8 +736,7 @@ fn H::step_foreign(self : H, tok : Tok) -> Bool {
     }
     End(t) => {
       if t == "br" || t == "p" {
-        self.break_out_foreign()
-        return false
+        return if self.break_out_foreign() { false } else { true }
       }
       let mut i = self.stack.length() - 1
       while i >= 0 {

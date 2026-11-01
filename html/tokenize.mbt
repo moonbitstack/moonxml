@@ -99,9 +99,9 @@ fn H::next_token(self : H) -> Tok {
     }
     if self.starts_with("</") {
       if self.pos + 2 >= self.n {
-        // A trailing `</` produces nothing.
+        // A trailing `</` at end of input is text.
         self.pos = self.n
-        continue
+        return Chars("</")
       }
       if not(is_ascii_alpha(self.peek_at(2))) {
         if self.peek_at(2) == '>' {

@@ -570,7 +570,7 @@ fn H::step_in_table(self : H, tok : Tok) -> Bool {
         self.anything_else_in_table(tok)
       }
     }
-    Eof => false
+    Eof => self.step_in_body(tok)
   }
 }
 
@@ -980,7 +980,7 @@ fn H::step_in_select(self : H, tok : Tok) -> Bool {
       false
     }
     End(_) => false
-    Eof => false
+    Eof => self.step_in_body(tok)
   }
 }
 
@@ -1037,7 +1037,19 @@ fn H::step_in_template(self : H, tok : Tok) -> Bool {
       false
     }
     End(_) => false
-    Eof => false
+    Eof => {
+      if self.has_open("template") {
+        self.pop_until("template")
+        self.afe_clear_to_marker()
+        if self.template_modes.length() > 0 {
+          let _ = self.template_modes.pop()
+        }
+        self.reset_mode()
+        true
+      } else {
+        false
+      }
+    }
   }
 }
 
