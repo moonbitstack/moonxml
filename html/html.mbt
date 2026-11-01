@@ -1269,7 +1269,7 @@ fn H::parse_end_tag(self : H) -> Unit {
     }
   }
   if name == "p" {
-    if self.p_in_scope() == false && self.has_open("body") {
+    if self.p_in_scope() == false && (self.has_open("body") || self.body_has_content()) {
       // The spec inserts an empty paragraph and closes it.
       let el = @moonxml.Element::new("p")
       self.append_node(@moonxml.Node::ElementNode(el))
@@ -1509,9 +1509,21 @@ fn H::parse_start_tag(self : H) -> Unit {
   }
   // Frames outside a frameset are ignored, and inside a template they are
   // ignored too.
-  if raw_name == "frame" || raw_name == "frameset" {
-    if self.template_index() >= 0 || raw_name == "frame" || self.body_has_content() {
+  if raw_name == "frame" {
+    // A frame only lives directly inside a frameset.
+    if not(self.has_open("frameset")) {
       return
+    }
+  }
+  if raw_name == "frameset" {
+    if self.template_index() >= 0 || self.body_has_content() {
+      return
+    }
+  }
+  // A `nobr` with one already open runs the adoption agency for it first.
+  if raw_name == "nobr" {
+    if self.has_open("nobr") {
+      self.adoption("nobr")
     }
   }
   // A second `a` runs the adoption agency for the first, then forgets it.
