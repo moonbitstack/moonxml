@@ -200,5 +200,5 @@ test "html5lib conformance" {
     f = f + 1
   }
   // Ratchet: raise this as the parser improves, never lower it.
-  assert_eq(pass >= 1446, true)
+  assert_eq(pass >= 1456, true)
 }

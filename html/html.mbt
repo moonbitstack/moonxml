@@ -365,6 +365,39 @@ fn strip_nul(s : String) -> String {
   sb.to_string()
 }
 
+/// NUL becomes U+FFFD in raw text and CDATA.
+fn nul_to_fffd(s : String) -> String {
+  if s.contains("\u{0}") == false {
+    return s
+  }
+  let sb = StringBuilder()
+  for c in s {
+    if c == '\u{0}' {
+      sb.write_string("\u{FFFD}")
+    } else {
+      sb.write_char(c)
+    }
+  }
+  sb.to_string()
+}
+
+/// Read a tag name, skipping NUL the way the tokenizer does.
+fn H::read_tag_name(self : H) -> String {
+  let sb = StringBuilder()
+  while not(self.at_end()) {
+    let c = self.peek()
+    if c == '\u{0}' {
+      self.pos = self.pos + 1
+    } else if is_tag_name_char(c) {
+      sb.write_char(lower_char(c))
+      self.pos = self.pos + 1
+    } else {
+      break
+    }
+  }
+  sb.to_string()
+}
+
 fn slice_of(cs : Array[Char], start : Int, end : Int) -> String {
   let sb = StringBuilder()
   let mut i = start
@@ -1260,7 +1293,7 @@ fn H::parse(self : H) -> @moonxml.Element {
       } else {
         let (text, nextpos) = scan_comment(self.s, self.pos)
         self.pos = nextpos
-        self.push_comment(text)
+        self.push_comment(nul_to_fffd(text))
       }
     } else if self.starts_with_ci("<!doctype") {
       self.pos = self.pos + 9
@@ -1316,7 +1349,7 @@ fn H::parse(self : H) -> @moonxml.Element {
         }
         i = i + 1
       }
-      self.append_node(@moonxml.Node::TextNode(slice_of(self.s, start, end)))
+      self.append_node(@moonxml.Node::TextNode(nul_to_fffd(slice_of(self.s, start, end))))
       self.pos = after
     } else if self.starts_with("<!") {
       // Bogus markup: treat as a comment up to '>'.
@@ -1341,7 +1374,7 @@ fn H::parse(self : H) -> @moonxml.Element {
       let raw = slice_of(self.s, start, self.pos)
       if raw.length() > 0 {
         self.reconstruct()
-        self.append_text(decode_entities(raw))
+        self.append_text(decode_entities(strip_nul(raw)))
       } else if not(self.at_end()) && self.peek() == '<' {
         // A '<' that did not start a tag: emit it and advance, or the loop hangs.
         self.pos = self.pos + 1
@@ -1459,11 +1492,7 @@ fn find_marker_ci(cs : Array[Char], start : Int, marker : String) -> Int {
 
 fn H::parse_end_tag(self : H) -> Unit {
   self.pos = self.pos + 2
-  let start = self.pos
-  while not(self.at_end()) && is_tag_name_char(self.peek()) {
-    self.pos = self.pos + 1
-  }
-  let name = slice_of(self.s, start, self.pos).to_lower()
+  let name = self.read_tag_name()
   let mut has_lt = false
   while not(self.at_end()) && self.peek() != '>' {
     if self.peek() == '<' {
@@ -1615,11 +1644,7 @@ fn is_special_el(l : String) -> Bool {
 
 fn H::parse_start_tag(self : H) -> Unit {
   self.pos = self.pos + 1
-  let start = self.pos
-  while not(self.at_end()) && is_tag_name_char(self.peek()) {
-    self.pos = self.pos + 1
-  }
-  let raw_name = slice_of(self.s, start, self.pos).to_lower()
+  let raw_name = self.read_tag_name()
   if raw_name.length() == 0 {
     // A stray '<'.
     self.append_node(@moonxml.Node::TextNode("<"))
@@ -1671,7 +1696,7 @@ fn H::parse_start_tag(self : H) -> Unit {
           while not(self.at_end()) && self.peek() != q {
             self.pos = self.pos + 1
           }
-          avalue = decode_entities_attr(slice_of(self.s, vstart, self.pos))
+          avalue = decode_entities_attr(nul_to_fffd(slice_of(self.s, vstart, self.pos)))
           if not(self.at_end()) {
             self.pos = self.pos + 1
           }
@@ -1680,7 +1705,7 @@ fn H::parse_start_tag(self : H) -> Unit {
           while not(self.at_end()) && @text.is_html_space(self.peek()) == false && self.peek() != '>' {
             self.pos = self.pos + 1
           }
-          avalue = decode_entities_attr(slice_of(self.s, vstart, self.pos))
+          avalue = decode_entities_attr(nul_to_fffd(slice_of(self.s, vstart, self.pos)))
         }
       }
       if aname.length() > 0 {
@@ -2201,9 +2226,9 @@ fn H::consume_rawtext(self : H, tag : String, decode : Bool) -> Unit {
   let raw = slice_of(self.s, self.pos, text_end)
   if raw.length() > 0 {
     let text = if decode {
-      decode_entities(raw)
+      decode_entities(nul_to_fffd(raw))
     } else {
-      raw
+      nul_to_fffd(raw)
     }
     self.append_node(@moonxml.Node::TextNode(text))
   }
@@ -2302,8 +2327,9 @@ fn loads_internal(text : String, fragment : Bool, context : String, scripting : 
   doc
 }
 
-/// Input-stream preprocessing: drop a BOM and NUL, and normalise CRLF and CR to
-/// LF, the way a browser reads bytes.
+/// Input-stream preprocessing: drop a BOM and normalise CRLF and CR to LF, the
+/// way a browser reads bytes. NUL goes on to the tokenizer, which drops it in
+/// data and replaces it with U+FFFD in raw text.
 fn preprocess_h(s : String) -> String {
   let cs = s.to_array()
   let n = cs.length()
@@ -2314,9 +2340,7 @@ fn preprocess_h(s : String) -> String {
   }
   while i < n {
     let c = cs[i]
-    if c == '\u{0}' {
-      i = i + 1
-    } else if c == '\r' {
+    if c == '\r' {
       sb.write_char('\n')
       if i + 1 < n && cs[i + 1] == '\n' {
         i = i + 1
