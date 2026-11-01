@@ -481,9 +481,6 @@ fn svg_adjust_tag(t : String) -> String {
 fn svg_adjust_attr(n : String) -> String {
   match n {
     "attributename" => "attributeName"
-    "contentscripttype" => "contentScriptType"
-    "contentstyletype" => "contentStyleType"
-    "externalresourcesrequired" => "externalResourcesRequired"
     "attributetype" => "attributeType"
     "basefrequency" => "baseFrequency"
     "baseprofile" => "baseProfile"
