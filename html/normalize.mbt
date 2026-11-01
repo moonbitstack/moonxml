@@ -79,6 +79,8 @@ pub fn normalize_document_with(root : @moonxml.Element, trailing : Int) -> Unit 
   let after_head : Array[@moonxml.Node] = []
   // Comments that follow the body element.
   let after_body : Array[@moonxml.Node] = []
+  // Content met after a frameset: it stays at html level.
+  let after_frameset : Array[@moonxml.Node] = []
   // Document-level comments, only possible when `html` had to be synthesized.
   let doc_level : Array[@moonxml.Node] = []
   let mut seen_element = existing.is_some()
@@ -124,7 +126,9 @@ pub fn normalize_document_with(root : @moonxml.Element, trailing : Int) -> Unit 
         }
       }
       @moonxml.Node::TextNode(s) => {
-        if @text.is_blank(s) && not(in_body) {
+        if frameset.is_some() && in_body {
+          after_frameset.push(n)
+        } else if @text.is_blank(s) && not(in_body) {
           // formatting whitespace before body is not part of the tree
         } else {
           in_body = true
@@ -133,7 +137,9 @@ pub fn normalize_document_with(root : @moonxml.Element, trailing : Int) -> Unit 
       }
       @moonxml.Node::CommentNode(_) => {
         comment_index = comment_index + 1
-        if comment_index > comment_total - trailing {
+        if frameset.is_some() && in_body {
+          after_frameset.push(n)
+        } else if comment_index > comment_total - trailing {
           after_body.push(n)
         } else if seen_head {
           after_head.push(n)

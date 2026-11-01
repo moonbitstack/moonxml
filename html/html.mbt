@@ -27,10 +27,12 @@ struct H {
   mut body_closed : Bool
   /// How many comments were appended after `</body>`.
   mut trailing_comments : Int
+  /// True when the input is a fragment, where html/head/body tags are text.
+  mut fragment_mode : Bool
 }
 
 fn H::new(s : String) -> H {
-  { s: s.to_array(), n: s.length(), pos: 0, stack: [], afe: [], repairs: 0, frag_ns: "", body_closed: false, trailing_comments: 0 }
+  { s: s.to_array(), n: s.length(), pos: 0, stack: [], afe: [], repairs: 0, frag_ns: "", body_closed: false, trailing_comments: 0, fragment_mode: false }
 }
 
 fn H::at_end(self : H) -> Bool {
@@ -583,13 +585,37 @@ fn H::auto_close(self : H, tag : String) -> Unit {
   }
 }
 
+/// Remove the nearest open element with this name without popping what sits
+/// above it, the way `</form>` works.
+fn H::remove_open(self : H, name : String) -> Bool {
+  let mut i = self.stack.length() - 1
+  while i > 0 {
+    if local_of(self.stack[i].name).to_lower() == name {
+      let el = self.stack[i]
+      let _ = self.stack.remove(i)
+      self.afe_remove(el)
+      return true
+    }
+    if is_special_el(local_of(self.stack[i].name).to_lower()) && local_of(self.stack[i].name).to_lower() != "div" {
+      return false
+    }
+    i = i - 1
+  }
+  false
+}
+
 fn H::pop_through_head(self : H) -> Unit {
   let mut i = self.stack.length() - 1
   let mut found = -1
   while i > 0 {
-    if local_of(self.stack[i].name).to_lower() == "head" {
+    let l = local_of(self.stack[i].name).to_lower()
+    if l == "head" {
       found = i
       break
+    }
+    // Content inside a template is not head content.
+    if l == "template" {
+      return
     }
     i = i - 1
   }
@@ -1231,6 +1257,11 @@ fn H::parse_end_tag(self : H) -> Unit {
       return
     }
   }
+  if name == "form" {
+    if self.remove_open("form") {
+      return
+    }
+  }
   if name == "p" {
     if self.p_in_scope() == false {
       // The spec inserts an empty paragraph and closes it.
@@ -1447,6 +1478,16 @@ fn H::parse_start_tag(self : H) -> Unit {
   // A heading start tag closes an open heading.
   if raw_name == "h1" || raw_name == "h2" || raw_name == "h3" || raw_name == "h4" || raw_name == "h5" || raw_name == "h6" {
     self.pop_while_in(["h1", "h2", "h3", "h4", "h5", "h6"])
+  }
+  // In a fragment, html/head/body tags are just text.
+  if self.fragment_mode && (raw_name == "html" || raw_name == "head" || raw_name == "body") {
+    return
+  }
+  // In frameset mode nothing but frames is inserted.
+  if local_of(self.current().name).to_lower() == "frameset" {
+    if not(raw_name == "frame" || raw_name == "frameset" || raw_name == "noframes") {
+      return
+    }
   }
   // Frames outside a frameset are ignored, and inside a template they are
   // ignored too.
@@ -1881,6 +1922,7 @@ fn loads_internal(text : String, fragment : Bool, context : String) -> @moonxml.
     }
   }
   let h = H::new(preprocess_h(text))
+  h.fragment_mode = fragment
   if fragment && not(is_integration_name(context_local(context).to_lower())) {
     if context.has_prefix("svg ") {
       h.frag_ns = svg_ns
