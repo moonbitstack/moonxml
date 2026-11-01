@@ -337,6 +337,20 @@ fn decode_entities_attr(s : String) -> String {
   decode_entities_mode(s, true)
 }
 
+/// NUL is ignored in ordinary text.
+fn strip_nul(s : String) -> String {
+  if s.contains("\u{0}") == false {
+    return s
+  }
+  let sb = StringBuilder()
+  for c in s {
+    if c != '\u{0}' {
+      sb.write_char(c)
+    }
+  }
+  sb.to_string()
+}
+
 fn slice_of(cs : Array[Char], start : Int, end : Int) -> String {
   let sb = StringBuilder()
   let mut i = start
@@ -607,7 +621,8 @@ fn H::append_to_html(self : H, node : @moonxml.Node) -> Unit {
     }
     i = i - 1
   }
-  self.append_node(node)
+  // No `html` element: the comment belongs to the document, above `html`.
+  self.stack[0].append(node)
 }
 
 fn find_child_named(parent : @moonxml.Element, name : String) -> @moonxml.Element? {
@@ -1434,7 +1449,9 @@ fn H::parse_start_tag(self : H) -> Unit {
   // Auto-closing for optional end tags, then reconstruction.
   self.auto_close(raw_name)
   self.implied_table_wrappers(raw_name)
-  self.reconstruct()
+  if not(closes_p(raw_name)) {
+    self.reconstruct()
+  }
   // Break out of foreign content on an HTML start tag (unless at an
   // integration point).
   let cur_ns = ns_of(self.current().name)
@@ -1859,7 +1876,7 @@ fn loads_internal(text : String, fragment : Bool, context : String) -> @moonxml.
   doc
 }
 
-/// Input-stream preprocessing: drop a BOM, drop NUL, and normalise CRLF and CR
+/// Input-stream preprocessing: drop a BOM and NUL, and normalise CRLF and CR
 /// to LF, the way a browser reads bytes.
 fn preprocess_h(s : String) -> String {
   let cs = s.to_array()

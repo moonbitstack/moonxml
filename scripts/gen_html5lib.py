@@ -67,8 +67,21 @@ def parse_file(path: pathlib.Path):
         i += 1
         doc = []
         while i < n and lines[i].startswith("| "):
-            doc.append(lines[i])
+            line = lines[i]
             i += 1
+            # A text node may span lines: its content is everything up to the
+            # closing quote, which can sit on a later line.
+            content = line[2:].lstrip()
+            if content.startswith('"') and not content.endswith('"'):
+                parts = [line]
+                while i < n:
+                    parts.append(lines[i])
+                    ended = lines[i].endswith('"')
+                    i += 1
+                    if ended:
+                        break
+                line = "\n".join(parts)
+            doc.append(line)
         cases.append(
             {
                 "file": path.name,
