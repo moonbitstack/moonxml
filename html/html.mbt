@@ -1554,6 +1554,11 @@ fn H::parse_end_tag(self : H) -> Unit {
       self.append_node(@moonxml.Node::ElementNode(el))
       return
     }
+    if self.p_in_scope() {
+      // Closing a paragraph keeps its formatting elements for reconstruction.
+      self.close_p()
+      return
+    }
   }
   // Walk up to the matching open element. A special element (a block, a
   // button, a cell) blocks the search: `</span>` never reaches past a button.
@@ -1880,6 +1885,14 @@ fn H::parse_start_tag(self : H) -> Unit {
         break
       }
       i = i - 1
+    }
+  }
+  // Inside template content, a non-table tag closes an open row so it lands
+  // beside the row rather than inside it.
+  if self.template_index() >= 0 && self.has_open("table") == false && local_of(self.current().name).to_lower() == "tr" {
+    let table_part = raw_name == "td" || raw_name == "th" || raw_name == "tr" || raw_name == "tbody" || raw_name == "thead" || raw_name == "tfoot" || raw_name == "caption" || raw_name == "col" || raw_name == "colgroup"
+    if not(table_part) {
+      self.pop()
     }
   }
   // A table part belongs to the table, not to an element fostered out of it.
