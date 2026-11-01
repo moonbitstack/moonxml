@@ -289,6 +289,89 @@ fn is_rcdata_tag(t : String) -> Bool {
   t == "textarea" || t == "title"
 }
 
+fn svg_adjust_tag(t : String) -> String {
+  match t {
+    "foreignobject" => "foreignObject"
+    "lineargradient" => "linearGradient"
+    "radialgradient" => "radialGradient"
+    "clippath" => "clipPath"
+    "textpath" => "textPath"
+    "altglyph" => "altGlyph"
+    "altglyphdef" => "altGlyphDef"
+    "altglyphitem" => "altGlyphItem"
+    "animatecolor" => "animateColor"
+    "animatemotion" => "animateMotion"
+    "animatetransform" => "animateTransform"
+    "feblend" => "feBlend"
+    "fecolormatrix" => "feColorMatrix"
+    "fecomponenttransfer" => "feComponentTransfer"
+    "fecomposite" => "feComposite"
+    "feconvolvematrix" => "feConvolveMatrix"
+    "fediffuselighting" => "feDiffuseLighting"
+    "fedisplacementmap" => "feDisplacementMap"
+    "fedistantlight" => "feDistantLight"
+    "feflood" => "feFlood"
+    "fefunca" => "feFuncA"
+    "fefuncb" => "feFuncB"
+    "fefuncg" => "feFuncG"
+    "fefuncr" => "feFuncR"
+    "fegaussianblur" => "feGaussianBlur"
+    "feimage" => "feImage"
+    "femerge" => "feMerge"
+    "femergenode" => "feMergeNode"
+    "femorphology" => "feMorphology"
+    "feoffset" => "feOffset"
+    "fepointlight" => "fePointLight"
+    "fespecularlighting" => "feSpecularLighting"
+    "fespotlight" => "feSpotLight"
+    "fetile" => "feTile"
+    "feturbulence" => "feTurbulence"
+    _ => t
+  }
+}
+
+fn svg_adjust_attr(n : String) -> String {
+  match n {
+    "viewbox" => "viewBox"
+    "preserveaspectratio" => "preserveAspectRatio"
+    "gradientunits" => "gradientUnits"
+    "gradienttransform" => "gradientTransform"
+    "patternunits" => "patternUnits"
+    "patterncontentunits" => "patternContentUnits"
+    "patterntransform" => "patternTransform"
+    "clippathunits" => "clipPathUnits"
+    "markerwidth" => "markerWidth"
+    "markerheight" => "markerHeight"
+    "markerunits" => "markerUnits"
+    "refx" => "refX"
+    "refy" => "refY"
+    "textlength" => "textLength"
+    "lengthadjust" => "lengthAdjust"
+    "spreadmethod" => "spreadMethod"
+    "maskunits" => "maskUnits"
+    "maskcontentunits" => "maskContentUnits"
+    "filterunits" => "filterUnits"
+    "primitiveunits" => "primitiveUnits"
+    "attributename" => "attributeName"
+    "attributetype" => "attributeType"
+    "basefrequency" => "baseFrequency"
+    "numoctaves" => "numOctaves"
+    "stddeviation" => "stdDeviation"
+    "stitchtiles" => "stitchTiles"
+    "zoomandpan" => "zoomAndPan"
+    _ => n
+  }
+}
+
+fn adjust_attrs_svg(attrs : Array[(String, String)]) -> Array[(String, String)] {
+  let out : Array[(String, String)] = []
+  for pair in attrs {
+    let (n, v) = pair
+    out.push((svg_adjust_attr(n), v))
+  }
+  out
+}
+
 fn closes_p(t : String) -> Bool {
   if t == "address" || t == "article" || t == "aside" || t == "blockquote" {
     return true
@@ -359,6 +442,51 @@ fn H::append_node(self : H, node : @moonxml.Node) -> Unit {
   self.current().append(node)
 }
 
+fn is_table_scope(l : String) -> Bool {
+  l == "table" || l == "tbody" || l == "thead" || l == "tfoot" || l == "tr"
+}
+
+fn table_allows(scope : String, tag : String) -> Bool {
+  if tag == "style" || tag == "script" || tag == "template" || tag == "input" {
+    return true
+  }
+  if scope == "table" {
+    if tag == "caption" || tag == "colgroup" || tag == "col" {
+      return true
+    }
+    return tag == "thead" || tag == "tbody" || tag == "tfoot" || tag == "tr"
+  }
+  if scope == "tr" {
+    return tag == "td" || tag == "th"
+  }
+  tag == "tr"
+}
+
+fn H::find_table(self : H) -> @moonxml.Element? {
+  let mut i = self.stack.length() - 1
+  while i >= 0 {
+    if local_of(self.stack[i].name).to_lower() == "table" {
+      return Some(self.stack[i])
+    }
+    i = i - 1
+  }
+  None
+}
+
+fn H::append_text(self : H, s : String) -> Unit {
+  let cur = local_of(self.current().name).to_lower()
+  if is_table_scope(cur) && not(@text.is_blank(s)) {
+    match self.find_table() {
+      Some(t) => {
+        let _ = t.insert_before(@moonxml.Node::TextNode(s))
+        return
+      }
+      None => ()
+    }
+  }
+  self.append_node(@moonxml.Node::TextNode(s))
+}
+
 fn H::parse(self : H) -> @moonxml.Element {
   let root = @moonxml.Element::new("#document")
   // Parse into `root`; wrapping happens in `loads`.
@@ -414,7 +542,7 @@ fn H::parse(self : H) -> @moonxml.Element {
       }
       let raw = slice_of(self.s, start, self.pos)
       if raw.length() > 0 {
-        self.append_node(@moonxml.Node::TextNode(decode_entities(raw)))
+        self.append_text(decode_entities(raw))
       }
     }
   }
@@ -570,13 +698,34 @@ fn H::parse_start_tag(self : H) -> Unit {
   } else {
     child_ns
   }
-  let name = if ns == "" {
-    raw_name
+  let adjusted = if ns == svg_ns {
+    svg_adjust_tag(raw_name)
   } else {
-    "{" + ns + "}" + raw_name
+    raw_name
   }
-  let el = @moonxml.Element::with_attrs(name, attrs)
-  self.append_node(@moonxml.Node::ElementNode(el))
+  let name = if ns == "" {
+    adjusted
+  } else {
+    "{" + ns + "}" + adjusted
+  }
+  let final_attrs = if ns == svg_ns {
+    adjust_attrs_svg(attrs)
+  } else {
+    attrs
+  }
+  let el = @moonxml.Element::with_attrs(name, final_attrs)
+  let scope = local_of(self.current().name).to_lower()
+  let foster = is_table_scope(scope) && not(table_allows(scope, raw_name))
+  if foster {
+    match self.find_table() {
+      Some(t) => {
+        let _ = t.insert_before(@moonxml.Node::ElementNode(el))
+      }
+      None => self.append_node(@moonxml.Node::ElementNode(el))
+    }
+  } else {
+    self.append_node(@moonxml.Node::ElementNode(el))
+  }
   if is_void_tag(raw_name) {
     return
   }
@@ -708,11 +857,42 @@ fn wrap_in_html(root : @moonxml.Element) -> Unit {
     }
   }
   let html = @moonxml.Element::new("html")
-  let body = @moonxml.Element::new("body")
+  let head_elems : Array[@moonxml.Node] = []
+  let body_nodes : Array[@moonxml.Node] = []
+  let mut in_body = false
   for n in move {
+    if not(in_body) && is_head_element(n) {
+      head_elems.push(n)
+    } else {
+      in_body = true
+      body_nodes.push(n)
+    }
+  }
+  if head_elems.length() > 0 {
+    let head = @moonxml.Element::new("head")
+    for n in head_elems {
+      head.append(n)
+    }
+    html.append(@moonxml.Node::ElementNode(head))
+  }
+  let body = @moonxml.Element::new("body")
+  for n in body_nodes {
     body.append(n)
   }
   html.append(@moonxml.Node::ElementNode(body))
   keep.push(@moonxml.Node::ElementNode(html))
   root.set_children(keep)
+}
+
+fn is_head_element(n : @moonxml.Node) -> Bool {
+  match n {
+    @moonxml.Node::ElementNode(e) => {
+      let l = local_of(e.name).to_lower()
+      if l == "title" || l == "meta" || l == "link" || l == "base" {
+        return true
+      }
+      l == "style" || l == "script" || l == "noscript" || l == "template"
+    }
+    _ => false
+  }
 }

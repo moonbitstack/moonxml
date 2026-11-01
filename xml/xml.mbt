@@ -975,35 +975,3 @@ fn X::expand_string(self : X, s : String, active : Array[String]) -> String rais
   }
   sb.to_string()
 }
-
-// ---------------------------------------------------------------------------
-// Streaming events
-// ---------------------------------------------------------------------------
-
-/// Emit a document's events to `sink`. The events are produced from a parsed
-/// tree, so no caller-visible difference exists; a future revision can stream
-/// them from the tokenizer directly.
-pub fn scan(text : String, sink : &@event.Sink) -> Unit raise @moonxml.Refused {
-  let doc = loads(text)
-  for c in doc.root.children {
-    emit_event(c, sink)
-  }
-}
-
-fn emit_event(node : @moonxml.Node, sink : &@event.Sink) -> Unit {
-  match node {
-    @moonxml.Node::ElementNode(e) => {
-      sink.push(@event.Event::StartTag(name=e.name, attrs=e.attrs, self_closing=e.closed))
-      for c in e.children {
-        emit_event(c, sink)
-      }
-      sink.push(@event.Event::EndTag(name=e.name))
-    }
-    @moonxml.Node::TextNode(s) => sink.push(@event.Event::Text(text=s))
-    @moonxml.Node::CDataNode(s) => sink.push(@event.Event::CData(text=s))
-    @moonxml.Node::CommentNode(s) => sink.push(@event.Event::Comment(text=s))
-    @moonxml.Node::ProcessingInstructionNode(pi) => sink.push(@event.Event::ProcessingInstruction(target=pi.target, data=pi.data))
-    @moonxml.Node::DoctypeNode(s) => sink.push(@event.Event::Doctype(text=s))
-    _ => ()
-  }
-}

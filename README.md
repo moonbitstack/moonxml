@@ -175,8 +175,11 @@ reported as `Unsupported`, not dropped. Nesting is bounded by `depth` (default
 
 **HTML.** Void elements, optional end tags (`p`, `li`, `dt`/`dd`, table rows and
 cells, `option`), raw-text `script`/`style`, RCDATA `textarea`/`title`,
-comments, doctypes, and foreign content (`svg`, `math`, `foreignObject`). Loose
-content is wrapped in `html`/`body`.
+comments, doctypes, and foreign content (`svg`, `math`, `foreignObject`) with
+SVG's camelCase tag and attribute names restored. Stray content inside a table
+is foster-parented before it, and leading head content (`title`, `meta`, `link`,
+`style`, `script`) is routed into `head`. Loose content is wrapped in
+`html`/`body`.
 
 ## Writing back
 
@@ -199,10 +202,10 @@ pub(open) trait Sink {
 ```
 
 `Document::events(sink)` emits a finished tree's events; `@xml.scan(text, sink)`
-emits a parsed document's events. A caller counting tags or writing rows to a
-database implements `Sink` once and never hand-walks a tree. (Today `scan`
-materialises the tree before emitting; true tokenizer-level streaming is future
-work — see below.)
+streams a document straight from its tokenizer, without building a tree, so a
+caller counting tags or writing rows to a database consumes a large document
+incrementally. Names are resolved and entities expanded identically to the tree
+parser, so the two reads agree.
 
 ## Errors
 
@@ -238,9 +241,6 @@ Stated plainly, because a library is defined as much by what it refuses:
 - **Encoding detection.** UTF-8 in, UTF-8 out; a leading BOM is stripped.
 - **Scripting.** `document.write` and scripting-enabled branches are out; this
   is the testable posture.
-- **Tokenizer-level streaming for `scan`.** `@xml.scan` currently parses to a
-  tree and walks it; the events are correct, but a very large document is not
-  consumed incrementally yet.
 
 ## Tests
 
