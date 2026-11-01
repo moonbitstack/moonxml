@@ -426,9 +426,16 @@ fn H::auto_close(self : H, tag : String) -> Unit {
     self.pop_while_current("th")
   }
   if tag == "thead" || tag == "tbody" || tag == "tfoot" {
-    self.pop_while_current("thead")
-    self.pop_while_current("tbody")
-    self.pop_while_current("tfoot")
+    self.pop_while_in(["tr", "td", "th", "tbody", "thead", "tfoot"])
+  }
+  if tag == "caption" || tag == "colgroup" || tag == "col" || tag == "tbody" || tag == "thead" || tag == "tfoot" || tag == "tr" || tag == "td" || tag == "th" {
+    self.pop_while_in(["caption"])
+  }
+  if tag == "tr" || tag == "tbody" || tag == "thead" || tag == "tfoot" {
+    self.pop_while_in(["colgroup"])
+  }
+  if tag == "colgroup" || tag == "col" {
+    self.pop_while_in(["colgroup"])
   }
   if tag == "button" {
     self.pop_while_current("button")
@@ -462,6 +469,62 @@ fn H::push_new(self : H, tag : String) -> Unit {
   let e = @moonxml.Element::new(tag)
   self.current().append(@moonxml.Node::ElementNode(e))
   self.push(e)
+}
+
+fn H::select_index(self : H) -> Int {
+  let mut i = self.stack.length() - 1
+  while i >= 0 {
+    if local_of(self.stack[i].name).to_lower() == "select" {
+      return i
+    }
+    i = i - 1
+  }
+  -1
+}
+
+fn H::pop_through_select(self : H) -> Unit {
+  let si = self.select_index()
+  if si >= 0 {
+    while self.stack.length() > si {
+      self.pop()
+    }
+  }
+}
+
+fn is_table_tag(t : String) -> Bool {
+  t == "table" || t == "tbody" || t == "thead" || t == "tfoot" || t == "tr" || t == "td" || t == "th" || t == "caption" || t == "colgroup" || t == "col"
+}
+
+/// In-select handling. Returns true when the tag was consumed and must not be
+/// inserted by the normal path.
+fn H::handle_in_select(self : H, tag : String) -> Bool {
+  if self.select_index() < 0 {
+    return false
+  }
+  if tag == "option" {
+    self.pop_while_in(["option"])
+    return false
+  }
+  if tag == "optgroup" {
+    self.pop_while_in(["option", "optgroup"])
+    return false
+  }
+  if tag == "select" {
+    self.pop_through_select()
+    return true
+  }
+  if tag == "input" || tag == "keygen" || tag == "textarea" {
+    self.pop_through_select()
+    return false
+  }
+  if tag == "script" || tag == "template" || tag == "hr" {
+    return false
+  }
+  if is_table_tag(tag) {
+    self.pop_through_select()
+    return false
+  }
+  true
 }
 
 fn H::implied_table_wrappers(self : H, tag : String) -> Unit {
@@ -819,6 +882,10 @@ fn H::parse_start_tag(self : H) -> Unit {
         attrs.push((aname, avalue))
       }
     }
+  }
+  // In-select handling comes first: most tags are ignored there.
+  if self.handle_in_select(raw_name) {
+    return
   }
   // Auto-closing for optional end tags, then reconstruction.
   self.auto_close(raw_name)

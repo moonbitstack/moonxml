@@ -1,7 +1,7 @@
 # Task: full HTML parsing conformance
 
 Status: in progress. The corpus is vendored and the runner measures a real pass
-rate: **911/1700** cases (53.6%) as of the latest commit. The parser implements
+rate: **937/1700** cases (55.1%) as of the latest commit. The parser implements
 the common insertion behaviours and the real adoption agency algorithm, but is
 not yet 100% of the corpus. This file is the incremental plan to get there.
 
@@ -26,7 +26,9 @@ later change is measured rather than asserted.
 Landed: `vendor/html5lib-tests/` (the 1.1 sdist corpus, 1700 cases),
 `scripts/gen_html5lib.py`, `tests/html5lib_cases.mbt`, and
 `tests/html5lib_runner_test.mbt`, which prints the rate and enforces a ratchet
-floor. The corpus is fetched once by a maintainer; CI reads the committed copy.
+floor. The `conformance` CI job downloads the corpus from PyPI, diffs it against
+the vendored copy, regenerates the fixtures and fails if they are stale, then
+runs the runner.
 
 ## Phases
 

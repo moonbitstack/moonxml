@@ -3,6 +3,7 @@ name: ci
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
@@ -18,4 +19,28 @@ jobs:
       - name: Check
         run: moon check
       - name: Test
+        run: moon test
+
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Fetch the corpus and verify the vendored copy is identical
+        run: |
+          python -m pip download html5lib==1.1 --no-deps --no-binary=:all: -d "$RUNNER_TEMP/h5"
+          tar xzf "$RUNNER_TEMP/h5/html5lib-1.1.tar.gz" -C "$RUNNER_TEMP/h5"
+          diff -r "$RUNNER_TEMP/h5/html5lib-1.1/html5lib/tests/testdata/tree-construction" \
+                  vendor/html5lib-tests/tree-construction
+      - name: Verify generated fixtures are current
+        run: |
+          python scripts/gen_html5lib.py
+          git diff --exit-code tests/html5lib_cases.mbt
+      - name: Conformance rate
         run: moon test
