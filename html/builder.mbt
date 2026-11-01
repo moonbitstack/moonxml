@@ -109,6 +109,12 @@ fn H::adjusted_foreign(self : H) -> Bool {
   ns_of(self.cur().name) != ""
 }
 
+/// Count one repair. The parser never fails, so this counter is how a caller
+/// learns that the document it got is not the document that was written.
+fn H::repair(self : H) -> Unit {
+  self.repairs = self.repairs + 1
+}
+
 fn H::pop(self : H) -> Unit {
   // The document element always stays: nothing pops past it.
   if self.stack.length() > 1 {

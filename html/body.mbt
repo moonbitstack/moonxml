@@ -474,6 +474,9 @@ fn H::end_in_body(self : H, t : String) -> Bool {
   }
   if t == "p" {
     if not(self.has_in_scope("p", ScButton)) {
+      // The spec inserts an empty paragraph so that the end tag has something
+      // to close, which is a repair of the source.
+      self.repair()
       let _ = self.insert_void("p", [])
       return false
     }
@@ -518,6 +521,8 @@ fn H::end_in_body(self : H, t : String) -> Bool {
     return false
   }
   if t == "br" {
+    // `</br>` is treated as `<br>`, which is a repair rather than an end tag.
+    self.repair()
     self.reconstruct()
     let _ = self.insert_void("br", [])
     self.frameset_ok = false
@@ -535,10 +540,13 @@ fn H::end_in_body(self : H, t : String) -> Bool {
       return false
     }
     if is_special_node(l, ns) {
+      // The end tag names nothing the parser can close, so it is dropped.
+      self.repair()
       return false
     }
     i = i - 1
   }
+  self.repair()
   false
 }
 

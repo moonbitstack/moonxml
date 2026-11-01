@@ -60,7 +60,9 @@ struct H {
   mut pending_nonws : Bool
   mut ignore_lf : Bool
   mut quirks : Bool
-  repairs : Int
+  /// How many times the parser had to repair something, which is what
+  /// `Document::repairs` reports.
+  mut repairs : Int
   mut fragment : Bool
   /// The fragment's context element. It is not in the tree and not on the
   /// stack; it only supplies the namespace and the initial insertion mode.
