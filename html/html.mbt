@@ -382,7 +382,7 @@ fn is_tag_name_char(c : Char) -> Bool {
 }
 
 fn is_void_tag(t : String) -> Bool {
-  if t == "area" || t == "base" || t == "br" || t == "col" {
+  if t == "area" || t == "base" || t == "br" || t == "col" || t == "basefont" || t == "bgsound" || t == "frame" || t == "keygen" {
     return true
   }
   if t == "embed" || t == "hr" || t == "img" || t == "input" {
@@ -610,8 +610,11 @@ fn H::auto_close(self : H, tag : String) -> Unit {
   if tag == "li" || tag == "dt" || tag == "dd" {
     self.close_list_item(tag)
   }
-  if tag == "option" {
+  if tag == "option" || tag == "optgroup" {
     self.pop_while_current("option")
+  }
+  if tag == "optgroup" {
+    self.pop_while_current("optgroup")
   }
   if tag == "tr" {
     self.pop_while_current("tr")
@@ -727,6 +730,27 @@ fn H::append_to_html(self : H, node : @moonxml.Node) -> Unit {
     i = i - 1
   }
   self.stack[0].append(node)
+}
+
+/// Append text to the open body (or the one under `html`), used when a token
+/// after `</body>` puts the parser back into body mode.
+fn H::append_to_body(self : H, s : String) -> Unit {
+  let mut i = self.stack.length() - 1
+  while i > 0 {
+    if local_of(self.stack[i].name).to_lower() == "body" {
+      append_text_to(self.stack[i], s)
+      return
+    }
+    i = i - 1
+  }
+  let container = match find_child_named(self.stack[0], "html") {
+    Some(h) => h
+    None => self.stack[0]
+  }
+  match find_child_named(container, "body") {
+    Some(b) => append_text_to(b, s)
+    None => self.append_text(s)
+  }
 }
 
 /// Whitespace after `</html>` still belongs inside `html`, even though the
@@ -866,7 +890,12 @@ fn H::close_list_item(self : H, tag : String) -> Unit {
   let mut found = -1
   while i > 0 {
     let l = local_of(self.stack[i].name).to_lower()
-    if l == "li" || l == "dd" || l == "dt" {
+    let is_target = if tag == "li" {
+      l == "li"
+    } else {
+      l == "dd" || l == "dt"
+    }
+    if is_target {
       found = i
       break
     }
@@ -1124,6 +1153,21 @@ fn H::foster_text(self : H, s : String) -> Bool {
     }
     None => false
   }
+}
+
+/// Append text to an element, merging with a preceding text node.
+fn append_text_to(el : @moonxml.Element, s : String) -> Unit {
+  let n = el.children.length()
+  if n > 0 {
+    match el.children[n - 1] {
+      @moonxml.Node::TextNode(prev) => {
+        el.children[n - 1] = @moonxml.Node::TextNode(prev + s)
+        return
+      }
+      _ => ()
+    }
+  }
+  el.append(@moonxml.Node::TextNode(s))
 }
 
 fn has_child_named(el : @moonxml.Element, name : String) -> Bool {
@@ -1612,13 +1656,19 @@ fn H::parse_start_tag(self : H) -> Unit {
   if self.handle_in_select(raw_name) {
     return
   }
-  if self.body_closed && self.frameset_document() {
+  if self.body_closed && self.frameset_document() && raw_name != "noframes" && raw_name != "html" {
     return
   }
   // A second `html` start tag merges its attributes into the open one.
   if raw_name == "html" {
     if self.has_open("html") {
       self.merge_attrs_onto("html", attrs)
+      return
+    }
+    if find_child_named(self.stack[0], "html").is_none() {
+      let h = @moonxml.Element::with_attrs("html", attrs)
+      self.stack[0].append(@moonxml.Node::ElementNode(h))
+      self.push(h)
       return
     }
     match find_child_named(self.stack[0], "html") {

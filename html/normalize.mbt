@@ -238,5 +238,19 @@ fn normalize_document_impl(
     }
     keep.push(@moonxml.Node::ElementNode(html))
     root.set_children(keep)
+  } else {
+    // Whitespace that landed beside `html` still belongs inside it.
+    let keep : Array[@moonxml.Node] = []
+    for c in root.children {
+      match c {
+        @moonxml.Node::ElementNode(_) => keep.push(c)
+        @moonxml.Node::DoctypeNode(_) => keep.push(c)
+        @moonxml.Node::TextNode(t) => if not(@text.is_blank(t)) {
+          keep.push(c)
+        }
+        _ => keep.push(c)
+      }
+    }
+    root.set_children(keep)
   }
 }
