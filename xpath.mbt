@@ -737,8 +737,15 @@ fn num_str(d : Double) -> String {
   }
 }
 
+/// The XPath string-value of a node. It is the concatenated descendant text
+/// for an element or the document, the data for a comment or a processing
+/// instruction, and the value for an attribute.
 fn node_string_value(n : Node) -> String {
-  n.text_content()
+  match n {
+    CommentNode(s) => s
+    ProcessingInstructionNode(pi) => pi.data
+    _ => n.text_content()
+  }
 }
 
 fn xval_to_string(v : XVal) -> String {
@@ -998,10 +1005,17 @@ fn preceding_nodes(node : Node, root : Element) -> Array[Node] {
   }
 }
 
+/// Whether this element is the synthetic root of a `Document`. XPath calls it
+/// the root node: it is the parent of the document element, but it is not an
+/// element, so no name test matches it and it has no name.
+fn is_document_node(e : Element) -> Bool {
+  e.name == "#document"
+}
+
 fn test_node(node : Node, nt : NodeTest) -> Bool {
   match nt {
     NameTest(nm) => match node {
-      ElementNode(e) => name_matches(e, nm)
+      ElementNode(e) => not(is_document_node(e)) && name_matches(e, nm)
       AttributeNode(an, _) => {
         if nm == "*" {
           true
@@ -1093,6 +1107,70 @@ fn fold_steps(start : Array[Node], steps : Array[Step], root : Element) -> Array
 // Evaluation
 // ---------------------------------------------------------------------------
 
+/// The position of `n` in a preorder walk of the tree, or -1 for a node the
+/// walk does not visit (an attribute, or a node detached from the tree).
+fn preorder_index(all : Array[Node], n : Node) -> Int {
+  let mut i = 0
+  while i < all.length() {
+    if physical_equal(all[i], n) {
+      return i
+    }
+    i = i + 1
+  }
+  -1
+}
+
+/// A union of two node-sets. XPath returns a node-set in document order, and a
+/// union is the operation that can produce one out of order, so the result is
+/// re-sorted by preorder position. Duplicates are removed by position, which is
+/// what makes them duplicates in the first place. Attribute nodes have no
+/// preorder position; they keep their relative order and sort after elements,
+/// which is as far as this tree model can place them.
+fn union_nodes(a : Array[Node], b : Array[Node], root : Element) -> Array[Node] {
+  let all = all_nodes(root)
+  let keys : Array[Int] = []
+  let kept : Array[Node] = []
+  let groups : Array[Array[Node]] = [a, b]
+  for g in groups {
+    for n in g {
+      let k = preorder_index(all, n)
+      let mut dup = false
+      let mut i = 0
+      while i < keys.length() {
+        if keys[i] == k {
+          if k >= 0 || node_string_value(kept[i]) == node_string_value(n) {
+            dup = true
+          }
+        }
+        i = i + 1
+      }
+      if not(dup) {
+        keys.push(k)
+        kept.push(n)
+      }
+    }
+  }
+  let out : Array[Node] = []
+  let outk : Array[Int] = []
+  let mut i = 0
+  while i < kept.length() {
+    let k = keys[i]
+    let sort_key = if k < 0 {
+      1 << 30
+    } else {
+      k
+    }
+    let mut pos = out.length()
+    while pos > 0 && outk[pos - 1] > sort_key {
+      pos = pos - 1
+    }
+    out.insert(pos, kept[i])
+    outk.insert(pos, sort_key)
+    i = i + 1
+  }
+  out
+}
+
 fn eval_expr(e : Expr, c : XC) -> XVal raise Refused {
   match e {
     StrLit(s) => XVal::VStr(s)
@@ -1118,14 +1196,7 @@ fn eval_expr(e : Expr, c : XC) -> XVal raise Refused {
     UnionExpr(l, r) => {
       let ln = xval_to_nodes(eval_expr(l, c))
       let rn = xval_to_nodes(eval_expr(r, c))
-      let out : Array[Node] = []
-      for n in ln {
-        out.push(n)
-      }
-      for n in rn {
-        out.push(n)
-      }
-      XVal::VNodes(dedup_nodes(out))
+      XVal::VNodes(union_nodes(ln, rn, c.root))
     }
     NegExpr(inner) => {
       let v = eval_expr(inner, c)
@@ -1452,7 +1523,11 @@ fn fun_node(args : Array[Expr], c : XC) -> Node raise Refused {
 
 fn node_local_name(n : Node) -> String {
   match n {
-    ElementNode(e) => e.local_name()
+    ElementNode(e) => if is_document_node(e) {
+      ""
+    } else {
+      e.local_name()
+    }
     AttributeNode(nm, _) => local_of_qname(nm)
     ProcessingInstructionNode(pi) => pi.target
     _ => ""
@@ -1461,7 +1536,11 @@ fn node_local_name(n : Node) -> String {
 
 fn node_name(n : Node) -> String {
   match n {
-    ElementNode(e) => e.name
+    ElementNode(e) => if is_document_node(e) {
+      ""
+    } else {
+      e.name
+    }
     AttributeNode(nm, _) => nm
     ProcessingInstructionNode(pi) => pi.target
     _ => ""
@@ -1470,7 +1549,11 @@ fn node_name(n : Node) -> String {
 
 fn node_namespace_uri(n : Node) -> String {
   match n {
-    ElementNode(e) => e.namespace_uri()
+    ElementNode(e) => if is_document_node(e) {
+      ""
+    } else {
+      e.namespace_uri()
+    }
     _ => ""
   }
 }

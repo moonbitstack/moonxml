@@ -353,11 +353,20 @@ pub fn Node::node_children(self : Node) -> Array[Node] {
 }
 
 /// The concatenated text content of `self` — XPath's string-value for an
-/// element, and simply the text for a text or CDATA node.
+/// element, and simply the data for a text, CDATA, comment or processing
+/// instruction node.
 pub fn Node::text_content(self : Node) -> String {
-  let sb = StringBuilder()
-  node_text(self, sb)
-  sb.to_string()
+  match self {
+    // A comment or a processing instruction is its own data; an element's text
+    // never includes them, which is why `node_text` skips them below.
+    CommentNode(s) => s
+    ProcessingInstructionNode(pi) => pi.data
+    _ => {
+      let sb = StringBuilder()
+      node_text(self, sb)
+      sb.to_string()
+    }
+  }
 }
 
 fn node_text(n : Node, sb : StringBuilder) -> Unit {
