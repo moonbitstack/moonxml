@@ -520,7 +520,7 @@ fn H::end_in_body(self : H, t : String) -> Bool {
     self.pop_until_any(["h1", "h2", "h3", "h4", "h5", "h6"])
     return false
   }
-  if t == "a" || is_formatting_tag(t) {
+  if t == "a" || t == "nobr" || is_formatting_tag(t) {
     self.adoption(t)
     return false
   }

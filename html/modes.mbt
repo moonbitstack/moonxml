@@ -73,7 +73,7 @@ fn H::create_html(self : H, attrs : Array[(String, String)]) -> @moonxml.Element
 
 fn H::step_initial(self : H, tok : Tok) -> Bool {
   match tok {
-    Chars(s) => if @text.is_blank(s) {
+    Chars(s) => if @text.is_blank(strip_nul(s)) {
       false
     } else {
       self.quirks = true
@@ -106,10 +106,10 @@ fn H::step_initial(self : H, tok : Tok) -> Bool {
 
 fn H::step_before_html(self : H, tok : Tok) -> Bool {
   match tok {
-    Chars(s) => if @text.is_blank(s) {
+    Chars(s) => if @text.is_blank(strip_nul(s)) {
       false
     } else {
-      let (_, rest) = split_lead_ws(s)
+      let (_, rest) = split_lead_ws(strip_nul(s))
       let _ = self.create_html([])
       self.mode = MBeforeHead
       if rest != s {
@@ -151,10 +151,10 @@ fn H::step_before_html(self : H, tok : Tok) -> Bool {
 
 fn H::step_before_head(self : H, tok : Tok) -> Bool {
   match tok {
-    Chars(s) => if @text.is_blank(s) {
+    Chars(s) => if @text.is_blank(strip_nul(s)) {
       false
     } else {
-      let (_, rest) = split_lead_ws(s)
+      let (_, rest) = split_lead_ws(strip_nul(s))
       self.make_head()
       if rest != s {
         self.dispatch(Chars(rest))
