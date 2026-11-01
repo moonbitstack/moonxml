@@ -116,7 +116,7 @@ fn file_slot(names : Array[String], passes : Array[Int], totals : Array[Int], na
 
 fn dump_case(c : H5Case) -> String {
   let doc = if c.fragment == "" {
-    @html.loads(c.input)
+    @html.loads_with_scripting(c.input, c.scripting)
   } else {
     @html.loads_fragment(c.input, context=c.fragment)
   }

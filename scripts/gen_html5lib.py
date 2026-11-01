@@ -59,7 +59,10 @@ def parse_file(path: pathlib.Path):
             i += 1
             fragment = lines[i] if i < n else ""
             i += 1
+        scripting = False
         while i < n and lines[i] in ("#script-off", "#script-on"):
+            if lines[i] == "#script-on":
+                scripting = True
             i += 1
         if i >= n or lines[i] != "#document":
             i += 1
@@ -88,6 +91,7 @@ def parse_file(path: pathlib.Path):
                 "input": "\n".join(data),
                 "fragment": fragment,
                 "doc": "\n".join(doc),
+                "scripting": scripting,
             }
         )
         while i < n and lines[i] == "":
@@ -133,6 +137,7 @@ def main() -> int:
         "  input : String",
         "  fragment : String",
         "  doc : String",
+        "  scripting : Bool",
         "}",
         "",
         "pub fn h5_cases() -> Array[H5Case] {",
@@ -140,8 +145,14 @@ def main() -> int:
     ]
     for c in cases:
         lines.append(
-            '    { file: "%s", input: "%s", fragment: "%s", doc: "%s" },'
-            % (esc(c["file"]), esc(c["input"]), esc(c["fragment"]), esc(c["doc"]))
+            '    { file: "%s", input: "%s", fragment: "%s", doc: "%s", scripting: %s },'
+            % (
+                esc(c["file"]),
+                esc(c["input"]),
+                esc(c["fragment"]),
+                esc(c["doc"]),
+                "true" if c["scripting"] else "false",
+            )
         )
     lines.append("  ]")
     lines.append("}")

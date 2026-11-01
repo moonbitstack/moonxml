@@ -171,6 +171,12 @@ pub fn normalize_document_with(root : @moonxml.Element, trailing : Int) -> Unit 
     Some(f) => shaped.push(@moonxml.Node::ElementNode(f))
     None => shaped.push(@moonxml.Node::ElementNode(body))
   }
+  for c in after_frameset {
+    shaped.push(c)
+  }
+  for c in after_body {
+    shaped.push(c)
+  }
   html.set_children(shaped)
   if existing.is_none() {
     let keep : Array[@moonxml.Node] = []

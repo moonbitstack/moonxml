@@ -29,10 +29,12 @@ struct H {
   mut trailing_comments : Int
   /// True when the input is a fragment, where html/head/body tags are text.
   mut fragment_mode : Bool
+  /// The scripting flag: with it on, `noscript` content is raw text.
+  mut scripting : Bool
 }
 
 fn H::new(s : String) -> H {
-  { s: s.to_array(), n: s.length(), pos: 0, stack: [], afe: [], repairs: 0, frag_ns: "", body_closed: false, trailing_comments: 0, fragment_mode: false }
+  { s: s.to_array(), n: s.length(), pos: 0, stack: [], afe: [], repairs: 0, frag_ns: "", body_closed: false, trailing_comments: 0, fragment_mode: false, scripting: false }
 }
 
 fn H::at_end(self : H) -> Bool {
@@ -730,6 +732,7 @@ fn H::body_has_content(self : H) -> Bool {
         return true
       }
       @moonxml.Node::CommentNode(_) => ()
+      @moonxml.Node::DoctypeNode(_) => ()
       _ => return true
     }
   }
@@ -1046,7 +1049,10 @@ fn H::parse(self : H) -> @moonxml.Element {
       }
     } else if self.starts_with_ci("<!doctype") {
       self.pos = self.pos + 9
-      root.append(@moonxml.Node::DoctypeNode(self.parse_doctype_html()))
+      let dt = self.parse_doctype_html()
+      if not(self.body_closed) {
+        root.append(@moonxml.Node::DoctypeNode(dt))
+      }
     } else if self.starts_with("<?") {
       // A processing-instruction lookalike becomes a bogus comment.
       self.pos = self.pos + 1
@@ -1263,7 +1269,7 @@ fn H::parse_end_tag(self : H) -> Unit {
     }
   }
   if name == "p" {
-    if self.p_in_scope() == false {
+    if self.p_in_scope() == false && self.has_open("body") {
       // The spec inserts an empty paragraph and closes it.
       let el = @moonxml.Element::new("p")
       self.append_node(@moonxml.Node::ElementNode(el))
@@ -1478,6 +1484,18 @@ fn H::parse_start_tag(self : H) -> Unit {
   // A heading start tag closes an open heading.
   if raw_name == "h1" || raw_name == "h2" || raw_name == "h3" || raw_name == "h4" || raw_name == "h5" || raw_name == "h6" {
     self.pop_while_in(["h1", "h2", "h3", "h4", "h5", "h6"])
+  }
+  // With scripting on, `noscript` content is raw text.
+  if raw_name == "noscript" && self.scripting && self.current_child_ns() == "" {
+    let el = @moonxml.Element::with_attrs("noscript", attrs)
+    self.append_node(@moonxml.Node::ElementNode(el))
+    if self_closing {
+      return
+    }
+    self.push(el)
+    self.consume_rawtext("noscript", false)
+    self.pop()
+    return
   }
   // In a fragment, html/head/body tags are just text.
   if self.fragment_mode && (raw_name == "html" || raw_name == "head" || raw_name == "body") {
@@ -1871,7 +1889,12 @@ fn H::consume_rawtext(self : H, tag : String, decode : Bool) -> Unit {
 
 /// Parse a complete HTML document, wrapping loose content in `html`/`body`.
 pub fn loads(text : String) -> @moonxml.Document {
-  loads_internal(text, false, "body")
+  loads_internal(text, false, "body", false)
+}
+
+/// Parse with the scripting flag on, which makes `noscript` content raw text.
+pub fn loads_with_scripting(text : String, scripting : Bool) -> @moonxml.Document {
+  loads_internal(text, false, "body", scripting)
 }
 
 /// Parse UTF-8 bytes as HTML. Invalid sequences are replaced with U+FFFD.
@@ -1881,7 +1904,7 @@ pub fn load(bytes : Bytes) -> @moonxml.Document {
 
 /// Parse an HTML fragment; content goes straight into the virtual root.
 pub fn loads_fragment(text : String, context? : String = "body") -> @moonxml.Document {
-  loads_internal(text, true, context)
+  loads_internal(text, true, context, false)
 }
 
 /// Elements whose foreign children are parsed as HTML.
@@ -1907,7 +1930,7 @@ fn context_local(context : String) -> String {
   }
 }
 
-fn loads_internal(text : String, fragment : Bool, context : String) -> @moonxml.Document {
+fn loads_internal(text : String, fragment : Bool, context : String, scripting : Bool) -> @moonxml.Document {
   if fragment && not(context_is_foreign(context)) {
     let cl = context_local(context)
     if cl == "textarea" || cl == "title" {
@@ -1923,6 +1946,7 @@ fn loads_internal(text : String, fragment : Bool, context : String) -> @moonxml.
   }
   let h = H::new(preprocess_h(text))
   h.fragment_mode = fragment
+  h.scripting = scripting
   if fragment && not(is_integration_name(context_local(context).to_lower())) {
     if context.has_prefix("svg ") {
       h.frag_ns = svg_ns
