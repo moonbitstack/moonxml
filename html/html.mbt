@@ -1585,9 +1585,7 @@ fn H::parse_end_tag(self : H) -> Unit {
   }
   if found {
     while self.stack.length() - 1 >= i && self.stack.length() > 1 {
-      let top = self.current()
       self.pop()
-      self.afe_remove(top)
     }
   } else {
     self.repairs = self.repairs + 1
