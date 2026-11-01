@@ -20,7 +20,7 @@
 /// Serialise a case the way it was parsed: fragments stay fragments and the
 /// scripting flag is carried over, so the comparison is about the tree and not
 /// about a different parser configuration.
-fn fixpoint_first(c : H5Case) -> @moonxml.Document {
+fn fixpoint_first(c : @tests.H5Case) -> @moonxml.Document {
   if c.fragment == "" {
     @html.loads_with_scripting(c.input, c.scripting)
   } else {
@@ -28,7 +28,7 @@ fn fixpoint_first(c : H5Case) -> @moonxml.Document {
   }
 }
 
-fn fixpoint_second(c : H5Case, text : String) -> @moonxml.Document {
+fn fixpoint_second(c : @tests.H5Case, text : String) -> @moonxml.Document {
   if c.fragment == "" {
     @html.loads_with_scripting(text, c.scripting)
   } else {
@@ -78,7 +78,7 @@ fn rawtext_context(ctx : String) -> Bool {
 ///
 /// Four families qualify, and they all come from the same place: a mode or a
 /// parsing rule that a source document cannot undo.
-fn exclusion_reason(c : H5Case, doc : @moonxml.Document) -> String {
+fn exclusion_reason(c : @tests.H5Case, doc : @moonxml.Document) -> String {
   // `plaintext` swallows everything after its start tag, including its end tag.
   let has_plaintext = try {
     doc.css("plaintext").length() > 0
@@ -113,7 +113,7 @@ fn exclusion_reason(c : H5Case, doc : @moonxml.Document) -> String {
 }
 
 test "html: serialise, reparse, serialise is a fixpoint" {
-  let cases = h5_cases()
+  let cases = @tests.h5_cases()
   let failures : Array[String] = []
   let mut excused = 0
   let mut checked = 0

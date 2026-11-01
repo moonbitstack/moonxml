@@ -48,7 +48,7 @@ test "xml: well-formed documents are accepted" {
     "<a b=\"a&#10;b\"/>",
   ]
   for text in good {
-    if not(xml_ok(text)) {
+    if !xml_ok(text) {
       println("refused: " + text + " (" + xml_error(text) + ")")
     }
     assert_eq(xml_ok(text), true)

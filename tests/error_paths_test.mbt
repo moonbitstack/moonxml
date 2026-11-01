@@ -71,7 +71,7 @@ test "css: a pseudo-class the engine does not know is refused as unsupported" {
 /// A selector a caller can register: picks the paragraphs of the context.
 struct Mine {}
 
-impl @moonxml.Selector for Mine with select(self, ctx, query) {
+impl @moonxml.Selector for Mine with select(_self, ctx, query) {
   // A registered selector works on the descendants of its input, which is the
   // convention the built-in ones follow.
   let out : Array[@moonxml.Node] = []

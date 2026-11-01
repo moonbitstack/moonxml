@@ -13,7 +13,7 @@ fn tree_problem(el : @moonxml.Element) -> String {
     match el.children[i] {
       @moonxml.ElementNode(c) => {
         match c.parent {
-          Some(p) => if not(physical_equal(p, el)) {
+          Some(p) => if !physical_equal(p, el) {
             return "child " + c.name + " does not point at its parent"
           }
           None => return "child " + c.name + " has no parent"
@@ -69,7 +69,7 @@ test "edit: insert_before and insert_after on a detached element do nothing" {
   lonely.insert_after(@moonxml.Node::ElementNode(@moonxml.Element::new("b")))
   lonely.replace_with(@moonxml.Node::ElementNode(@moonxml.Element::new("c")))
   assert_eq(lonely.children.length(), 0)
-  assert_eq(lonely.parent.is_none(), true)
+  assert_eq((lonely.parent is None), true)
 }
 
 test "edit: replace_with keeps the position and clears the old parent" {
@@ -79,7 +79,7 @@ test "edit: replace_with keeps the position and clears the old parent" {
   first.replace_with(@moonxml.Node::ElementNode(@moonxml.Element::new("h1")))
   assert_eq(tree_problem(r), "")
   assert_eq(r.children_elements()[0].name, "h1")
-  assert_eq(first.parent.is_none(), true)
+  assert_eq((first.parent is None), true)
   assert_eq(doc.css("h1").length(), 1)
 }
 
@@ -88,11 +88,11 @@ test "edit: remove returns the subtree and detaches it" {
   let first = doc.css("p").items[0].as_element().unwrap()
   let got = first.remove()
   assert_eq(got.is_element(), true)
-  assert_eq(first.parent.is_none(), true)
+  assert_eq((first.parent is None), true)
   assert_eq(doc.css("p").length(), 1)
   // Removing twice is harmless.
   let _ = first.remove()
-  assert_eq(first.parent.is_none(), true)
+  assert_eq((first.parent is None), true)
 }
 
 test "edit: unwrap splices children in place" {
@@ -103,7 +103,7 @@ test "edit: unwrap splices children in place" {
   let div = doc.css("div").items[0].as_element().unwrap()
   assert_eq(div.text(), "1234")
   assert_eq(div.children_elements()[0].name, "i")
-  assert_eq(b.parent.is_none(), true)
+  assert_eq((b.parent is None), true)
   assert_eq(b.children.length(), 0)
 }
 
@@ -169,7 +169,7 @@ test "edit: clone_deep is independent of the original" {
   c.set_text("changed")
   assert_eq(c.text(), "changed")
   assert_eq(r.text(), "ab")
-  assert_eq(c.parent.is_none(), true)
+  assert_eq((c.parent is None), true)
   assert_eq(tree_problem(c), "")
 }
 
@@ -212,9 +212,9 @@ test "edit: siblings and index_in_parent agree" {
   assert_eq(b.previous_element_sibling().unwrap().name, "a")
   assert_eq(b.next_element_sibling().unwrap().name, "c")
   let a = doc.css("a").items[0].as_element().unwrap()
-  assert_eq(a.previous_element_sibling().is_none(), true)
+  assert_eq((a.previous_element_sibling() is None), true)
   let c = doc.css("c").items[0].as_element().unwrap()
-  assert_eq(c.next_element_sibling().is_none(), true)
+  assert_eq((c.next_element_sibling() is None), true)
   assert_eq(b.parent.unwrap().name, "div")
 }
 
