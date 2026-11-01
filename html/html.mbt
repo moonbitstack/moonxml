@@ -1701,7 +1701,7 @@ fn H::parse_start_tag(self : H) -> Unit {
     }
   }
   // A body tag, or a block that cannot live in head, closes head.
-  if raw_name == "body" || closes_p(raw_name) || is_rawtext_tag(raw_name) || is_rcdata_tag(raw_name) {
+  if raw_name == "body" || closes_p(raw_name) || ((is_rawtext_tag(raw_name) || is_rcdata_tag(raw_name)) && raw_name != "noframes" && raw_name != "noscript") {
     self.pop_through_head()
   }
   // A heading start tag closes an open heading.
