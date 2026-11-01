@@ -181,6 +181,17 @@ fn H::pop_until_any(self : H, names : Array[String]) -> Unit {
   }
 }
 
+/// Pop through a particular element, inclusive.
+fn H::pop_until_node(self : H, el : @moonxml.Element) -> Unit {
+  while self.stack.length() > 0 {
+    let top = self.cur()
+    self.pop()
+    if physical_equal(top, el) {
+      return
+    }
+  }
+}
+
 fn H::pop_until_index(self : H, idx : Int) -> Unit {
   while self.stack.length() > idx {
     self.pop()

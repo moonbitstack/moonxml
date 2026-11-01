@@ -84,6 +84,12 @@ def parse_file(path: pathlib.Path):
                     i += 1
                     line = line + "\n" + following
                     quotes += following.count('"')
+            elif content.startswith("<!--") and "-->" not in content:
+                # A comment whose data contains a newline spills onto a line
+                # that carries no `| ` marker; keep reading until it closes.
+                while i < n and "-->" not in line:
+                    line = line + "\n" + lines[i]
+                    i += 1
             doc.append(line)
         cases.append(
             {

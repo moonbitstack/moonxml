@@ -175,8 +175,7 @@ fn H::start_in_body(
   }
   if is_heading_tag(t) {
     self.close_p()
-    let l = self.cur_local()
-    if is_heading(t_like(l)) {
+    if is_heading(self.cur_local()) {
       self.pop()
     }
     let _ = self.insert_el(t, a)
@@ -411,11 +410,6 @@ fn H::start_in_body(
   self.reconstruct()
   let _ = self.insert_el(t, a)
   false
-}
-
-/// `is_heading` takes a lowercased name; keep one spelling for both callers.
-fn t_like(l : String) -> String {
-  l
 }
 
 fn H::close_list_item(self : H, t : String) -> Unit {
@@ -765,13 +759,14 @@ fn H::step_foreign(self : H, tok : Tok) -> Bool {
       let mut i = self.stack.length() - 1
       while i >= 0 {
         let node = self.stack[i]
-        let l = local_of(node.name).to_lower()
-        if l == t {
-          self.pop_until_index(i)
-          return true
-        }
+        // An HTML element ends the foreign search: the end tag belongs to the
+        // insertion mode from there down.
         if ns_of(node.name) == "" {
           return false
+        }
+        if local_of(node.name).to_lower() == t {
+          self.pop_until_node(node)
+          return true
         }
         i = i - 1
       }

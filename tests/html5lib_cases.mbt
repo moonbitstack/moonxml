@@ -82,7 +82,7 @@ pub fn h5_cases() -> Array[H5Case] {
     { file: "comments01.dat", input: "FOO<!-- BAR -->BAZ", fragment: "", doc: "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR  -->\n|     \"BAZ\"", scripting: false },
     { file: "comments01.dat", input: "FOO<!-- BAR --!>BAZ", fragment: "", doc: "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR  -->\n|     \"BAZ\"", scripting: false },
     { file: "comments01.dat", input: "FOO<!-- BAR --! >BAZ", fragment: "", doc: "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR --! >BAZ -->", scripting: false },
-    { file: "comments01.dat", input: "FOO<!-- BAR --!\n>BAZ", fragment: "", doc: "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR --!", scripting: false },
+    { file: "comments01.dat", input: "FOO<!-- BAR --!\n>BAZ", fragment: "", doc: "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR --!\n>BAZ -->", scripting: false },
     { file: "comments01.dat", input: "FOO<!-- BAR --   >BAZ", fragment: "", doc: "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR --   >BAZ -->", scripting: false },
     { file: "comments01.dat", input: "FOO<!-- BAR -- <QUX> -- MUX -->BAZ", fragment: "", doc: "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR -- <QUX> -- MUX  -->\n|     \"BAZ\"", scripting: false },
     { file: "comments01.dat", input: "FOO<!-- BAR -- <QUX> -- MUX --!>BAZ", fragment: "", doc: "| <html>\n|   <head>\n|   <body>\n|     \"FOO\"\n|     <!--  BAR -- <QUX> -- MUX  -->\n|     \"BAZ\"", scripting: false },

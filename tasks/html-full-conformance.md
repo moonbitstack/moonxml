@@ -1,9 +1,11 @@
 # Task: full HTML parsing conformance
 
-Status: in progress. The corpus is vendored and the runner measures a real pass
-rate: **1480/1700** cases (87.1%) as of the latest commit. The parser implements
-the common insertion behaviours and the real adoption agency algorithm, but is
-not yet 100% of the corpus. This file is the incremental plan to get there.
+Status: essentially done. The corpus is vendored and the runner measures a real
+pass rate: **1696/1700** cases (99.8%) as of the latest commit. The tree builder
+is a full insertion-mode state machine (P2), the adoption agency follows the
+specification (P3), foreign content and fragment parsing follow the
+integration-point rules (P4, P5). Four cases remain; they are listed under
+"Remaining" below.
 
 Acceptance for "done": every `.dat` file under html5lib-tests/tree-construction
 passes, the tokenizer JSON tests pass, and the fragment cases pass, with a
@@ -73,9 +75,10 @@ Acceptance: the adoption-agency cases in the corpus pass, including
 `<p>1<b>2<i>3</b>4</i>5</p>`, `<b>1<p>2</b>3</p>`, and the `nobr` cases.
 Landed: the active formatting list, reconstruction, the Noah's Ark clause, and
 the full adoption agency with the inner-loop limit, bookmark, cloning and
-reparenting; the canonical cases are covered in `tests/adoption_test.mbt`.
-Still to come: markers at the spec boundary points, the `nobr` special case, and
-the corpus comparison.
+reparenting; markers at the spec boundary points (`td`/`th`/`caption`/
+`applet`/`object`/`marquee`/`template`); the `nobr` special case (its own start
+rule and the adoption agency on its end tag). 18/18 cases in `adoption01.dat`
+and 2/2 in `adoption02.dat` pass.
 
 ### P4 — foreign content
 
@@ -100,6 +103,43 @@ Acceptance: the fragment cases in the corpus pass.
 Emit the html5lib tree format for the runner, and keep the user-facing HTML
 serializer spec-conformant (raw text elements, void elements, attribute escaping,
 the `noscript`/`template` rules).
+
+## Landed
+
+- **P1 (tokenizer)** — token stream with the five content models (data, RCDATA,
+  RAWTEXT, script data, PLAINTEXT) and scanners for tags, attributes, comments,
+  doctypes, CDATA and character references, all driven by the tree builder.
+  NUL is handled per state: dropped in data, U+FFFD in raw text, comments and
+  foreign content.
+- **P2 (insertion modes)** — all twenty-three modes with an explicit `mode`
+  variable, the transition table documented at the top of `html/builder.mbt`, and
+  `reset_insertion_mode` walking the open-element stack appropriately. `Text`
+  and `InTableText` remember the mode they came from.
+- **P3 (adoption agency)** — see above.
+- **P4 (foreign content)** — MathML text integration points, SVG/HTML
+  integration points, `annotation-xml` encodings, the breakout list, namespaced
+  attributes (`xlink:`, `xml:`, `xmlns:`), `definitionURL`, the SVG tag and
+  attribute case tables, and the rule that a fragment whose context is a plain
+  foreign element never breaks out.
+- **P5 (fragments)** — the context element supplies the namespace, the tokenizer
+  content model and the insertion mode, but stays off the stack; the tree is
+  built in a fresh `html` root and the fragment is that root's children.
+- **P6 (serializer)** — the runner's html5lib-format dump and the user-facing
+  writer are separate; the latter is not part of the conformance measurement.
+
+## Remaining
+
+Four cases, all corner interactions rather than missing structure:
+
+- `namespace-sensitivity.dat`: `<td><svg><td><foreignObject><span></td>Foo`.
+  html5lib closes the HTML cell when the foreign end tag search reaches an HTML
+  element; this parser matches the SVG-namespaced `td` first.
+- `plain-text-unsafe.dat` (two cases): `<svg>`, NUL, `</svg>`, `<frameset>`.
+  The corpus expects the frameset to replace the body, which means the U+FFFD
+  character token must not clear the frameset-ok flag. html5lib marks this file
+  "unsafe".
+- `template.dat`: `<template><svg><foo><template><foreignObject><div></template>`
+  — an end tag that crosses the HTML/SVG namespace boundary inside a template.
 
 ## Non-goals
 

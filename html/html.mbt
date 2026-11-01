@@ -664,30 +664,6 @@ fn append_text_to(el : @moonxml.Element, s : String) -> Unit {
   el.append(@moonxml.Node::TextNode(s))
 }
 
-fn find_child_named(parent : @moonxml.Element, name : String) -> @moonxml.Element? {
-  for c in parent.children {
-    match c {
-      @moonxml.Node::ElementNode(e) => if local_of(e.name).to_lower() == name {
-        return Some(e)
-      }
-      _ => ()
-    }
-  }
-  None
-}
-
-fn has_child_named(el : @moonxml.Element, name : String) -> Bool {
-  for c in el.children {
-    match c {
-      @moonxml.Node::ElementNode(e) => if local_of(e.name).to_lower() == name {
-        return true
-      }
-      _ => ()
-    }
-  }
-  false
-}
-
 /// Only whitespace survives as text inside a frameset.
 fn keep_ws(s : String) -> String {
   let sb = StringBuilder()

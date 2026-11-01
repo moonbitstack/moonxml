@@ -1,10 +1,10 @@
-/// Document normalization for `loads`.
+/// Document shaping, kept as a public utility.
 ///
-/// The tree builder produces the nodes a tokenizer saw; a browser additionally
-/// guarantees one `html` element with a `head` (possibly empty) and a `body`
-/// (or a `frameset`), and drops formatting whitespace outside the body. This
-/// file performs that shaping after parsing, so the tree matches the shape the
-/// html5lib corpus expects without a full set of insertion modes.
+/// `loads` no longer needs this: the insertion-mode machine creates the `html`,
+/// `head` and `body` elements where the specification says they go. The
+/// function remains for callers that build a tree by hand, or that feed one
+/// through a different parser, and want the one-element/one-head/one-body shape
+/// a browser guarantees.
 
 fn norm_is_head_element(n : @moonxml.Node) -> Bool {
   match n {
