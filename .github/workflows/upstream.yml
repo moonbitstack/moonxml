@@ -1,0 +1,54 @@
+name: upstream
+
+# A weekly check against the corpora as they are upstream today. The vendored
+# copies are a fixed point in time; this job answers a different question: does
+# the parser still pass what html5lib has added since? It is not part of the
+# required checks, and it never commits anything.
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  corpus:
+    name: corpus against upstream master
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Replace the vendored corpora with upstream master
+        run: |
+          git clone --depth 1 https://github.com/html5lib/html5lib-tests "$RUNNER_TEMP/h5"
+          rm -rf vendor/html5lib-tests/tree-construction vendor/html5lib-tests/tokenizer
+          cp -r "$RUNNER_TEMP/h5/tree-construction" vendor/html5lib-tests/
+          cp -r "$RUNNER_TEMP/h5/tokenizer" vendor/html5lib-tests/
+          cp "$RUNNER_TEMP/h5/LICENSE" vendor/html5lib-tests/LICENSE
+          git -C "$RUNNER_TEMP/h5" log -1 --format='%H %cs' | tee "$RUNNER_TEMP/upstream.txt"
+      - name: Regenerate the fixtures from upstream
+        run: |
+          python3 scripts/gen_html5lib.py
+          python3 scripts/gen_tokenizer_tests.py
+      - name: Run the corpora
+        run: |
+          set +e
+          moon test -p moonbitstack/moonxml/tests 2>&1 | tee "$RUNNER_TEMP/run.log"
+          status=${PIPESTATUS[0]}
+          {
+            echo "### Upstream corpus run"
+            echo "upstream: $(cat "$RUNNER_TEMP/upstream.txt")"
+            echo '```'
+            grep -aE 'html5lib (tree-construction|tokenizer):|^fixpoint:' "$RUNNER_TEMP/run.log" || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"

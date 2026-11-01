@@ -1,0 +1,13 @@
+version: 2
+
+updates:
+  # Keep the action versions in the workflows current; the CI itself has no
+  # other dependencies.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: ""
+    labels:
+      - "ci"

@@ -1,0 +1,16 @@
+# The tree is LF everywhere: the CI checks compare files byte for byte, and a
+# checkout with CRLF would fail them for a reason that has nothing to do with the
+# change being tested.
+* text=auto eol=lf
+
+# The corpora carry carriage returns as test data, so they must be stored as
+# bytes rather than as lines. `.mbti` files are generated and compared, so they
+# are text with normal LF endings.
+*.dat -text
+*.test -text
+*.mbti text
+
+# Binary assets, if any are ever added.
+*.png binary
+*.wasm binary
+*.gz binary

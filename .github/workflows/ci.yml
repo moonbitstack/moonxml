@@ -5,9 +5,19 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+# A new push to the same branch makes the previous run irrelevant.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  check:
+    name: check
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Install MoonBit
@@ -16,13 +26,58 @@ jobs:
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
       - name: Version
         run: moon version
-      - name: Check
+      - name: Type check
         run: moon check
+      # `moon check` regenerates the interface files, so a diff means the
+      # committed ones no longer describe the public API.
+      - name: The public interface files are current
+        run: git diff --exit-code -- '*.mbti' '*/*.mbti' '*/*/*.mbti'
+      - name: Sources are plain text
+        run: python3 scripts/check_hygiene.py
+
+  test:
+    name: test (${{ matrix.os }}, ${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      # A failure on one target should not hide the result on the others.
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: wasm-gc
+          - os: ubuntu-latest
+            target: js
+          - os: ubuntu-latest
+            target: native
+          - os: macos-latest
+            target: wasm-gc
+          - os: windows-latest
+            target: wasm-gc
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MoonBit (unix)
+        if: runner.os != 'Windows'
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Install MoonBit (windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:USERPROFILE\.moon\bin"
+      - name: Version
+        run: moon version
       - name: Test
-        run: moon test
+        run: moon test --target ${{ matrix.target }}
 
   conformance:
+    name: conformance
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      UPSTREAM: https://github.com/html5lib/html5lib-tests
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -32,24 +87,30 @@ jobs:
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-      - name: Fetch the corpus and verify the vendored copy is identical
+      - name: Verify the tree-construction corpus matches the sdist
         run: |
           python -m pip download html5lib==1.1 --no-deps --no-binary=:all: -d "$RUNNER_TEMP/h5"
           tar xzf "$RUNNER_TEMP/h5/html5lib-1.1.tar.gz" -C "$RUNNER_TEMP/h5"
           diff -r "$RUNNER_TEMP/h5/html5lib-1.1/html5lib/tests/testdata/tree-construction" \
                   vendor/html5lib-tests/tree-construction
-      - name: Fetch the tokenizer corpus and verify the vendored copy
+      - name: Verify the tokenizer corpus matches upstream
         run: |
-          git clone --depth 1 https://github.com/html5lib/html5lib-tests "$RUNNER_TEMP/h5tests"
+          git clone --depth 1 "$UPSTREAM" "$RUNNER_TEMP/h5tests"
           diff -r "$RUNNER_TEMP/h5tests/tokenizer" vendor/html5lib-tests/tokenizer
-      - name: Verify generated fixtures are current
+      - name: Regenerate the fixtures and the entity table
         run: |
-          python scripts/gen_html5lib.py
-          python scripts/gen_tokenizer_tests.py
-          git diff --exit-code tests/html5lib_cases.mbt tests/tokenizer_cases.mbt
-      - name: Verify the entity table is current
+          python3 scripts/gen_html5lib.py
+          python3 scripts/gen_tokenizer_tests.py
+          python3 scripts/gen_entities.py
+      - name: The committed fixtures are the generated ones
         run: |
-          python scripts/gen_entities.py
-          git diff --exit-code html/entities.mbt
-      - name: Conformance rate
-        run: moon test
+          git diff --exit-code -- tests/html5lib_cases.mbt tests/tokenizer_cases.mbt html/entities.mbt
+      - name: Corpus rates
+        run: |
+          moon test 2>&1 | tee "$RUNNER_TEMP/test.log"
+          {
+            echo "### html5lib conformance"
+            echo '```'
+            grep -E 'html5lib (tree-construction|tokenizer):|fixpoint:' "$RUNNER_TEMP/test.log" || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
