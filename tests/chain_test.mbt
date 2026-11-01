@@ -11,7 +11,7 @@ test "by_ helpers" {
   assert_eq(doc.by_id("a").length(), 1)
   assert_eq(doc.by_class("last").length(), 1)
   assert_eq(doc.by_tag("li").length(), 3)
-  assert_eq(doc.by_tag("*").length(), 8)
+  assert_eq(doc.by_tag("*").length(), 9)
 }
 
 test "traversal" {

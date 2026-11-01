@@ -62,6 +62,12 @@ fn H::starts_with(self : H, lit : String) -> Bool {
   true
 }
 
+fn H::skip_ws_h(self : H) -> Unit {
+  while not(self.at_end()) && @text.is_html_space(self.peek()) {
+    self.pos = self.pos + 1
+  }
+}
+
 fn H::starts_with_ci(self : H, lit : String) -> Bool {
   let l = lit.to_array()
   if self.pos + l.length() > self.n {
@@ -427,15 +433,77 @@ fn H::auto_close(self : H, tag : String) -> Unit {
   if tag == "button" {
     self.pop_while_current("button")
   }
+  if tag == "rb" || tag == "rtc" {
+    self.pop_while_in(["rb", "rt", "rp", "rtc"])
+  }
+  if tag == "rt" || tag == "rp" {
+    self.pop_while_in(["rb", "rt", "rp"])
+  }
+}
+
+fn H::pop_while_in(self : H, tags : Array[String]) -> Unit {
+  while self.stack.length() > 1 {
+    let l = local_of(self.current().name).to_lower()
+    let mut found = false
+    for t in tags {
+      if l == t {
+        found = true
+      }
+    }
+    if found {
+      self.pop()
+    } else {
+      break
+    }
+  }
+}
+
+fn H::push_new(self : H, tag : String) -> Unit {
+  let e = @moonxml.Element::new(tag)
+  self.current().append(@moonxml.Node::ElementNode(e))
+  self.push(e)
+}
+
+fn H::implied_table_wrappers(self : H, tag : String) -> Unit {
+  let cur = local_of(self.current().name).to_lower()
+  if tag == "tr" && cur == "table" {
+    self.push_new("tbody")
+  } else if tag == "td" || tag == "th" {
+    let c2 = local_of(self.current().name).to_lower()
+    if c2 == "table" {
+      self.push_new("tbody")
+      self.push_new("tr")
+    } else if c2 == "tbody" || c2 == "thead" || c2 == "tfoot" {
+      self.push_new("tr")
+    }
+  } else if tag == "col" && cur == "table" {
+    self.push_new("colgroup")
+  }
 }
 
 fn H::current_child_ns(self : H) -> String {
   let cur = self.current()
   let local = local_of(cur.name).to_lower()
   if local == "foreignobject" || local == "desc" || local == "title" {
-    ""
-  } else {
-    ns_of(cur.name)
+    return ""
+  }
+  if local == "mtext" || local == "mi" || local == "mo" || local == "mn" || local == "ms" {
+    return ""
+  }
+  if local == "annotation-xml" {
+    return ""
+  }
+  ns_of(cur.name)
+}
+
+fn is_html_breakout(t : String) -> Bool {
+  match t {
+    "b" | "big" | "blockquote" | "body" | "br" | "center" | "code" | "dd" | "div" | "dl" |
+    "dt" | "em" | "embed" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "head" | "hr" | "i" |
+    "img" | "li" | "listing" | "menu" | "meta" | "nobr" | "ol" | "p" | "pre" | "ruby" |
+    "s" | "small" | "span" | "strong" | "strike" | "sub" | "sup" | "table" | "tt" | "u" |
+    "ul" | "var" | "font" => true
+    _ => false
   }
 }
 
@@ -495,30 +563,12 @@ fn H::parse(self : H) -> @moonxml.Element {
   while not(self.at_end()) {
     if self.starts_with("<!--") {
       self.pos = self.pos + 4
-      let start = self.pos
-      let close = find_marker_ci(self.s, self.pos, "-->")
-      let text = if close < 0 {
-        slice_of(self.s, start, self.n)
-      } else {
-        let t = slice_of(self.s, start, close)
-        self.pos = close + 3
-        t
-      }
-      if close < 0 {
-        self.pos = self.n
-      }
+      let (text, nextpos) = scan_comment(self.s, self.pos)
+      self.pos = nextpos
       self.append_node(@moonxml.Node::CommentNode(text))
     } else if self.starts_with_ci("<!doctype") {
       self.pos = self.pos + 9
-      let start = self.pos
-      while not(self.at_end()) && self.peek() != '>' {
-        self.pos = self.pos + 1
-      }
-      let raw = slice_of(self.s, start, self.pos)
-      if not(self.at_end()) {
-        self.pos = self.pos + 1
-      }
-      root.append(@moonxml.Node::DoctypeNode(trim_h(raw)))
+      root.append(@moonxml.Node::DoctypeNode(self.parse_doctype_html()))
     } else if self.starts_with("</") {
       self.parse_end_tag()
     } else if self.starts_with("<!") {
@@ -545,10 +595,85 @@ fn H::parse(self : H) -> @moonxml.Element {
       if raw.length() > 0 {
         self.reconstruct()
         self.append_text(decode_entities(raw))
+      } else if not(self.at_end()) && self.peek() == '<' {
+        // A '<' that did not start a tag: emit it and advance, or the loop hangs.
+        self.pos = self.pos + 1
+        self.append_text("<")
       }
     }
   }
   root
+}
+
+fn scan_comment(cs : Array[Char], start : Int) -> (String, Int) {
+  let n = cs.length()
+  let mut i = start
+  while i + 2 < n {
+    if cs[i] == '-' && cs[i + 1] == '-' {
+      if cs[i + 2] == '>' {
+        return (slice_of(cs, start, i), i + 3)
+      }
+      if cs[i + 2] == '!' && i + 3 < n && cs[i + 3] == '>' {
+        return (slice_of(cs, start, i), i + 4)
+      }
+    }
+    i = i + 1
+  }
+  (slice_of(cs, start, n), n)
+}
+
+fn H::parse_doctype_html(self : H) -> String {
+  self.skip_ws_h()
+  let nstart = self.pos
+  while not(self.at_end()) && self.peek() != '>' && not(@text.is_html_space(self.peek())) {
+    self.pos = self.pos + 1
+  }
+  let name = slice_of(self.s, nstart, self.pos).to_lower()
+  self.skip_ws_h()
+  let mut pubid = ""
+  let mut sys = ""
+  if self.starts_with_ci("PUBLIC") {
+    self.pos = self.pos + 6
+    self.skip_ws_h()
+    pubid = self.read_quoted_or_empty()
+    self.skip_ws_h()
+    sys = self.read_quoted_or_empty()
+  } else if self.starts_with_ci("SYSTEM") {
+    self.pos = self.pos + 6
+    self.skip_ws_h()
+    sys = self.read_quoted_or_empty()
+  }
+  while not(self.at_end()) && self.peek() != '>' {
+    self.pos = self.pos + 1
+  }
+  if not(self.at_end()) {
+    self.pos = self.pos + 1
+  }
+  if pubid == "" && sys == "" {
+    name
+  } else {
+    name + " \"" + pubid + "\" \"" + sys + "\""
+  }
+}
+
+fn H::read_quoted_or_empty(self : H) -> String {
+  if self.at_end() {
+    return ""
+  }
+  let q = self.peek()
+  if q != '"' && q != '\'' {
+    return ""
+  }
+  self.pos = self.pos + 1
+  let start = self.pos
+  while not(self.at_end()) && self.peek() != q {
+    self.pos = self.pos + 1
+  }
+  let out = slice_of(self.s, start, self.pos)
+  if not(self.at_end()) {
+    self.pos = self.pos + 1
+  }
+  out
 }
 
 fn trim_h(s : String) -> String {
@@ -697,7 +822,18 @@ fn H::parse_start_tag(self : H) -> Unit {
   }
   // Auto-closing for optional end tags, then reconstruction.
   self.auto_close(raw_name)
+  self.implied_table_wrappers(raw_name)
   self.reconstruct()
+  // Break out of foreign content on an HTML start tag (unless at an
+  // integration point).
+  let cur_ns = ns_of(self.current().name)
+  let cur_local = local_of(self.current().name).to_lower()
+  let at_integration = cur_local == "foreignobject" || cur_local == "desc" || cur_local == "title" || cur_local == "mtext" || cur_local == "mi" || cur_local == "mo" || cur_local == "mn" || cur_local == "ms" || cur_local == "annotation-xml"
+  if cur_ns != "" && not(at_integration) && is_html_breakout(raw_name) {
+    while self.stack.length() > 1 && ns_of(self.current().name) != "" {
+      self.pop()
+    }
+  }
   // Namespace decision.
   let child_ns = self.current_child_ns()
   let ns = if raw_name == "svg" {
@@ -812,7 +948,7 @@ fn H::consume_rawtext(self : H, tag : String, decode : Bool) -> Unit {
 
 /// Parse a complete HTML document, wrapping loose content in `html`/`body`.
 pub fn loads(text : String) -> @moonxml.Document {
-  loads_internal(text, false)
+  loads_internal(text, false, "body")
 }
 
 /// Parse UTF-8 bytes as HTML. Invalid sequences are replaced with U+FFFD.
@@ -822,15 +958,35 @@ pub fn load(bytes : Bytes) -> @moonxml.Document {
 
 /// Parse an HTML fragment; content goes straight into the virtual root.
 pub fn loads_fragment(text : String, context? : String = "body") -> @moonxml.Document {
-  ignore(context)
-  loads_internal(text, true)
+  loads_internal(text, true, context)
 }
 
-fn loads_internal(text : String, fragment : Bool) -> @moonxml.Document {
+fn context_local(context : String) -> String {
+  if context.has_prefix("svg ") || context.has_prefix("math ") {
+    context.substring(start=4, end=context.length())
+  } else {
+    context
+  }
+}
+
+fn loads_internal(text : String, fragment : Bool, context : String) -> @moonxml.Document {
+  if fragment {
+    let cl = context_local(context)
+    if cl == "textarea" || cl == "title" {
+      let root = @moonxml.Element::new("#document")
+      root.append(@moonxml.Node::TextNode(decode_entities(text)))
+      return @moonxml.Document::from_root(root, @moonxml.Flavour::Html)
+    }
+    if cl == "style" || cl == "script" || cl == "xmp" || cl == "iframe" || cl == "noembed" || cl == "noframes" {
+      let root = @moonxml.Element::new("#document")
+      root.append(@moonxml.Node::TextNode(text))
+      return @moonxml.Document::from_root(root, @moonxml.Flavour::Html)
+    }
+  }
   let h = H::new(strip_bom_h(text))
   let root = h.parse()
-  if fragment == false && not_has_html(root) {
-    wrap_in_html(root)
+  if fragment == false {
+    normalize_document(root)
   }
   let doc = @moonxml.Document::from_root(root, @moonxml.Flavour::Html)
   if h.repairs > 0 {

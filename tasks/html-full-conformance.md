@@ -1,8 +1,9 @@
 # Task: full HTML parsing conformance
 
-Status: in progress. The current parser implements the common insertion behaviours
-and now runs the real adoption agency algorithm, but it is not yet 100% of the
-html5lib tree-construction corpus. This file is the incremental plan to get there.
+Status: in progress. The corpus is vendored and the runner measures a real pass
+rate: **911/1700** cases (53.6%) as of the latest commit. The parser implements
+the common insertion behaviours and the real adoption agency algorithm, but is
+not yet 100% of the corpus. This file is the incremental plan to get there.
 
 Acceptance for "done": every `.dat` file under html5lib-tests/tree-construction
 passes, the tokenizer JSON tests pass, and the fragment cases pass, with a
@@ -22,9 +23,10 @@ later change is measured rather than asserted.
 - CI runs the runner against the committed fixtures; a drop in the pass rate
   fails the build.
 
-The corpus is not fetched in this environment (network is restricted), so the
-harness is committed with a small hand-written seed set; the generator fills it
-in when run where the corpus is reachable.
+Landed: `vendor/html5lib-tests/` (the 1.1 sdist corpus, 1700 cases),
+`scripts/gen_html5lib.py`, `tests/html5lib_cases.mbt`, and
+`tests/html5lib_runner_test.mbt`, which prints the rate and enforces a ratchet
+floor. The corpus is fetched once by a maintainer; CI reads the committed copy.
 
 ## Phases
 
