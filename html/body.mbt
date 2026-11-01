@@ -423,9 +423,12 @@ fn H::close_list_item(self : H, t : String) -> Unit {
   while i >= 0 {
     let node = self.stack[i]
     let l = local_of(node.name).to_lower()
-    if l == t {
-      self.generate_implied_end(t)
-      self.pop_until(t)
+    // A dd or dt start tag closes whichever of the two is open; an li start
+    // tag closes only an li.
+    let hit = if t == "li" { l == "li" } else { l == "dd" || l == "dt" }
+    if hit {
+      self.generate_implied_end(l)
+      self.pop_until(l)
       return
     }
     if is_special_el(l) && l != "address" && l != "div" && l != "p" {

@@ -227,7 +227,7 @@ fn H::close_template(self : H) -> Unit {
 fn H::step_in_head(self : H, tok : Tok) -> Bool {
   match tok {
     Chars(s) => if @text.is_blank(strip_nul(s)) {
-      self.insert_text(s)
+      self.insert_text(strip_nul(s))
       false
     } else {
       // Whitespace that starts the run still belongs to head.
@@ -389,7 +389,7 @@ fn is_head_content(t : String) -> Bool {
 fn H::step_after_head(self : H, tok : Tok) -> Bool {
   match tok {
     Chars(s) => if @text.is_blank(strip_nul(s)) {
-      self.insert_text(s)
+      self.insert_text(strip_nul(s))
       false
     } else {
       // Whitespace stays between head and body; the rest starts the body.
