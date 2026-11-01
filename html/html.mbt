@@ -1530,7 +1530,7 @@ fn H::parse_end_tag(self : H) -> Unit {
     self.repairs = self.repairs + 1
     return
   }
-  if name == "body" || name == "html" {
+  if name == "body" || name == "html" || name == "frameset" {
     self.body_closed = true
   }
   if formatting_tag(name) {
@@ -1548,7 +1548,7 @@ fn H::parse_end_tag(self : H) -> Unit {
     }
   }
   if name == "p" {
-    if self.p_in_scope() == false && self.current_child_ns() == "" && (self.has_open("body") || self.body_has_content()) {
+    if self.p_in_scope() == false && self.current_child_ns() == "" && not(self.body_closed) && (self.has_open("body") || self.body_has_content()) {
       // The spec inserts an empty paragraph and closes it.
       let el = @moonxml.Element::new("p")
       self.append_node(@moonxml.Node::ElementNode(el))
@@ -1831,7 +1831,7 @@ fn H::parse_start_tag(self : H) -> Unit {
     }
   }
   if raw_name == "frameset" {
-    if self.template_index() >= 0 || self.body_has_content() || self.fragment_mode {
+    if self.template_index() >= 0 || self.body_has_content() || self.fragment_mode || self.has_open("body") {
       return
     }
   }
