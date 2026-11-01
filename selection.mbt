@@ -9,7 +9,11 @@
 /// A caller-implementable selector. `select` narrows `ctx` by `query`; a
 /// selector that takes no text ignores it. `self` carries whatever state the
 /// implementation wants.
-pub trait Selector {
+/// A named selector, the extension point behind `Document::selector`.
+///
+/// The trait is open, like `@event.Sink`: a caller in another package registers
+/// its own by implementing it.
+pub(open) trait Selector {
   /// Narrow `ctx`. Most selectors search the descendants of its nodes; that is
   /// the convention the built-ins follow.
   select(Self, ctx : Selection, query : String) -> Selection raise Refused

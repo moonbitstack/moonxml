@@ -430,14 +430,47 @@ fn nth_formula(s : String) -> (Int, Int) raise Refused {
   if i < n && (char_at(t, i) == 'n' || char_at(t, i) == 'N') {
     i = i + 1
     let a = if digits == "" { sign_a } else { sign_a * int_of(digits) }
-    let b = if i >= n { 0 } else { int_of(trim(t.substring(start=i, end=n))) }
+    let b = if i >= n {
+      0
+    } else {
+      nth_offset(trim(t.substring(start=i, end=n)), s)
+    }
     (a, b)
   } else {
-    if digits == "" {
+    if digits == "" || i < n {
       raise Refused::BadQuery(at=0, why="bad nth formula: " + s)
     }
     (0, sign_a * int_of(digits))
   }
+}
+
+/// The `+B` / `-B` half of an `An+B` formula. Anything else is a bad formula,
+/// including a lone sign (`2n+`), which used to read as zero.
+fn nth_offset(rest : String, whole : String) -> Int raise Refused {
+  let cs = rest.to_array()
+  if cs.length() == 0 {
+    return 0
+  }
+  let mut k = 0
+  let mut sign = 1
+  if cs[0] == '+' {
+    k = 1
+  } else if cs[0] == '-' {
+    k = 1
+    sign = -1
+  }
+  if k >= cs.length() {
+    raise Refused::BadQuery(at=0, why="bad nth formula: " + whole)
+  }
+  let mut digits = ""
+  while k < cs.length() {
+    if cs[k] < '0' || cs[k] > '9' {
+      raise Refused::BadQuery(at=0, why="bad nth formula: " + whole)
+    }
+    digits = digits + cs[k].to_string()
+    k = k + 1
+  }
+  sign * int_of(digits)
 }
 
 fn trim(s : String) -> String {
@@ -489,23 +522,27 @@ pub fn name_matches(el : Element, t : String) -> Bool {
     return true
   }
   if t.contains("{") == false {
-    let l = el.local_name()
-    if l == t {
-      return true
-    }
-    // Type selectors match HTML element names without regard to case. An
-    // element whose name is not all lowercase can only come from an XML parse,
-    // where names are compared exactly.
-    if l == l.to_lower() && l == t.to_lower() {
-      return true
-    }
+    return el.local_name() == t
   }
   false
 }
 
-fn match_complex(el : Element, parts : Array[(Combinator, Compound)], idx : Int) -> Bool {
+/// A type selector in a HTML document is matched without regard to case; in an
+/// XML document it is not. The flavour is the document's, not the element's,
+/// which is why it is a parameter here rather than a property of `el`.
+fn name_matches_in(el : Element, t : String, ci : Bool) -> Bool {
+  if name_matches(el, t) {
+    return true
+  }
+  if not(ci) || t.contains("{") {
+    return false
+  }
+  el.local_name().to_lower() == t.to_lower()
+}
+
+fn match_complex(el : Element, parts : Array[(Combinator, Compound)], idx : Int, ci : Bool) -> Bool {
   let (_, comp) = parts[idx]
-  if match_compound(el, comp) == false {
+  if match_compound(el, comp, ci) == false {
     return false
   }
   if idx == 0 {
@@ -520,7 +557,7 @@ fn match_complex(el : Element, parts : Array[(Combinator, Compound)], idx : Int)
         match cur {
           None => break
           Some(p) => {
-            if match_complex(p, parts, idx - 1) {
+            if match_complex(p, parts, idx - 1, ci) {
               found = true
               break
             }
@@ -531,11 +568,11 @@ fn match_complex(el : Element, parts : Array[(Combinator, Compound)], idx : Int)
       found
     }
     Child => match el.parent {
-      Some(p) => match_complex(p, parts, idx - 1)
+      Some(p) => match_complex(p, parts, idx - 1, ci)
       None => false
     }
     Adjacent => match el.previous_element_sibling() {
-      Some(s) => match_complex(s, parts, idx - 1)
+      Some(s) => match_complex(s, parts, idx - 1, ci)
       None => false
     }
     Sibling => {
@@ -545,7 +582,7 @@ fn match_complex(el : Element, parts : Array[(Combinator, Compound)], idx : Int)
         match cur {
           None => break
           Some(s) => {
-            if match_complex(s, parts, idx - 1) {
+            if match_complex(s, parts, idx - 1, ci) {
               found = true
               break
             }
@@ -558,19 +595,19 @@ fn match_complex(el : Element, parts : Array[(Combinator, Compound)], idx : Int)
   }
 }
 
-fn matches_any_complex(el : Element, list : Array[Complex]) -> Bool {
+fn matches_any_complex(el : Element, list : Array[Complex], ci : Bool) -> Bool {
   for c in list {
-    if match_complex(el, c.parts, c.parts.length() - 1) {
+    if match_complex(el, c.parts, c.parts.length() - 1, ci) {
       return true
     }
   }
   false
 }
 
-fn match_compound(el : Element, comp : Compound) -> Bool {
+fn match_compound(el : Element, comp : Compound, ci : Bool) -> Bool {
   if comp.universal == false {
     match comp.tag {
-      Some(t) => if name_matches(el, t) == false {
+      Some(t) => if name_matches_in(el, t, ci) == false {
         return false
       }
       None => ()
@@ -592,7 +629,7 @@ fn match_compound(el : Element, comp : Compound) -> Bool {
     }
   }
   for ps in comp.pseudos {
-    if match_pseudo(el, ps) == false {
+    if match_pseudo(el, ps, ci) == false {
       return false
     }
   }
@@ -672,7 +709,7 @@ fn type_count(el : Element) -> Int {
 }
 
 // Count siblings matching `of` (or all element siblings when `of` is empty).
-fn filtered_position(el : Element, of : Array[Complex]) -> (Int, Int) {
+fn filtered_position(el : Element, of : Array[Complex], ci : Bool) -> (Int, Int) {
   match el.parent {
     None => (1, 1)
     Some(p) => {
@@ -682,7 +719,7 @@ fn filtered_position(el : Element, of : Array[Complex]) -> (Int, Int) {
       let mut i = 0
       for c in p.children {
         match c {
-          ElementNode(x) => if of.length() == 0 || matches_any_complex(x, of) {
+          ElementNode(x) => if of.length() == 0 || matches_any_complex(x, of, ci) {
             total = total + 1
             if i <= idx {
               pos = pos + 1
@@ -707,7 +744,7 @@ fn nth_matches(pos : Int, total : Int, a : Int, b : Int, from_end : Bool) -> Boo
   }
 }
 
-fn match_pseudo(el : Element, ps : Pseudo) -> Bool {
+fn match_pseudo(el : Element, ps : Pseudo, ci : Bool) -> Bool {
   match ps {
     FirstChild => el.previous_element_sibling().is_none()
     LastChild => el.next_element_sibling().is_none()
@@ -720,27 +757,27 @@ fn match_pseudo(el : Element, ps : Pseudo) -> Bool {
       None => false
     }
     Empty => element_is_empty(el)
-    Not(list) => matches_any_complex(el, list) == false
-    Is(list) | Where(list) => matches_any_complex(el, list)
+    Not(list) => matches_any_complex(el, list, ci) == false
+    Is(list) | Where(list) => matches_any_complex(el, list, ci)
     NthChild(a, b, of) => {
       // `of S` restricts the pseudo-class to elements matching S; a sibling
       // that does not match is not counted and cannot match the formula.
-      if of.length() > 0 && not(matches_any_complex(el, of)) {
+      if of.length() > 0 && not(matches_any_complex(el, of, ci)) {
         return false
       }
-      let (pos, total) = filtered_position(el, of)
+      let (pos, total) = filtered_position(el, of, ci)
       nth_matches(pos, total, a, b, false)
     }
     NthLastChild(a, b, of) => {
-      if of.length() > 0 && not(matches_any_complex(el, of)) {
+      if of.length() > 0 && not(matches_any_complex(el, of, ci)) {
         return false
       }
-      let (pos, total) = filtered_position(el, of)
+      let (pos, total) = filtered_position(el, of, ci)
       nth_matches(pos, total, a, b, true)
     }
     NthOfType(a, b) => nth_matches(type_position(el), type_count(el), a, b, false)
     NthLastOfType(a, b) => nth_matches(type_position(el), type_count(el), a, b, true)
-    Has(list, child) => has_match(el, list, child)
+    Has(list, child) => has_match(el, list, child, ci)
   }
 }
 
@@ -757,17 +794,17 @@ fn element_is_empty(el : Element) -> Bool {
   true
 }
 
-fn has_match(el : Element, list : Array[Complex], child : Bool) -> Bool {
+fn has_match(el : Element, list : Array[Complex], child : Bool, ci : Bool) -> Bool {
   if child {
     for c in el.children_elements() {
-      if matches_any_complex(c, list) {
+      if matches_any_complex(c, list, ci) {
         return true
       }
     }
     false
   } else {
     for d in el.descendant_elements() {
-      if matches_any_complex(d, list) {
+      if matches_any_complex(d, list, ci) {
         return true
       }
     }
@@ -780,18 +817,31 @@ fn has_match(el : Element, list : Array[Complex], child : Bool) -> Bool {
 // ---------------------------------------------------------------------------
 
 /// Match `el` against `query` on its own, ignoring any surrounding context.
+///
+/// With no document to ask, this applies the HTML rule for type selectors, which
+/// is the case a caller checking one element by hand expects.
 pub fn css_matches_one(el : Element, query : String) -> Bool raise Refused {
   let list = parse_selector_list(query)
-  matches_any_complex(el, list)
+  matches_any_complex(el, list, true)
+}
+
+/// Whether type selectors are matched without regard to case: true for a HTML
+/// document, false for an XML one, and true when there is no document to ask.
+fn case_insensitive(ctx : Selection) -> Bool {
+  match ctx.doc {
+    Some(d) => d.flavour == Flavour::Html
+    None => true
+  }
 }
 
 /// Narrow `ctx` by `query`: every descendant element that matches, in document
 /// order, deduplicated.
 pub fn css_select(ctx : Selection, query : String) -> Selection raise Refused {
   let list = parse_selector_list(query)
+  let ci = case_insensitive(ctx)
   let out : Array[Node] = []
   for e in gather_elements(ctx) {
-    if matches_any_complex(e, list) {
+    if matches_any_complex(e, list, ci) {
       out.push(ElementNode(e))
     }
   }

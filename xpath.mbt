@@ -590,10 +590,48 @@ fn parse_primary(p : XP) -> Expr raise Refused {
       raise Refused::BadQuery(at=p.pos, why="expected ')'")
     }
     p.pos = p.pos + 1
+    // Arity is checked while parsing, so a call with the wrong shape raises a
+    // query error instead of indexing past the argument list while evaluating.
+    if not(arity_ok(nm, args.length())) {
+      raise Refused::BadQuery(at=p.pos, why="wrong number of arguments to " + nm + "()")
+    }
     Expr::FunExpr(nm, args)
   } else {
     raise Refused::BadQuery(at=p.pos, why="expected an expression")
   }
+}
+
+/// Whether `name` takes `n` arguments. A name outside the core library is left
+/// to the evaluator, which reports it as unsupported.
+fn arity_ok(name : String, n : Int) -> Bool {
+  if name == "last" || name == "position" || name == "true" || name == "false" {
+    return n == 0
+  }
+  if name == "count" || name == "sum" || name == "id" || name == "not" || name == "boolean" {
+    return n == 1
+  }
+  if name == "floor" || name == "ceiling" || name == "round" || name == "lang" {
+    return n == 1
+  }
+  if name == "starts-with" || name == "contains" || name == "substring-before" {
+    return n == 2
+  }
+  if name == "substring-after" || name == "translate" {
+    return n == 2 || (name == "translate" && n == 3)
+  }
+  if name == "substring" {
+    return n == 2 || n == 3
+  }
+  if name == "concat" {
+    return n >= 2
+  }
+  if name == "string" || name == "string-length" || name == "normalize-space" {
+    return n == 0 || n == 1
+  }
+  if name == "local-name" || name == "name" || name == "namespace-uri" || name == "number" {
+    return n == 0 || n == 1
+  }
+  true
 }
 
 fn parse_string_lit(p : XP) -> String raise Refused {
