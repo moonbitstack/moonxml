@@ -221,4 +221,4 @@ connection, so `moonxml/htmx` stops at the request and the swap.
 
 ## Licence
 
-Apache-2.0. See [LICENSE](LICENSE). Test fixtures generated from [html5lib-tests](https://github.com/html5lib/html5lib-tests) (MIT).
+Apache-2.0. See [LICENSE](LICENSE). Test fixtures generated from [html5lib-tests](https://github.com/html5lib/html5lib-tests) (MIT), [libxml2](https://gitlab.gnome.org/GNOME/libxml2)'s XPath tests (MIT) and the W3C CSS3 Selectors Test Suite in [web-platform-tests](https://github.com/web-platform-tests/wpt) (BSD-3-Clause).

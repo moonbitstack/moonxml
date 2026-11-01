@@ -1,0 +1,10 @@
+// The corpora that need both parsers, which no one package can import: libxml2's
+// XPath expressions and the W3C selectors suite, each with the cases known to fail.
+import {
+}
+
+import {
+  "moonbitstack/moonxml",
+  "moonbitstack/moonxml/html",
+  "moonbitstack/moonxml/xml",
+} for "test"
