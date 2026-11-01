@@ -2238,3 +2238,4 @@ fn entity_value(name : String) -> String? {
     _ => None
   }
 }
+

@@ -1713,3 +1713,4 @@ pub fn h5_cases() -> Array[H5Case] {
     { file: "webkit02.dat", input: "</foreignObject><plaintext><div>foo</div>", fragment: "", doc: "| <html>\n|   <head>\n|   <body>\n|     <plaintext>\n|       \"<div>foo</div>\"", scripting: false },
   ]
 }
+

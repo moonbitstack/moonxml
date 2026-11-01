@@ -49,7 +49,7 @@ def main() -> None:
     out.append("")
 
     target = Path(__file__).resolve().parent.parent / "html" / "entities.mbt"
-    target.write_text("\n".join(out), encoding="utf-8")
+    target.write_text("\n".join(out) + "\n", encoding="utf-8", newline="\n")
     print("wrote %s (%d entries)" % (target, len(html5)))
 
 

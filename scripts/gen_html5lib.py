@@ -163,7 +163,7 @@ def main() -> int:
     lines.append("  ]")
     lines.append("}")
     lines.append("")
-    OUT.write_text("\n".join(lines), encoding="utf-8")
+    OUT.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     print("wrote %d cases to %s (%d bytes)" % (len(cases), OUT, OUT.stat().st_size))
     return 0
 

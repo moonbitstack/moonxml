@@ -7031,3 +7031,4 @@ pub fn tok_cases() -> Array[TokCase] {
     { file: "unicodeCharsProblematic.test", desc: "CR followed by U+0000", input: "\r\u{0}", state: "data", last: "", expected: ["c\\n\\u{0}"] },
   ]
 }
+
