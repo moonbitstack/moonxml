@@ -1250,11 +1250,26 @@ fn H::parse_end_tag(self : H) -> Unit {
     self.pos = self.pos + 1
   }
   let name = slice_of(self.s, start, self.pos).to_lower()
+  let mut has_lt = false
   while not(self.at_end()) && self.peek() != '>' {
+    if self.peek() == '<' {
+      has_lt = true
+    }
     self.pos = self.pos + 1
   }
   if not(self.at_end()) {
     self.pos = self.pos + 1
+  }
+  if name == "br" {
+    // `</br>` is an error; browsers insert a break instead.
+    let el = @moonxml.Element::new("br")
+    self.append_node(@moonxml.Node::ElementNode(el))
+    return
+  }
+  if has_lt {
+    // An end tag with a `<` in it is dropped.
+    self.repairs = self.repairs + 1
+    return
   }
   if name == "body" || name == "html" {
     self.body_closed = true
@@ -1480,6 +1495,13 @@ fn H::parse_start_tag(self : H) -> Unit {
         return
       }
       None => ()
+    }
+  }
+  // A second `body` start tag only adds attributes it does not already have.
+  if raw_name == "body" {
+    if self.has_open("body") {
+      self.merge_attrs_onto("body", attrs)
+      return
     }
   }
   // A body tag, or a block that cannot live in head, closes head.
