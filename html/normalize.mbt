@@ -141,9 +141,11 @@ pub fn normalize_document_with(root : @moonxml.Element, trailing : Int) -> Unit 
           after_frameset.push(n)
         } else if comment_index > comment_total - trailing {
           after_body.push(n)
+        } else if in_body {
+          body.append(n)
         } else if seen_head {
           after_head.push(n)
-        } else if not(in_body) && head.children.length() > 0 {
+        } else if head.children.length() > 0 {
           head.append(n)
         } else if seen_element {
           before_head.push(n)

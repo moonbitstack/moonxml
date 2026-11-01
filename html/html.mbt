@@ -1654,6 +1654,9 @@ fn H::parse_start_tag(self : H) -> Unit {
     return
   }
   self.push(el)
+  if raw_name == "pre" || raw_name == "listing" {
+    self.skip_leading_newline()
+  }
   if ns == "" && formatting_tag(raw_name) {
     self.afe_add(el)
   }
@@ -1889,6 +1892,13 @@ fn find_script_end(cs : Array[Char], start : Int, n : Int) -> Int {
     }
   }
   -1
+}
+
+/// `pre`, `listing` and `textarea` drop one newline straight after the start tag.
+fn H::skip_leading_newline(self : H) -> Unit {
+  if not(self.at_end()) && self.peek() == '\n' {
+    self.pos = self.pos + 1
+  }
 }
 
 fn H::consume_rawtext(self : H, tag : String, decode : Bool) -> Unit {
