@@ -72,15 +72,15 @@ def parse_file(path: pathlib.Path):
             # A text node may span lines: its content is everything up to the
             # closing quote, which can sit on a later line.
             content = line[2:].lstrip()
-            if content.startswith('"') and not content.endswith('"'):
-                parts = [line]
-                while i < n:
-                    parts.append(lines[i])
-                    ended = lines[i].endswith('"')
+            if content.startswith('"'):
+                # A text node runs until its quotes balance; the newlines inside
+                # it are part of the content.
+                quotes = content.count('"')
+                while quotes % 2 == 1 and i < n:
+                    following = lines[i]
                     i += 1
-                    if ended:
-                        break
-                line = "\n".join(parts)
+                    line = line + "\n" + following
+                    quotes += following.count('"')
             doc.append(line)
         cases.append(
             {

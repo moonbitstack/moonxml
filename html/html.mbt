@@ -383,7 +383,7 @@ fn is_void_tag(t : String) -> Bool {
 }
 
 fn is_rawtext_tag(t : String) -> Bool {
-  t == "script" || t == "style" || t == "xmp" || t == "iframe" || t == "noembed" || t == "noframes"
+  t == "script" || t == "style" || t == "xmp" || t == "iframe" || t == "noembed" || t == "noframes" || t == "plaintext"
 }
 
 fn is_rcdata_tag(t : String) -> Bool {
@@ -1034,6 +1034,19 @@ fn H::parse(self : H) -> @moonxml.Element {
       }
       self.repairs = self.repairs + 1
       self.append_node(@moonxml.Node::CommentNode(text))
+    } else if self.starts_with("</") && not(is_ascii_alpha_c(self.peek_at(2))) {
+      // `</` with no tag name: a bogus comment, like `</ tttt>`.
+      self.pos = self.pos + 2
+      let start = self.pos
+      while not(self.at_end()) && self.peek() != '>' {
+        self.pos = self.pos + 1
+      }
+      let text = slice_of(self.s, start, self.pos)
+      if not(self.at_end()) {
+        self.pos = self.pos + 1
+      }
+      self.repairs = self.repairs + 1
+      self.push_comment(text)
     } else if self.starts_with("</") {
       self.parse_end_tag()
     } else if self.starts_with("<![CDATA[") && ns_of(self.current().name) != "" {
@@ -1339,6 +1352,7 @@ fn H::parse_start_tag(self : H) -> Unit {
   }
   let attrs : Array[(String, String)] = []
   let mut self_closing = false
+  let mut terminated = false
   while not(self.at_end()) {
     while not(self.at_end()) && @text.is_html_space(self.peek()) {
       self.pos = self.pos + 1
@@ -1349,11 +1363,13 @@ fn H::parse_start_tag(self : H) -> Unit {
     let c = self.peek()
     if c == '>' {
       self.pos = self.pos + 1
+      terminated = true
       break
     } else if c == '/' {
       if self.peek_at(1) == '>' {
         self.pos = self.pos + 2
         self_closing = true
+        terminated = true
         break
       } else {
         self.pos = self.pos + 1
@@ -1397,6 +1413,10 @@ fn H::parse_start_tag(self : H) -> Unit {
       }
     }
   }
+  if not(terminated) {
+    // EOF inside a tag: the token is dropped.
+    return
+  }
   // In-select handling comes first: most tags are ignored there.
   if self.handle_in_select(raw_name) {
     return
@@ -1420,8 +1440,8 @@ fn H::parse_start_tag(self : H) -> Unit {
       None => ()
     }
   }
-  // A body tag while head is still open closes head.
-  if raw_name == "body" {
+  // A body tag, or a block that cannot live in head, closes head.
+  if raw_name == "body" || closes_p(raw_name) || is_rawtext_tag(raw_name) || is_rcdata_tag(raw_name) {
     self.pop_through_head()
   }
   // A heading start tag closes an open heading.
@@ -1677,7 +1697,7 @@ fn find_script_end(cs : Array[Char], start : Int, n : Int) -> Int {
         tag_start = i
         st = 9
       } else if c == '>' {
-        st = 6
+        st = 0
       } else {
         st = 6
       }
@@ -1743,7 +1763,7 @@ fn find_script_end(cs : Array[Char], start : Int, n : Int) -> Int {
         tag_start = i
         st = 16
       } else if c == '>' {
-        st = 13
+        st = 0
       } else if c != '-' {
         st = 13
       }
