@@ -1552,7 +1552,7 @@ fn H::parse_start_tag(self : H) -> Unit {
     self.pop()
     return
   }
-  if self_closing {
+  if self_closing && (ns != "" || is_void_tag(raw_name)) {
     return
   }
   self.push(el)
@@ -1856,8 +1856,11 @@ fn context_is_foreign(context : String) -> Bool {
 }
 
 fn context_local(context : String) -> String {
-  if context.has_prefix("svg ") || context.has_prefix("math ") {
+  // `svg title` and `math ms` name an element in that namespace.
+  if context.has_prefix("svg ") {
     context.substring(start=4, end=context.length())
+  } else if context.has_prefix("math ") {
+    context.substring(start=5, end=context.length())
   } else {
     context
   }
@@ -1878,7 +1881,7 @@ fn loads_internal(text : String, fragment : Bool, context : String) -> @moonxml.
     }
   }
   let h = H::new(preprocess_h(text))
-  if fragment && not(is_integration_name(context_local(context))) {
+  if fragment && not(is_integration_name(context_local(context).to_lower())) {
     if context.has_prefix("svg ") {
       h.frag_ns = svg_ns
     } else if context.has_prefix("math ") {
