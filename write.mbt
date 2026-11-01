@@ -175,6 +175,17 @@ fn is_void(el : String) -> Bool {
   false
 }
 
+/// Whether every child of `e` is character data.
+fn text_only(e : Element) -> Bool {
+  for c in e.children {
+    match c {
+      TextNode(_) | CDataNode(_) => ()
+      _ => return false
+    }
+  }
+  true
+}
+
 fn is_rawtext(el : String) -> Bool {
   if el == "script" || el == "style" || el == "xmp" {
     return true
@@ -220,6 +231,69 @@ fn escape_attr_html(sb : StringBuilder, s : String) -> Unit {
   }
 }
 
+/// Split a flattened doctype (`name "pub" "sys"`) into its name and the quoted
+/// identifiers that follow it. A quote inside an identifier makes the flattened
+/// form ambiguous; the first two quoted runs are taken as the identifiers, which
+/// is the best a string can do.
+fn split_doctype(info : String) -> (String, Array[String]) {
+  let cs = info.to_array()
+  let n = cs.length()
+  let mut i = 0
+  while i < n && cs[i] != ' ' && cs[i] != '\t' {
+    i = i + 1
+  }
+  let nb = StringBuilder()
+  let mut k = 0
+  while k < i {
+    nb.write_char(cs[k])
+    k = k + 1
+  }
+  let ids : Array[String] = []
+  while i < n {
+    if cs[i] == '"' {
+      let start = i
+      i = i + 1
+      while i < n && cs[i] != '"' {
+        i = i + 1
+      }
+      if i < n {
+        i = i + 1
+      }
+      let sb = StringBuilder()
+      let mut j = start
+      while j < i {
+        sb.write_char(cs[j])
+        j = j + 1
+      }
+      ids.push(sb.to_string())
+    } else {
+      i = i + 1
+    }
+  }
+  (nb.to_string(), ids)
+}
+
+/// The text of a doctype in a HTML document.
+///
+/// The tree keeps the flattened form the html5lib corpus prints: the name, then
+/// the public and system identifiers when either is present, each quoted, with
+/// no `PUBLIC` or `SYSTEM` keyword. A parser needs the keyword, so the writer
+/// puts it back — a doctype with an empty public identifier is a `SYSTEM` one,
+/// and any other pair is a `PUBLIC` one. That is what makes a written document
+/// read back as the same doctype.
+fn html_doctype_text(info : String) -> String {
+  let (name, ids) = split_doctype(info)
+  if ids.length() == 0 {
+    info
+  } else if ids.length() == 1 {
+    name + " SYSTEM " + ids[0]
+  } else if ids[0] == "\"\"" {
+    name + " SYSTEM " + ids[1]
+  } else {
+    name + " PUBLIC " + ids[0] + " " + ids[1]
+  }
+}
+
 fn write_html_node(node : Node, sb : StringBuilder) -> Unit {
   match node {
     ElementNode(e) => write_html_element(e, sb)
@@ -241,15 +315,31 @@ fn write_html_node(node : Node, sb : StringBuilder) -> Unit {
     }
     DoctypeNode(s) => {
       sb.write_string("<!DOCTYPE ")
-      sb.write_string(s)
+      sb.write_string(html_doctype_text(s))
       sb.write_char('>')
     }
     AttributeNode(_, v) => escape_text_html(sb, v)
   }
 }
 
+/// Whether the element's first child is character data beginning with a
+/// newline, which is the case the parser's leading-newline rule eats.
+fn starts_with_newline(e : Element) -> Bool {
+  if e.children.length() == 0 {
+    return false
+  }
+  match e.children[0] {
+    TextNode(s) | CDataNode(s) => s.length() > 0 && char_at(s, 0) == '\n'
+    _ => false
+  }
+}
+
 fn write_html_element(e : Element, sb : StringBuilder) -> Unit {
-  let local = html_local(e.name)
+  let (uri, local) = split_clark(e.name)
+  // The HTML rules (void elements, raw text) are about elements in the HTML
+  // namespace; an `svg plaintext` is an ordinary element that happens to share
+  // the name.
+  let html_ns = uri == ""
   sb.write_char('<')
   sb.write_string(local)
   for pair in e.attrs {
@@ -264,10 +354,13 @@ fn write_html_element(e : Element, sb : StringBuilder) -> Unit {
     }
   }
   sb.write_char('>')
-  if is_void(local) {
+  if html_ns && is_void(local) {
     return
   }
-  if is_rawtext(local) {
+  // `noscript` holds raw text when the tree was parsed with scripting enabled
+  // and normal content when it was not; a text-only child list can only be the
+  // former, and writing it raw is what makes the document read back as itself.
+  if html_ns && (is_rawtext(local) || (local == "noscript" && text_only(e))) {
     for c in e.children {
       match c {
         TextNode(s) => sb.write_string(s)
@@ -276,6 +369,13 @@ fn write_html_element(e : Element, sb : StringBuilder) -> Unit {
       }
     }
   } else {
+    // The parser drops one newline directly after `pre`, `textarea` and
+    // `listing`; writing content that starts with a newline therefore needs an
+    // extra one, or reading the document back loses it.
+    if html_ns && (local == "pre" || local == "textarea" || local == "listing") &&
+      starts_with_newline(e) {
+      sb.write_char('\n')
+    }
     for c in e.children {
       write_html_node(c, sb)
     }
