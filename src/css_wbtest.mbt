@@ -306,3 +306,31 @@ test ":enabled and :disabled reach only what HTML lets a document disable" {
   }
   assert_eq(neither, ["form", "p"])
 }
+
+///|
+test "a selector that does not parse names its fault and where it is" {
+  let doc = page()
+  let message = try {
+    ignore(doc.css("ul >"))
+    ""
+  } catch {
+    Refused::BadQuery(at~, why~) => "at \{at}: \{why}"
+    _ => "another kind of refusal"
+  }
+  assert_eq(message.has_prefix("at "), true)
+  assert_eq(message.contains("combinator"), true)
+}
+
+///|
+test "a pseudo-class that needs a browser is refused by name" {
+  let doc = page()
+  let message = try {
+    ignore(doc.css("a:hover"))
+    ""
+  } catch {
+    Refused::BadQuery(why~, ..) => why
+    _ => "another kind of refusal"
+  }
+  assert_eq(message.contains(":hover"), true)
+  assert_eq(message.contains("not statically decidable"), true)
+}

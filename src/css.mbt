@@ -190,9 +190,13 @@ fn parse_complex(text : String) -> Complex raise Refused {
     }
   }
   let mut pending : Combinator = Descendant
+  // Whether a combinator has been written without a compound after it: a
+  // selector that ends on one is not a selector.
+  let mut owed = false
   skip_ws()
   if i < n && is_combinator_char(text.at(i)) {
     pending = combinator_of(text.at(i))
+    owed = true
     i = i + 1
     skip_ws()
   }
@@ -202,14 +206,19 @@ fn parse_complex(text : String) -> Complex raise Refused {
       raise BadQuery(at=i, why="a compound selector is empty")
     }
     parts.push((pending, compound))
+    owed = false
     i = next
     pending = Descendant
     skip_ws()
     if i < n && is_combinator_char(text.at(i)) {
       pending = combinator_of(text.at(i))
+      owed = true
       i = i + 1
       skip_ws()
     }
+  }
+  if owed {
+    raise BadQuery(at=i, why="a combinator needs a selector after it")
   }
   if parts.is_empty() {
     raise BadQuery(at=0, why="a complex selector needs a compound")
