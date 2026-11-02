@@ -66,7 +66,7 @@ fn rcdata_state(lexer : Lexer, ch : Int32) -> Unit {
     lexer.state = RcdataLessThan
     return
   }
-  emit_char(lexer, ch)
+  emit_char(lexer, replaced(ch))
 }
 
 ///|
@@ -79,7 +79,7 @@ fn rawtext_state(lexer : Lexer, ch : Int32) -> Unit {
     lexer.state = RawtextLessThan
     return
   }
-  emit_char(lexer, ch)
+  emit_char(lexer, replaced(ch))
 }
 
 ///|
@@ -92,7 +92,7 @@ fn script_data_state(lexer : Lexer, ch : Int32) -> Unit {
     lexer.state = ScriptLessThan
     return
   }
-  emit_char(lexer, ch)
+  emit_char(lexer, replaced(ch))
 }
 
 ///|
@@ -101,8 +101,18 @@ fn plaintext_state(lexer : Lexer, ch : Int32) -> Unit {
     emit_eof(lexer)
     return
   }
-  // A NULL in plain text is a replacement character, not something to drop.
-  emit_char(lexer, if ch == 0 { 0xFFFD } else { ch })
+  emit_char(lexer, replaced(ch))
+}
+
+///|
+/// A NULL as text, which is a replacement character everywhere but the data
+/// state: there the tree builder decides by insertion mode.
+fn replaced(ch : Int32) -> Int32 {
+  if ch == 0 {
+    0xFFFD
+  } else {
+    ch
+  }
 }
 
 // -------------------------------------------------------------------- markup
@@ -398,6 +408,7 @@ fn after_attribute_value_quoted_state(lexer : Lexer, ch : Int32) -> Unit {
     emit_eof(lexer)
     return
   }
+  finish_attr(lexer)
   lexer.state = BeforeAttributeName
   lexer.reconsume()
 }
@@ -416,6 +427,7 @@ fn self_closing_start_tag_state(lexer : Lexer, ch : Int32) -> Unit {
     emit_eof(lexer)
     return
   }
+  finish_attr(lexer)
   lexer.state = BeforeAttributeName
   lexer.reconsume()
 }
@@ -669,30 +681,28 @@ fn before_doctype_name_state(lexer : Lexer, ch : Int32) -> Unit {
     return
   }
   if ch == 0 {
-    lexer.doctype_name = StringBuilder()
-    lexer.doctype_name.write_char('\u{FFFD}')
+    lexer.doctype_name = Some(StringBuilder())
+    lexer.doctype_name.unwrap().write_char('\u{FFFD}')
     lexer.state = DoctypeName
     return
   }
   if ch == 0x3E {
-    lexer.doctype_name = StringBuilder()
     lexer.force_quirks = true
     lexer.state = Data
     emit_doctype(lexer)
     return
   }
   if ch == -1 {
-    lexer.doctype_name = StringBuilder()
     lexer.force_quirks = true
     emit_doctype(lexer)
     emit_eof(lexer)
     return
   }
-  lexer.doctype_name = StringBuilder()
+  lexer.doctype_name = Some(StringBuilder())
   if ch >= 0x41 && ch <= 0x5A {
-    lexer.doctype_name.write_char(as_char(ch + 0x20))
+    lexer.doctype_name.unwrap().write_char(as_char(ch + 0x20))
   } else {
-    lexer.doctype_name.write_char(as_char(ch))
+    lexer.doctype_name.unwrap().write_char(as_char(ch))
   }
   lexer.state = DoctypeName
 }
@@ -715,14 +725,14 @@ fn doctype_name_state(lexer : Lexer, ch : Int32) -> Unit {
     return
   }
   if ch == 0 {
-    lexer.doctype_name.write_char('\u{FFFD}')
+    lexer.doctype_name.unwrap().write_char('\u{FFFD}')
     return
   }
   if ch >= 0x41 && ch <= 0x5A {
-    lexer.doctype_name.write_char(as_char(ch + 0x20))
+    lexer.doctype_name.unwrap().write_char(as_char(ch + 0x20))
     return
   }
-  lexer.doctype_name.write_char(as_char(ch))
+  lexer.doctype_name.unwrap().write_char(as_char(ch))
 }
 
 ///|
@@ -765,12 +775,12 @@ fn after_doctype_public_keyword_state(lexer : Lexer, ch : Int32) -> Unit {
     return
   }
   if ch == 0x22 {
-    lexer.doctype_public = StringBuilder()
+    lexer.doctype_public = Some(StringBuilder())
     lexer.state = DoctypePublicIdentifierDouble
     return
   }
   if ch == 0x27 {
-    lexer.doctype_public = StringBuilder()
+    lexer.doctype_public = Some(StringBuilder())
     lexer.state = DoctypePublicIdentifierSingle
     return
   }
@@ -797,12 +807,12 @@ fn before_doctype_public_identifier_state(lexer : Lexer, ch : Int32) -> Unit {
     return
   }
   if ch == 0x22 {
-    lexer.doctype_public = StringBuilder()
+    lexer.doctype_public = Some(StringBuilder())
     lexer.state = DoctypePublicIdentifierDouble
     return
   }
   if ch == 0x27 {
-    lexer.doctype_public = StringBuilder()
+    lexer.doctype_public = Some(StringBuilder())
     lexer.state = DoctypePublicIdentifierSingle
     return
   }
@@ -830,7 +840,7 @@ fn doctype_public_double_state(lexer : Lexer, ch : Int32) -> Unit {
     return
   }
   if ch == 0 {
-    lexer.doctype_public.write_char('\u{FFFD}')
+    lexer.doctype_public.unwrap().write_char('\u{FFFD}')
     return
   }
   if ch == 0x3E {
@@ -845,7 +855,7 @@ fn doctype_public_double_state(lexer : Lexer, ch : Int32) -> Unit {
     emit_eof(lexer)
     return
   }
-  lexer.doctype_public.write_char(as_char(ch))
+  lexer.doctype_public.unwrap().write_char(as_char(ch))
 }
 
 ///|
@@ -855,7 +865,7 @@ fn doctype_public_single_state(lexer : Lexer, ch : Int32) -> Unit {
     return
   }
   if ch == 0 {
-    lexer.doctype_public.write_char('\u{FFFD}')
+    lexer.doctype_public.unwrap().write_char('\u{FFFD}')
     return
   }
   if ch == 0x3E {
@@ -870,7 +880,7 @@ fn doctype_public_single_state(lexer : Lexer, ch : Int32) -> Unit {
     emit_eof(lexer)
     return
   }
-  lexer.doctype_public.write_char(as_char(ch))
+  lexer.doctype_public.unwrap().write_char(as_char(ch))
 }
 
 ///|
@@ -885,12 +895,12 @@ fn after_doctype_public_identifier_state(lexer : Lexer, ch : Int32) -> Unit {
     return
   }
   if ch == 0x22 {
-    lexer.doctype_system = StringBuilder()
+    lexer.doctype_system = Some(StringBuilder())
     lexer.state = DoctypeSystemIdentifierDouble
     return
   }
   if ch == 0x27 {
-    lexer.doctype_system = StringBuilder()
+    lexer.doctype_system = Some(StringBuilder())
     lexer.state = DoctypeSystemIdentifierSingle
     return
   }
@@ -916,12 +926,12 @@ fn between_doctype_public_and_system_state(lexer : Lexer, ch : Int32) -> Unit {
     return
   }
   if ch == 0x22 {
-    lexer.doctype_system = StringBuilder()
+    lexer.doctype_system = Some(StringBuilder())
     lexer.state = DoctypeSystemIdentifierDouble
     return
   }
   if ch == 0x27 {
-    lexer.doctype_system = StringBuilder()
+    lexer.doctype_system = Some(StringBuilder())
     lexer.state = DoctypeSystemIdentifierSingle
     return
   }
@@ -943,12 +953,12 @@ fn after_doctype_system_keyword_state(lexer : Lexer, ch : Int32) -> Unit {
     return
   }
   if ch == 0x22 {
-    lexer.doctype_system = StringBuilder()
+    lexer.doctype_system = Some(StringBuilder())
     lexer.state = DoctypeSystemIdentifierDouble
     return
   }
   if ch == 0x27 {
-    lexer.doctype_system = StringBuilder()
+    lexer.doctype_system = Some(StringBuilder())
     lexer.state = DoctypeSystemIdentifierSingle
     return
   }
@@ -975,12 +985,12 @@ fn before_doctype_system_identifier_state(lexer : Lexer, ch : Int32) -> Unit {
     return
   }
   if ch == 0x22 {
-    lexer.doctype_system = StringBuilder()
+    lexer.doctype_system = Some(StringBuilder())
     lexer.state = DoctypeSystemIdentifierDouble
     return
   }
   if ch == 0x27 {
-    lexer.doctype_system = StringBuilder()
+    lexer.doctype_system = Some(StringBuilder())
     lexer.state = DoctypeSystemIdentifierSingle
     return
   }
@@ -1008,7 +1018,7 @@ fn doctype_system_double_state(lexer : Lexer, ch : Int32) -> Unit {
     return
   }
   if ch == 0 {
-    lexer.doctype_system.write_char('\u{FFFD}')
+    lexer.doctype_system.unwrap().write_char('\u{FFFD}')
     return
   }
   if ch == 0x3E {
@@ -1023,7 +1033,7 @@ fn doctype_system_double_state(lexer : Lexer, ch : Int32) -> Unit {
     emit_eof(lexer)
     return
   }
-  lexer.doctype_system.write_char(as_char(ch))
+  lexer.doctype_system.unwrap().write_char(as_char(ch))
 }
 
 ///|
@@ -1033,7 +1043,7 @@ fn doctype_system_single_state(lexer : Lexer, ch : Int32) -> Unit {
     return
   }
   if ch == 0 {
-    lexer.doctype_system.write_char('\u{FFFD}')
+    lexer.doctype_system.unwrap().write_char('\u{FFFD}')
     return
   }
   if ch == 0x3E {
@@ -1048,7 +1058,7 @@ fn doctype_system_single_state(lexer : Lexer, ch : Int32) -> Unit {
     emit_eof(lexer)
     return
   }
-  lexer.doctype_system.write_char(as_char(ch))
+  lexer.doctype_system.unwrap().write_char(as_char(ch))
 }
 
 ///|

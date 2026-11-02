@@ -106,9 +106,9 @@ priv enum Token {
   Characters(text~ : String)
   CommentToken(text~ : String)
   DoctypeToken(
-    name~ : String,
-    public_id~ : String,
-    system_id~ : String,
+    name~ : String?,
+    public_id~ : String?,
+    system_id~ : String?,
     force_quirks~ : Bool
   )
   Eof
@@ -137,9 +137,11 @@ priv struct Lexer {
   mut self_closing : Bool
   // comment and doctype data
   mut comment : StringBuilder
-  mut doctype_name : StringBuilder
-  mut doctype_public : StringBuilder
-  mut doctype_system : StringBuilder
+  // The standard tells a missing identifier from an empty one, and the quirks
+  // rules ask which it was.
+  mut doctype_name : StringBuilder?
+  mut doctype_public : StringBuilder?
+  mut doctype_system : StringBuilder?
   mut force_quirks : Bool
   // the character reference being decoded
   mut reference : StringBuilder
@@ -156,10 +158,16 @@ priv struct Lexer {
   /// The name of the element whose end tag closes the raw text the tokenizer is
   /// in the middle of, if it is in the middle of one.
   mut raw_name : String
+  /// Where tokens go. The tree builder, but for a test that reads them.
+  out : (Lexer, Token) -> Unit
 }
 
 ///|
-fn Lexer::new(text : String, builder : Builder) -> Lexer {
+fn Lexer::new(
+  text : String,
+  builder : Builder,
+  out~ : (Lexer, Token) -> Unit = process,
+) -> Lexer {
   {
     text,
     at: 0,
@@ -176,9 +184,9 @@ fn Lexer::new(text : String, builder : Builder) -> Lexer {
     attr_value: StringBuilder(),
     self_closing: false,
     comment: StringBuilder(),
-    doctype_name: StringBuilder(),
-    doctype_public: StringBuilder(),
-    doctype_system: StringBuilder(),
+    doctype_name: None,
+    doctype_public: None,
+    doctype_system: None,
     force_quirks: false,
     reference: StringBuilder(),
     ref_return: Data,
@@ -187,6 +195,7 @@ fn Lexer::new(text : String, builder : Builder) -> Lexer {
     at_eof: false,
     raw_buf: StringBuilder(),
     raw_name: "",
+    out,
   }
 }
 
@@ -320,13 +329,13 @@ fn flush_run(lexer : Lexer) -> Unit {
   lexer.run = StringBuilder()
   lexer.run_empty = true
   lexer.run_space = true
-  process(lexer, Characters(text~))
+  (lexer.out)(lexer, Characters(text~))
 }
 
 ///|
 fn emit_token(lexer : Lexer, token : Token) -> Unit {
   flush_run(lexer)
-  process(lexer, token)
+  (lexer.out)(lexer, token)
 }
 
 ///|
@@ -355,13 +364,13 @@ fn emit_comment(lexer : Lexer) -> Unit {
 
 ///|
 fn emit_doctype(lexer : Lexer) -> Unit {
-  let name = lexer.doctype_name.to_string()
-  let public_id = lexer.doctype_public.to_string()
-  let system_id = lexer.doctype_system.to_string()
+  let name = lexer.doctype_name.map(text => text.to_string())
+  let public_id = lexer.doctype_public.map(text => text.to_string())
+  let system_id = lexer.doctype_system.map(text => text.to_string())
   let force_quirks = lexer.force_quirks
-  lexer.doctype_name = StringBuilder()
-  lexer.doctype_public = StringBuilder()
-  lexer.doctype_system = StringBuilder()
+  lexer.doctype_name = None
+  lexer.doctype_public = None
+  lexer.doctype_system = None
   lexer.force_quirks = false
   emit_token(lexer, DoctypeToken(name~, public_id~, system_id~, force_quirks~))
 }

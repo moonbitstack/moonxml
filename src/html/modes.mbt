@@ -123,11 +123,16 @@ fn initial(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
       }
     CommentToken(text~) => insert_comment_into(b.root, text)
     DoctypeToken(name~, public_id~, system_id~, force_quirks~) => {
+      let name = name.unwrap_or("")
       b.quirks = match quirks_of(name, public_id, system_id, force_quirks) {
         Quirks => true
         NoQuirks | LimitedQuirks => false
       }
-      let raw = doctype_text(name, public_id, system_id)
+      let raw = doctype_text(
+        name,
+        public_id.unwrap_or(""),
+        system_id.unwrap_or(""),
+      )
       b.root.append(@moonxml.DoctypeNode(raw))
       b.mode = BeforeHtml
     }
@@ -153,20 +158,20 @@ priv enum QuirkState {
 /// The standard's quirks rules, from the doctype's three parts.
 fn quirks_of(
   name : String,
-  public_id : String,
-  system_id : String,
+  public_id : String?,
+  system_id : String?,
   force_quirks : Bool,
 ) -> QuirkState {
   if force_quirks || name != "html" {
     return Quirks
   }
-  let public = public_id.to_lower()
-  let system = system_id.to_lower()
+  let public = public_id.unwrap_or("").to_lower()
+  let system = system_id.unwrap_or("").to_lower()
   if public.has_prefix("-//w3c//dtd xhtml 1.0 frameset//") ||
     public.has_prefix("-//w3c//dtd xhtml 1.0 transitional//") {
     return LimitedQuirks
   }
-  if !system_id.is_empty() &&
+  if system_id is Some(_) &&
     (
       public.has_prefix("-//w3c//dtd html 4.01 frameset//") ||
       public.has_prefix("-//w3c//dtd html 4.01 transitional//")
@@ -210,7 +215,7 @@ fn quirks_of(
   if system == "http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd" {
     return Quirks
   }
-  if system_id.is_empty() &&
+  if system_id is None &&
     (
       public.has_prefix("-//w3c//dtd html 4.01 frameset//") ||
       public.has_prefix("-//w3c//dtd html 4.01 transitional//")
