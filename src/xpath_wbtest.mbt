@@ -321,3 +321,88 @@ test "a broken expression names the fault" {
   }
   assert_eq(failed3, true)
 }
+
+///|
+test "two text nodes with the same characters are still two nodes" {
+  let doc = Document::new(flavour=Xml)
+  let root = Element::new("root")
+  let left = Element::new("left", children=[TextNode("same")])
+  let right = Element::new("right", children=[TextNode("same")])
+  root.append(ElementNode(left))
+  root.append(ElementNode(right))
+  doc.root.append(ElementNode(root))
+  assert_eq(doc.xpath("//text()").length(), 2)
+  // The root node, `root`, its two children and their two texts.
+  assert_eq(doc.xpath("//.").length(), 6)
+  // `//.` is `descendant-or-self` then `self`, so the repeated walk must not
+  // answer a node twice.
+  assert_eq(doc.xpath("/root//././/.").length(), 5)
+  assert_eq(doc.xpath("//left/text() | //right/text()").length(), 2)
+}
+
+///|
+test "an attribute is a node with an identity" {
+  let doc = library()
+  let self = doc.xpath("//book/attribute::id/self::node()")
+  assert_eq(self.length(), 2)
+  // The name test keeps the axis's principal node type: an element test does
+  // not reach an attribute, and an attribute test does not reach an element.
+  assert_eq(doc.xpath("//book/attribute::id/self::*").length(), 0)
+  assert_eq(doc.xpath("//book/attribute::id/ancestor::*").length(), 3)
+  assert_eq(doc.xpath("//book/attribute::id/parent::book").length(), 2)
+  match self.items[0] {
+    AttributeNode(attr) => {
+      assert_eq(attr.name, "id")
+      assert_eq(attr.value, "b1")
+    }
+    _ => assert_eq("an attribute node", "another kind of node")
+  }
+}
+
+///|
+test "the namespace axis answers what is in scope" {
+  let doc = Document::new(flavour=Xml)
+  let root = Element::new("doc", attrs=[("xmlns:a", "urn:a")])
+  let inner = Element::new("inner", attrs=[("xmlns:b", "urn:b")])
+  root.append(ElementNode(inner))
+  doc.root.append(ElementNode(root))
+  assert_eq(doc.xpath("//inner/namespace::*").length(), 3)
+  assert_eq(doc.xpath("//*[namespace::a]").length(), 2)
+  assert_eq(doc.xpath("//*[namespace::b]").length(), 1)
+  assert_eq(doc.xpath("//inner/namespace::a/..").length(), 1)
+  assert_eq(doc.xpath_value("name(//inner/namespace::b)").to_string(), "b")
+  assert_eq(
+    doc.xpath_value("string(//inner/namespace::b)").to_string(),
+    "urn:b",
+  )
+  assert_eq(doc.xpath("//inner/namespace::node()").length(), 3)
+}
+
+///|
+test "numbers follow IEEE 754 where the sign is observable" {
+  let doc = library()
+  assert_eq(doc.xpath_value("1 div -0").is_num(-1.0 / 0.0), true)
+  assert_eq(doc.xpath_value("1 div round(-0.1)").is_num(-1.0 / 0.0), true)
+  assert_eq(doc.xpath_value("1 div floor(-0)").is_num(-1.0 / 0.0), true)
+  assert_eq(doc.xpath_value("1.5e2").is_num(150.0), true)
+  assert_eq(doc.xpath_value("1.5e-2").is_num(0.015), true)
+}
+
+///|
+test "a relational comparison is numeric, not lexicographic" {
+  let doc = library()
+  assert_eq(doc.xpath_value("'b' > 'a'").to_string(), "false")
+  assert_eq(doc.xpath_value("'10' > '9'").to_string(), "true")
+  assert_eq(doc.xpath_value("'a' = 'a'").to_string(), "true")
+}
+
+///|
+test "substring keeps to the specification for awkward arguments" {
+  let doc = library()
+  assert_eq(doc.xpath_value("substring('12345', 0 div 0, 3)").to_string(), "")
+  assert_eq(
+    doc.xpath_value("substring('12345', -5000000000, 5000000004)").to_string(),
+    "123",
+  )
+  assert_eq(doc.xpath_value("substring('12345', 1.5, 2.6)").to_string(), "234")
+}

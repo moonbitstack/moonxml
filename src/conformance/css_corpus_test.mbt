@@ -44,18 +44,36 @@ fn css_matched_ids(sel : @moonxml.Selection) -> Array[String] {
 }
 
 ///|
-/// Files that do not pass yet, each a gap in the engine. A file leaving this list
-/// has to be taken off it, so the list can only shrink.
-let known_files : Array[String] = [
-  "css3-modsel-22.xml", "css3-modsel-47.xml", "css3-modsel-57.xml", "css3-modsel-70.xml",
-  "css3-modsel-94.xml", "css3-modsel-95.xml", "css3-modsel-96.xml", "css3-modsel-97.xml",
-  "css3-modsel-98.xml", "css3-modsel-100.xml", "css3-modsel-104.xml", "css3-modsel-107.xml",
-  "css3-modsel-111.xml", "css3-modsel-113.xml", "css3-modsel-114.xml", "css3-modsel-118.xml",
-  "css3-modsel-120.xml", "css3-modsel-124.xml", "css3-modsel-130.xml", "css3-modsel-131.xml",
-  "css3-modsel-132.xml", "css3-modsel-133.xml", "css3-modsel-137.xml", "css3-modsel-138.xml",
-  "css3-modsel-139.xml", "css3-modsel-140.xml", "css3-modsel-144.xml", "css3-modsel-45c.xml",
-  "css3-modsel-46b.xml", "css3-modsel-72b.xml", "css3-modsel-94b.xml",
-]
+/// The `@namespace` declarations of a file, as the map a selector's prefixes
+/// resolve against: `prefix=uri`, the empty prefix the default.
+fn css_namespaces_of(text : String) -> @moonxml.NamespaceMap {
+  let prefixes : Array[(String, String)] = []
+  let mut default_uri = ""
+  for part in text.split(";") {
+    if part.is_empty() {
+      continue
+    }
+    match part.find("=") {
+      Some(at) => {
+        let prefix = part[0:at].to_owned()
+        let uri = part[at + 1:part.length()].to_owned()
+        if prefix.is_empty() {
+          default_uri = uri
+        } else {
+          prefixes.push((prefix, uri))
+        }
+      }
+      None => ()
+    }
+  }
+  { default: default_uri, prefixes, }
+}
+
+///|
+/// Files that do not pass yet, each a gap in the engine. Empty: every file in
+/// the suite passes. A file leaving this list has to be taken off it, so the
+/// list can only shrink.
+let known_files : Array[String] = []
 
 ///|
 test "w3c selectors: every file passes but the known gaps" {
@@ -74,10 +92,11 @@ test "w3c selectors: every file passes but the known gaps" {
   let surprises = []
   for file, rules in files {
     let doc = docs.get(file).unwrap()
+    let namespaces = css_namespaces_of(rules[0].namespaces)
     let matched = []
     let mut refused = false
     for rule in rules {
-      try doc.css(rule.selector) catch {
+      try doc.css(rule.selector, namespaces~) catch {
         _ => refused = true
       } noraise {
         sel => matched.push_iter(css_matched_ids(sel).iter())

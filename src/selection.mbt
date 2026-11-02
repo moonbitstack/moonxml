@@ -109,12 +109,18 @@ fn gather(ctx : Selection, keep : (Element) -> Bool) -> Selection {
 /// Narrow with a CSS selector, Selectors Level 4's statically decidable
 /// subset. Searches the descendants of the selected nodes — the context
 /// itself is never a candidate, `querySelectorAll`'s rule.
+///
+/// `namespaces` resolves the prefixes a selector writes, the way a
+/// stylesheet's `@namespace` rules do; the default matches no prefix at all.
 pub fn Selection::css(
   self : Selection,
   query : String,
+  namespaces~ : NamespaceMap = namespace_map,
 ) -> Selection raise Refused {
   let complexes = css_parse(query)
-  gather(self, fn(element) { complex_list_matches(complexes, element) })
+  gather(self, fn(element) {
+    complex_list_matches(complexes, element, namespaces)
+  })
 }
 
 ///|
@@ -153,6 +159,7 @@ pub fn Selection::filter(self : Selection, keep : (Node) -> Bool) -> Selection {
 pub fn Selection::closest(
   self : Selection,
   query : String,
+  namespaces~ : NamespaceMap = namespace_map,
 ) -> Selection raise Refused {
   let complexes = css_parse(query)
   let out : Array[Node] = []
@@ -163,7 +170,7 @@ pub fn Selection::closest(
       while climbing {
         match current {
           Some(element) =>
-            if complex_list_matches(complexes, element) {
+            if complex_list_matches(complexes, element, namespaces) {
               out.push(ElementNode(element))
               climbing = false
             } else {
@@ -504,8 +511,12 @@ pub fn Selection::smooth(self : Selection) -> Unit {
 
 ///|
 /// Narrow to the descendants of this element that match a CSS selector.
-pub fn Element::css(self : Element, query : String) -> Selection raise Refused {
-  selection_of(ElementNode(self)).css(query)
+pub fn Element::css(
+  self : Element,
+  query : String,
+  namespaces~ : NamespaceMap = namespace_map,
+) -> Selection raise Refused {
+  selection_of(ElementNode(self)).css(query, namespaces~)
 }
 
 ///|
@@ -562,9 +573,13 @@ pub fn Element::custom(
 
 ///|
 /// Narrow to the descendants of this node that match a CSS selector; a node that is not an element answers empty.
-pub fn Node::css(self : Node, query : String) -> Selection raise Refused {
+pub fn Node::css(
+  self : Node,
+  query : String,
+  namespaces~ : NamespaceMap = namespace_map,
+) -> Selection raise Refused {
   match self {
-    ElementNode(data) => data.css(query)
+    ElementNode(data) => data.css(query, namespaces~)
     _ => Selection::new()
   }
 }
@@ -649,8 +664,9 @@ pub fn Node::custom(self : Node, sel : &Selector) -> Selection raise Refused {
 pub fn Document::css(
   self : Document,
   query : String,
+  namespaces~ : NamespaceMap = namespace_map,
 ) -> Selection raise Refused {
-  self.selection([ElementNode(self.root)]).css(query)
+  self.selection([ElementNode(self.root)]).css(query, namespaces~)
 }
 
 ///|

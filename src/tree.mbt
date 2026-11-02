@@ -252,6 +252,60 @@ pub fn Node::is_text(self : Node) -> Bool {
 }
 
 ///|
+/// The language an element declares: its `lang` attribute in HTML, `xml:lang`
+/// in XML. A tree read from either may carry both spellings, so both are read.
+pub fn Element::lang(self : Element) -> String? {
+  for pair in self.attrs {
+    if pair.0 == "lang" ||
+      pair.0 == "xml:lang" ||
+      pair.0 == "{http://www.w3.org/XML/1998/namespace}lang" {
+      return Some(pair.1)
+    }
+  }
+  None
+}
+
+///|
+/// Whether an element's language is `wanted`, or a regional variety of it:
+/// a document in `en-GB` answers `lang("en")` and `lang("en-gb")`.
+pub fn Element::is_lang(self : Element, wanted : String) -> Bool {
+  let mut current : Element? = Some(self)
+  while current is Some(here) {
+    match here.lang() {
+      Some(have) => return language_prefix(have, wanted)
+      None => ()
+    }
+    current = here.parent
+  }
+  false
+}
+
+///|
+/// A language tag against a wanted one: equal, or the wanted one followed by a
+/// region subtag, in either case.
+fn language_prefix(have : String, wanted : String) -> Bool {
+  let have_lower = ascii_fold(have)
+  let wanted_lower = ascii_fold(wanted)
+  if have_lower == wanted_lower {
+    return true
+  }
+  have_lower.has_prefix(wanted_lower + "-")
+}
+
+///|
+fn ascii_fold(text : String) -> String {
+  let out = StringBuilder()
+  for ch in text {
+    if ch >= 'A' && ch <= 'Z' {
+      out.write_char((ch.to_int() + 0x20).unsafe_to_char())
+    } else {
+      out.write_char(ch)
+    }
+  }
+  out.to_string()
+}
+
+///|
 /// The children of a node that is an element; a node with no children
 /// answers an empty list.
 pub fn Node::children(self : Node) -> Array[Node] {

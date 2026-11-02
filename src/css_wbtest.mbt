@@ -220,3 +220,89 @@ test "the empty selection stays empty through a chain" {
   assert_eq(doc.css("nope").text(), "")
   assert_eq(doc.css("nope").first().length(), 0)
 }
+
+///|
+/// A document with three namespaces: `urn:a` declared, `urn:b` on a subtree,
+/// and one element in no namespace.
+fn namespaced() -> Document {
+  let doc = Document::new(flavour=Xml)
+  let root = Element::new("{urn:a}doc", attrs=[
+    ("xmlns:a", "urn:a"),
+    ("xmlns:b", "urn:b"),
+  ])
+  let in_a = Element::new("{urn:a}p", attrs=[("{urn:a}kind", "x")])
+  let in_b = Element::new("{urn:b}p", attrs=[("{urn:b}kind", "x")])
+  let bare = Element::new("p", attrs=[("kind", "x")])
+  root.append(ElementNode(in_a))
+  root.append(ElementNode(in_b))
+  root.append(ElementNode(bare))
+  doc.root.append(ElementNode(root))
+  doc
+}
+
+///|
+test "a prefix resolves through the namespace map" {
+  let doc = namespaced()
+  let ns : NamespaceMap = {
+    default: "",
+    prefixes: [("a", "urn:a"), ("b", "urn:b")],
+  }
+  assert_eq(doc.css("a|p", namespaces=ns).length(), 1)
+  assert_eq(doc.css("b|p", namespaces=ns).length(), 1)
+  assert_eq(doc.css("*|p", namespaces=ns).length(), 3)
+  assert_eq(doc.css("|p", namespaces=ns).length(), 1)
+  assert_eq(doc.css("[a|kind]", namespaces=ns).length(), 1)
+  assert_eq(doc.css("[*|kind]", namespaces=ns).length(), 3)
+  assert_eq(doc.css("[|kind]", namespaces=ns).length(), 1)
+  // A prefix the map does not bind matches by local part, the rule this
+  // library keeps for a tree that carries no prefix map of its own.
+  assert_eq(doc.css("nope|p", namespaces=ns).length(), 3)
+}
+
+///|
+test "a default namespace governs the bare type selector" {
+  let doc = namespaced()
+  let ns : NamespaceMap = { default: "urn:b", prefixes: [], }
+  assert_eq(doc.css("p", namespaces=ns).length(), 1)
+  assert_eq(doc.css("*", namespaces=ns).length(), 1)
+  // An unprefixed attribute test is always the attribute without a namespace.
+  assert_eq(doc.css("[kind]", namespaces=ns).length(), 1)
+}
+
+///|
+test ":lang matches by language prefix, from the nearest ancestor" {
+  let doc = Document::new(flavour=Xml)
+  let root = Element::new("doc", attrs=[("xml:lang", "en-GB")])
+  let british = Element::new("p")
+  let welsh = Element::new("p", attrs=[("xml:lang", "en-GB-wa")])
+  let french = Element::new("p", attrs=[("lang", "fr")])
+  root.append(ElementNode(british))
+  root.append(ElementNode(welsh))
+  root.append(ElementNode(french))
+  doc.root.append(ElementNode(root))
+  assert_eq(doc.css("p:lang(en)").length(), 2)
+  assert_eq(doc.css("p:lang(en-GB)").length(), 2)
+  assert_eq(doc.css("p:lang(EN-gb)").length(), 2)
+  assert_eq(doc.css("p:lang(fr)").length(), 1)
+  assert_eq(doc.css("p:lang(de)").length(), 0)
+}
+
+///|
+test ":enabled and :disabled reach only what HTML lets a document disable" {
+  let doc = Document::new(flavour=Html)
+  let form = Element::new("form")
+  let input = Element::new("input", attrs=[("type", "text")])
+  let off = Element::new("input", attrs=[("disabled", "")])
+  let para = Element::new("p")
+  form.append(ElementNode(input))
+  form.append(ElementNode(off))
+  form.append(ElementNode(para))
+  doc.root.append(ElementNode(form))
+  assert_eq(doc.css(":enabled").length(), 1)
+  assert_eq(doc.css(":disabled").length(), 1)
+  let neither : Array[String] = []
+  for node in doc.css(":not(:enabled):not(:disabled)").items {
+    neither.push(node.name())
+  }
+  assert_eq(neither, ["form", "p"])
+}

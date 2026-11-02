@@ -26,11 +26,48 @@ priv enum Combinator {
 /// One attribute requirement: `[a]`, `[a=v]`, `[a~=v]`, `[a|=v]`, `[a^=v]`,
 /// `[a$=v]`, `[a*=v]`, each optionally with the `i` or `s` flag.
 priv struct AttrReq {
-  name : String
+  name : NameTest
   op : String
   value : String
   flag : String
 }
+
+///|
+/// Which namespace a name test asks for: `a|p` a prefix, `*|p` any, `|p` none,
+/// and `p` the default namespace — or any namespace when the caller declared
+/// no default.
+priv enum SpaceTest {
+  Prefixed(String)
+  AnySpace
+  NoSpace
+  DefaultSpace
+}
+
+///|
+/// A type or attribute selector: a namespace requirement and a local name,
+/// `*` for any. A Clark name (`{uri}local`) is carried whole in `local` and
+/// compared against the whole name.
+priv struct NameTest {
+  space : SpaceTest
+  name : String
+}
+
+///|
+/// The namespaces a selector's prefixes resolve against — what `@namespace`
+/// declares in a stylesheet, handed over by the caller.
+///
+///     doc.css("a|ref", namespaces={ default: "", prefixes: [("a", "urn:x")] })
+pub(all) struct NamespaceMap {
+  /// The default namespace, `""` for none.
+  default : String
+  /// The prefix-to-URI bindings, in no particular order.
+  prefixes : Array[(String, String)]
+}
+
+///|
+/// No namespaces declared: type selectors match any namespace, and an
+/// unprefixed attribute selector matches the attribute with no namespace.
+pub let namespace_map : NamespaceMap = { default: "", prefixes: [], }
 
 ///|
 /// A pseudo-class, with its argument already parsed.
@@ -54,6 +91,7 @@ priv enum Pseudo {
   Enabled
   Required
   Optional
+  Lang(String)
   Not(Array[Complex])
   Is(Array[Complex])
   Where(Array[Complex])
@@ -63,7 +101,7 @@ priv enum Pseudo {
 ///|
 /// One compound selector: the pieces that must all hold on one element.
 priv struct Compound {
-  mut tag : String?
+  mut tag : NameTest?
   mut id : String?
   classes : Array[String]
   attrs : Array[AttrReq]
@@ -222,9 +260,8 @@ fn parse_compound(
   while i < n {
     let unit = text.at(i)
     if unit == 0x2A && fresh {
-      // *
-      i = i + 1
-      let (tag, next) = read_type(text, i, "*")
+      // `*`, and `*|local`
+      let (tag, next) = read_name_test(text, i)
       compound.tag = Some(tag)
       i = next
       fresh = false
@@ -272,21 +309,13 @@ fn parse_compound(
       }
       fresh = false
     } else if unit == 0x7B && fresh {
-      // a Clark name: {uri}local
+      // a Clark name: {uri}local, matched whole
       let (tag, next) = read_clark(text, i)
       compound.tag = Some(tag)
       i = next
       fresh = false
     } else if fresh && (is_name_start(unit) || unit == 0x7C) {
-      // a type selector, with an optional space prefix
-      let head = if unit == 0x7C {
-        ""
-      } else {
-        let (name, next) = read_name(text, i)
-        i = next
-        name
-      }
-      let (tag, next) = read_type(text, i, head)
+      let (tag, next) = read_name_test(text, i)
       compound.tag = Some(tag)
       i = next
       fresh = false
@@ -300,26 +329,63 @@ fn parse_compound(
 ///|
 /// A `{uri}local` name in a type selector: the URI may carry colons and
 /// slashes, so it is read up to its closing brace rather than as a name.
-fn read_clark(text : String, from : Int32) -> (String, Int32) {
+fn read_clark(text : String, from : Int32) -> (NameTest, Int32) {
   let close = match find_char(text, from, '}') {
     Some(at) => at
     None => text.length()
   }
   let (part, next) = read_name(text, close + 1)
-  (text[from:close + 1].to_owned() + part, next)
+  ({ space: DefaultSpace, name: text[from:close + 1].to_owned() + part, }, next)
 }
 
 ///|
-/// A type selector's local part, keeping the prefix when there is one:
-/// `rect`, `svg|rect`, `*|rect` and `|rect` all reach `name_matches` as
-/// written, because the tree carries Clark names and keeps no prefix map.
-fn read_type(text : String, from : Int32, head : String) -> (String, Int32) {
-  if from < text.length() && text.at(from) == 0x7C {
-    let (part, next) = read_name(text, from + 1)
-    (head + "|" + part, next)
+/// A local part in a name test: a name, or `*` for any.
+fn read_local_name(text : String, from : Int32) -> (String, Int32) {
+  if from < text.length() && text.at(from) == 0x2A {
+    ("*", from + 1)
   } else {
-    (head, from)
+    read_name(text, from)
   }
+}
+
+///|
+/// A type selector: `p`, `*`, `a|p`, `*|p` or `|p`.
+fn read_name_test(
+  text : String,
+  from : Int32,
+) -> (NameTest, Int32) raise Refused {
+  let n = text.length()
+  let mut i = from
+  if i < n && text.at(i) == 0x7C {
+    let (want, next) = read_local_name(text, i + 1)
+    if want.is_empty() {
+      raise BadQuery(at=i, why="a type selector needs a name after `|`")
+    }
+    return ({ space: NoSpace, name: want, }, next)
+  }
+  if i < n && text.at(i) == 0x2A {
+    if i + 1 < n && text.at(i + 1) == 0x7C {
+      let (want, next) = read_local_name(text, i + 2)
+      if want.is_empty() {
+        raise BadQuery(at=i, why="a type selector needs a name after `|`")
+      }
+      return ({ space: AnySpace, name: want, }, next)
+    }
+    return ({ space: DefaultSpace, name: "*", }, i + 1)
+  }
+  let (head, next) = read_name(text, i)
+  if head.is_empty() {
+    raise BadQuery(at=i, why="a type selector needs a name")
+  }
+  i = next
+  if i < n && text.at(i) == 0x7C {
+    let (want, after) = read_local_name(text, i + 1)
+    if want.is_empty() {
+      raise BadQuery(at=i, why="a type selector needs a name after `|`")
+    }
+    return ({ space: Prefixed(head), name: want, }, after)
+  }
+  ({ space: DefaultSpace, name: head, }, i)
 }
 
 ///|
@@ -360,6 +426,49 @@ fn is_name_char(unit : UInt16) -> Bool {
 }
 
 ///|
+/// An attribute selector's name: `title`, `a|title`, `*|title` or `|title`.
+fn read_attribute_test(
+  inner : String,
+  at : Int32,
+) -> (NameTest, Int32) raise Refused {
+  let n = inner.length()
+  if n > 0 && inner.at(0) == 0x7C {
+    let (want, next) = read_local_name(inner, 1)
+    if want.is_empty() || want == "*" {
+      raise BadQuery(at~, why="an attribute selector needs a name")
+    }
+    return ({ space: NoSpace, name: want, }, next)
+  }
+  if n > 0 && inner.at(0) == 0x2A {
+    if n > 1 && inner.at(1) == 0x7C {
+      let (want, next) = read_local_name(inner, 2)
+      if want.is_empty() || want == "*" {
+        raise BadQuery(at~, why="an attribute selector needs a name")
+      }
+      return ({ space: AnySpace, name: want, }, next)
+    }
+    raise BadQuery(at~, why="an attribute selector needs a name")
+  }
+  let (head, next) = read_name(inner, 0)
+  if head.is_empty() {
+    raise BadQuery(at~, why="an attribute selector needs a name")
+  }
+  // `a|=v` is the dash-match operator, not a namespace: the `|` only splits a
+  // name when it is followed by a name or a `*`.
+  if next < n &&
+    inner.at(next) == 0x7C &&
+    next + 1 < n &&
+    inner.at(next + 1) != 0x3D {
+    let (want, after) = read_local_name(inner, next + 1)
+    if want.is_empty() || want == "*" {
+      raise BadQuery(at~, why="an attribute selector needs a name")
+    }
+    return ({ space: Prefixed(head), name: want, }, after)
+  }
+  ({ space: DefaultSpace, name: head, }, next)
+}
+
+///|
 /// `[attr]`, `[attr op value]`, with the optional case flag.
 fn parse_attr(text : String, from : Int32) -> (AttrReq, Int32) raise Refused {
   let close = match find_close(text, from) {
@@ -367,16 +476,8 @@ fn parse_attr(text : String, from : Int32) -> (AttrReq, Int32) raise Refused {
     None => raise BadQuery(at=from, why="an attribute selector is never closed")
   }
   let inner = text[from + 1:close].trim().to_owned()
-  let n = inner.length()
-  let mut at = 0
-  while at < n && is_name_char(inner.at(at)) {
-    at = at + 1
-  }
-  let name = inner[0:at].to_owned()
-  if name.is_empty() {
-    raise BadQuery(at=from + 1, why="an attribute selector needs a name")
-  }
-  let rest = inner[at:n].trim()
+  let (name, at) = read_attribute_test(inner, from + 1)
+  let rest = inner[at:inner.length()].trim()
   if rest.is_empty() {
     return (AttrReq::{ name, op: "", value: "", flag: "", }, close + 1)
   }
@@ -521,6 +622,7 @@ fn parse_functional(
     "nth-last-child" => NthLastChild(parse_an_plus_b(arg, at))
     "nth-of-type" => NthOfType(parse_an_plus_b(arg, at))
     "nth-last-of-type" => NthLastOfType(parse_an_plus_b(arg, at))
+    "lang" => Lang(arg.trim().to_owned())
     "not" => Not(parse_inner(arg, at))
     "is" => Is(parse_inner(arg, at))
     "where" => Where(parse_inner(arg, at))
@@ -609,9 +711,13 @@ fn an_plus_b_holds(anb : AnPlusB, count : Int32) -> Bool {
 // right-to-left, backtracking where a combinator allows more than one answer.
 
 ///|
-fn complex_list_matches(complexes : Array[Complex], element : Element) -> Bool {
+fn complex_list_matches(
+  complexes : Array[Complex],
+  element : Element,
+  namespaces : NamespaceMap,
+) -> Bool {
   for complex in complexes {
-    if complex_matches(complex, element) {
+    if complex_matches(complex, element, namespaces) {
       return true
     }
   }
@@ -619,19 +725,28 @@ fn complex_list_matches(complexes : Array[Complex], element : Element) -> Bool {
 }
 
 ///|
-fn complex_matches(complex : Complex, element : Element) -> Bool {
+fn complex_matches(
+  complex : Complex,
+  element : Element,
+  namespaces : NamespaceMap,
+) -> Bool {
   let last = complex.parts.length() - 1
   let (_, subject) = complex.parts[last]
-  if !compound_matches(subject, element) {
+  if !compound_matches(subject, element, namespaces) {
     return false
   }
-  chain_matches(complex, last - 1, element)
+  chain_matches(complex, last - 1, element, namespaces)
 }
 
 ///|
 /// `idx` is the compound to the left of `element`; the combinator between
 /// them sits in `parts[idx + 1]`.
-fn chain_matches(complex : Complex, idx : Int32, element : Element) -> Bool {
+fn chain_matches(
+  complex : Complex,
+  idx : Int32,
+  element : Element,
+  namespaces : NamespaceMap,
+) -> Bool {
   if idx < 0 {
     return true
   }
@@ -641,15 +756,15 @@ fn chain_matches(complex : Complex, idx : Int32, element : Element) -> Bool {
     Child =>
       match element.parent {
         Some(parent) =>
-          compound_matches(compound, parent) &&
-          chain_matches(complex, idx - 1, parent)
+          compound_matches(compound, parent, namespaces) &&
+          chain_matches(complex, idx - 1, parent, namespaces)
         None => false
       }
     Descendant => {
       let mut current = element.parent
       while current is Some(ancestor) {
-        if compound_matches(compound, ancestor) &&
-          chain_matches(complex, idx - 1, ancestor) {
+        if compound_matches(compound, ancestor, namespaces) &&
+          chain_matches(complex, idx - 1, ancestor, namespaces) {
           return true
         }
         current = ancestor.parent
@@ -659,8 +774,8 @@ fn chain_matches(complex : Complex, idx : Int32, element : Element) -> Bool {
     NextSibling =>
       match previous_element(element) {
         Some(sibling) =>
-          compound_matches(compound, sibling) &&
-          chain_matches(complex, idx - 1, sibling)
+          compound_matches(compound, sibling, namespaces) &&
+          chain_matches(complex, idx - 1, sibling, namespaces)
         None => false
       }
     LaterSibling =>
@@ -672,8 +787,8 @@ fn chain_matches(complex : Complex, idx : Int32, element : Element) -> Bool {
             if physical_equal(sibling, element) {
               break
             }
-            if compound_matches(compound, sibling) &&
-              chain_matches(complex, idx - 1, sibling) {
+            if compound_matches(compound, sibling, namespaces) &&
+              chain_matches(complex, idx - 1, sibling, namespaces) {
               found = true
               break
             }
@@ -686,9 +801,16 @@ fn chain_matches(complex : Complex, idx : Int32, element : Element) -> Bool {
 }
 
 ///|
-fn compound_matches(compound : Compound, element : Element) -> Bool {
+fn compound_matches(
+  compound : Compound,
+  element : Element,
+  namespaces : NamespaceMap,
+) -> Bool {
   match compound.tag {
-    Some(tag) => if !name_matches(element.name, tag) { return false }
+    Some(probe) =>
+      if !type_matches(element.name, probe, namespaces) {
+        return false
+      }
     None => ()
   }
   match compound.id {
@@ -705,12 +827,12 @@ fn compound_matches(compound : Compound, element : Element) -> Bool {
     }
   }
   for req in compound.attrs {
-    if !attr_matches(element, req) {
+    if !attr_matches(element, req, namespaces) {
       return false
     }
   }
   for pseudo in compound.pseudos {
-    if !pseudo_matches(pseudo, element) {
+    if !pseudo_matches(pseudo, element, namespaces) {
       return false
     }
   }
@@ -718,30 +840,60 @@ fn compound_matches(compound : Compound, element : Element) -> Bool {
 }
 
 ///|
-/// The one name-matching rule XPath and CSS share: the whole `{uri}local`
-/// name, or — when the test carries no `{` — the local part. A prefix in the
-/// test matches by local part too, because the tree keeps no prefix map and a
-/// wrong resolution is worse than an honest one.
-fn name_matches(full : String, probe : String) -> Bool {
-  if probe == "*" {
-    return true
+/// The namespace a prefix stands for, from the map the caller passed.
+fn prefix_uri(namespaces : NamespaceMap, prefix : String) -> String? {
+  for pair in namespaces.prefixes {
+    if pair.0 == prefix {
+      return Some(pair.1)
+    }
   }
-  if full == probe {
-    return true
-  }
-  if probe.contains("|") {
-    let tail = probe[probe.find("|").unwrap() + 1:probe.length()].to_owned()
-    return tail == "*" || local_of(full) == tail
-  }
-  if !probe.contains("{") {
-    return local_of(full) == probe
-  }
-  false
+  None
 }
 
 ///|
-fn attr_matches(element : Element, req : AttrReq) -> Bool {
-  match element.attr(req.name) {
+/// A type selector against a `{uri}local` name. A Clark selector names the
+/// whole name; otherwise the local part has to agree, and the namespace does
+/// too — except that a prefix the caller did not bind matches by local part,
+/// because the tree keeps no prefix map and a wrong namespace is worse than an
+/// honest match.
+fn type_matches(
+  full : String,
+  probe : NameTest,
+  namespaces : NamespaceMap,
+) -> Bool {
+  if probe.name.contains("{") {
+    return full == probe.name
+  }
+  if probe.name != "*" && local_of(full) != probe.name {
+    return false
+  }
+  let uri = namespace_of(full)
+  match probe.space {
+    AnySpace => true
+    NoSpace => uri is None
+    // With no default namespace declared, a type selector matches elements in
+    // any namespace — Selectors' rule for a stylesheet that declares none.
+    DefaultSpace =>
+      if namespaces.default.is_empty() {
+        true
+      } else {
+        uri == Some(namespaces.default)
+      }
+    Prefixed(prefix) =>
+      match prefix_uri(namespaces, prefix) {
+        Some(wanted) => uri == Some(wanted)
+        None => true
+      }
+  }
+}
+
+///|
+fn attr_matches(
+  element : Element,
+  req : AttrReq,
+  namespaces : NamespaceMap,
+) -> Bool {
+  match attribute_value(element, req.name, namespaces) {
     None => false
     Some(have) =>
       match req.op {
@@ -765,6 +917,48 @@ fn attr_matches(element : Element, req : AttrReq) -> Bool {
         "$=" => !req.value.is_empty() && ends_with(have, req.value, req.flag)
         "*=" => !req.value.is_empty() && holds_within(have, req.value, req.flag)
         _ => false
+      }
+  }
+}
+
+///|
+fn attribute_value(
+  element : Element,
+  probe : NameTest,
+  namespaces : NamespaceMap,
+) -> String? {
+  for pair in element.attrs {
+    if attribute_name_matches(pair.0, probe, namespaces) {
+      return Some(pair.1)
+    }
+  }
+  None
+}
+
+///|
+/// An attribute selector against a `{uri}local` attribute name. An unprefixed
+/// attribute test is always the no-namespace attribute: the default namespace
+/// does not reach attributes.
+fn attribute_name_matches(
+  full : String,
+  probe : NameTest,
+  namespaces : NamespaceMap,
+) -> Bool {
+  if probe.name.contains("{") {
+    return full == probe.name
+  }
+  if probe.name != "*" && local_of(full) != probe.name {
+    return false
+  }
+  let uri = namespace_of(full)
+  match probe.space {
+    AnySpace => true
+    NoSpace => uri is None
+    DefaultSpace => uri is None
+    Prefixed(prefix) =>
+      match prefix_uri(namespaces, prefix) {
+        Some(wanted) => uri == Some(wanted)
+        None => true
       }
   }
 }
@@ -827,7 +1021,11 @@ fn ascii_lower(text : StringView) -> String {
 }
 
 ///|
-fn pseudo_matches(pseudo : Pseudo, element : Element) -> Bool {
+fn pseudo_matches(
+  pseudo : Pseudo,
+  element : Element,
+  namespaces : NamespaceMap,
+) -> Bool {
   match pseudo {
     FirstChild => previous_element(element) is None
     LastChild => next_element(element) is None
@@ -892,14 +1090,35 @@ fn pseudo_matches(pseudo : Pseudo, element : Element) -> Bool {
     AnyLink => element.has_attr("href")
     Link => element.has_attr("href")
     Checked => element.has_attr("checked") || element.has_attr("selected")
-    Disabled => element.has_attr("disabled")
-    Enabled => !element.has_attr("disabled")
+    // Only an element HTML lets a document disable can be either; a paragraph
+    // is neither enabled nor disabled, which `:not(:enabled):not(:disabled)`
+    // is the way to ask for.
+    Disabled => is_disableable(element) && element.has_attr("disabled")
+    Enabled => is_disableable(element) && !element.has_attr("disabled")
     Required => element.has_attr("required")
     Optional => !element.has_attr("required")
-    Not(list) => !complex_list_matches(list, element)
-    Is(list) => complex_list_matches(list, element)
-    Where(list) => complex_list_matches(list, element)
-    Has(list) => has_matches(list, element)
+    Lang(wanted) => element.is_lang(wanted)
+    Not(list) => !complex_list_matches(list, element, namespaces)
+    Is(list) => complex_list_matches(list, element, namespaces)
+    Where(list) => complex_list_matches(list, element, namespaces)
+    Has(list) => has_matches(list, element, namespaces)
+  }
+}
+
+///|
+/// The elements HTML gives a disabled state: the form controls and the two
+/// grouping elements. Everything else is outside both `:enabled` and
+/// `:disabled`.
+fn is_disableable(element : Element) -> Bool {
+  match local_of(element.name) {
+    "button"
+    | "input"
+    | "select"
+    | "textarea"
+    | "optgroup"
+    | "option"
+    | "fieldset" => true
+    _ => false
   }
 }
 
@@ -940,7 +1159,11 @@ fn of_type_position(element : Element, from_end~ : Bool) -> Int32 {
 ///|
 /// `:has(relative)`: does any element the relative selector can reach from
 /// `element` match it?
-fn has_matches(list : Array[Complex], element : Element) -> Bool {
+fn has_matches(
+  list : Array[Complex],
+  element : Element,
+  namespaces : NamespaceMap,
+) -> Bool {
   for complex in list {
     let (lead, first) = complex.parts[0]
     let candidates : Array[Element] = []
@@ -978,8 +1201,8 @@ fn has_matches(list : Array[Complex], element : Element) -> Bool {
         }
     }
     for candidate in candidates {
-      if compound_matches(first, candidate) &&
-        relative_chain(complex, 0, candidate) {
+      if compound_matches(first, candidate, namespaces) &&
+        relative_chain(complex, 0, candidate, namespaces) {
         return true
       }
     }
@@ -989,7 +1212,12 @@ fn has_matches(list : Array[Complex], element : Element) -> Bool {
 
 ///|
 /// The rest of a relative selector, walked left-to-right from `element`.
-fn relative_chain(complex : Complex, idx : Int32, element : Element) -> Bool {
+fn relative_chain(
+  complex : Complex,
+  idx : Int32,
+  element : Element,
+  namespaces : NamespaceMap,
+) -> Bool {
   if idx + 1 >= complex.parts.length() {
     return true
   }
@@ -997,8 +1225,8 @@ fn relative_chain(complex : Complex, idx : Int32, element : Element) -> Bool {
   match comb {
     Descendant => {
       for data in descendant_elements(element) {
-        if compound_matches(compound, data) &&
-          relative_chain(complex, idx + 1, data) {
+        if compound_matches(compound, data, namespaces) &&
+          relative_chain(complex, idx + 1, data, namespaces) {
           return true
         }
       }
@@ -1007,8 +1235,8 @@ fn relative_chain(complex : Complex, idx : Int32, element : Element) -> Bool {
     Child => {
       for child in element.children {
         if child is ElementNode(data) &&
-          compound_matches(compound, data) &&
-          relative_chain(complex, idx + 1, data) {
+          compound_matches(compound, data, namespaces) &&
+          relative_chain(complex, idx + 1, data, namespaces) {
           return true
         }
       }
@@ -1017,8 +1245,8 @@ fn relative_chain(complex : Complex, idx : Int32, element : Element) -> Bool {
     NextSibling =>
       match next_element(element) {
         Some(sibling) =>
-          compound_matches(compound, sibling) &&
-          relative_chain(complex, idx + 1, sibling)
+          compound_matches(compound, sibling, namespaces) &&
+          relative_chain(complex, idx + 1, sibling, namespaces)
         None => false
       }
     LaterSibling =>
@@ -1027,8 +1255,8 @@ fn relative_chain(complex : Complex, idx : Int32, element : Element) -> Bool {
           let siblings = element_children(parent)
           let mut past = false
           for sibling in siblings {
-            if past && compound_matches(compound, sibling) {
-              if relative_chain(complex, idx + 1, sibling) {
+            if past && compound_matches(compound, sibling, namespaces) {
+              if relative_chain(complex, idx + 1, sibling, namespaces) {
                 return true
               }
             }

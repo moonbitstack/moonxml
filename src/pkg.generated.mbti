@@ -17,6 +17,8 @@ pub fn dumps_html(Node) -> String
 
 pub fn local_of(String) -> String
 
+pub let namespace_map : NamespaceMap
+
 pub fn namespace_of(String) -> String?
 
 // Errors
@@ -52,7 +54,7 @@ pub fn Document::by_name(Self, String) -> Selection
 pub fn Document::by_tag(Self, String) -> Selection
 pub fn Document::children(Self) -> Selection
 pub fn Document::clear(Self) -> Unit
-pub fn Document::css(Self, String) -> Selection raise Refused
+pub fn Document::css(Self, String, namespaces? : NamespaceMap) -> Selection raise Refused
 pub fn Document::custom(Self, &Selector) -> Selection raise Refused
 pub fn Document::descendants(Self) -> Selection
 pub fn Document::document_element(Self) -> Element?
@@ -97,7 +99,7 @@ pub fn Element::classes(Self) -> Array[String]
 pub fn Element::clear(Self) -> Unit
 pub fn Element::closest(Self, String) -> Selection raise Refused
 pub fn Element::content(Self) -> Self?
-pub fn Element::css(Self, String) -> Selection raise Refused
+pub fn Element::css(Self, String, namespaces? : NamespaceMap) -> Selection raise Refused
 pub fn Element::custom(Self, &Selector) -> Selection raise Refused
 pub fn Element::document(Self) -> Document?
 pub fn Element::has_attr(Self, String) -> Bool
@@ -106,6 +108,8 @@ pub fn Element::html(Self) -> String
 pub fn Element::insert(Self, Int32, Node) -> Unit
 pub fn Element::insert_after(Self, Node) -> Bool
 pub fn Element::insert_before(Self, Node) -> Bool
+pub fn Element::is_lang(Self, String) -> Bool
+pub fn Element::lang(Self) -> String?
 pub fn Element::new(String, children? : Array[Node], attrs? : Array[(String, String)], closed? : Bool) -> Self
 pub fn Element::prepend(Self, Node) -> Unit
 pub fn Element::remove(Self) -> Bool
@@ -140,6 +144,11 @@ pub(all) struct Namespace {
   uri : String
 }
 
+pub(all) struct NamespaceMap {
+  default : String
+  prefixes : Array[(String, String)]
+}
+
 pub(all) enum Node {
   ElementNode(Element)
   TextNode(String)
@@ -156,7 +165,7 @@ pub fn Node::by_name(Self, String) -> Selection
 pub fn Node::by_tag(Self, String) -> Selection
 pub fn Node::children(Self) -> Array[Self]
 pub fn Node::closest(Self, String) -> Selection raise Refused
-pub fn Node::css(Self, String) -> Selection raise Refused
+pub fn Node::css(Self, String, namespaces? : NamespaceMap) -> Selection raise Refused
 pub fn Node::custom(Self, &Selector) -> Selection raise Refused
 pub fn Node::is_element(Self) -> Bool
 pub fn Node::is_text(Self) -> Bool
@@ -196,8 +205,8 @@ pub fn Selection::by_name(Self, String) -> Self
 pub fn Selection::by_tag(Self, String) -> Self
 pub fn Selection::children(Self) -> Self
 pub fn Selection::clear(Self) -> Unit
-pub fn Selection::closest(Self, String) -> Self raise Refused
-pub fn Selection::css(Self, String) -> Self raise Refused
+pub fn Selection::closest(Self, String, namespaces? : NamespaceMap) -> Self raise Refused
+pub fn Selection::css(Self, String, namespaces? : NamespaceMap) -> Self raise Refused
 pub fn Selection::custom(Self, &Selector) -> Self raise Refused
 pub fn Selection::descendants(Self) -> Self
 pub fn Selection::eq(Self, Int32) -> Self

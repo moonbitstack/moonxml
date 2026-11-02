@@ -2022,47 +2022,10 @@ fn name_of_text(name : String, part : NamePart) -> String {
 /// `lang()`: the `xml:lang` of the node or its nearest ancestor that carries
 /// one, matched case-insensitively by prefix.
 fn lang_matches(spot : Spot, wanted : String) -> Bool {
-  let mut current = spot_owner(spot)
-  while current is Some(element) {
-    let mut found : String? = None
-    for pair in element.attrs {
-      if pair.0 == "{http://www.w3.org/XML/1998/namespace}lang" ||
-        pair.0 == "xml:lang" ||
-        pair.0 == "lang" {
-        found = Some(pair.1)
-        break
-      }
-    }
-    match found {
-      Some(have) => return lang_prefix(have, wanted)
-      None => ()
-    }
-    current = element.parent
+  match spot_owner(spot) {
+    Some(element) => element.is_lang(wanted)
+    None => false
   }
-  false
-}
-
-///|
-fn lang_prefix(have : String, wanted : String) -> Bool {
-  let have_lower = ascii_lower_text(have)
-  let wanted_lower = ascii_lower_text(wanted)
-  if have_lower == wanted_lower {
-    return true
-  }
-  have_lower.has_prefix(wanted_lower + "-")
-}
-
-///|
-fn ascii_lower_text(text : String) -> String {
-  let out = StringBuilder()
-  for ch in text {
-    if ch >= 'A' && ch <= 'Z' {
-      out.write_char((ch.to_int() + 0x20).unsafe_to_char())
-    } else {
-      out.write_char(ch)
-    }
-  }
-  out.to_string()
 }
 
 ///|

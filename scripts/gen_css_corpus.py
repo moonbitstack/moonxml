@@ -11,7 +11,14 @@ asserts which element ids end up lime:
     assert_equals(getComputedStyle(document.getElementById('t1'))
                     .backgroundColor, "rgb(0, 255, 0)");
 
-so a case is (document, selector, ids that must match, ids that must not).
+so a case is (document, selector, ids that must match, ids that must not, the
+`@namespace` declarations the selector's prefixes resolve against).
+
+The colour argument decides the expectation, not the function's name: an
+assertion that an element is *not* red says nothing about the lime rule, while
+one that it is not lime says it must not match. The message argument carries
+commas, so the arguments are split rather than matched by one regular
+expression.
 
 Files that need a pointer or a timer (`promise_test`, `test_driver`) or that
 test a dynamic pseudo-class cannot be decided by a static query and are
@@ -25,9 +32,6 @@ from __future__ import annotations
 import pathlib
 import re
 import sys
-
-CORPUS = pathlib.Path(sys.argv[1])
-OUT = pathlib.Path(sys.argv[2])
 
 DYNAMIC = (":hover", ":active", ":focus", ":visited", ":target", ":link")
 
@@ -89,6 +93,76 @@ def lime_selectors(css: str) -> list[str]:
     return out
 
 
+def namespace_decls(css: str) -> list[tuple[str, str]]:
+    """The `@namespace` declarations: the prefix (`""` for the default) and URI."""
+    out = []
+    for m in re.finditer(
+        r"@namespace\s+([A-Za-z_][\w-]*\s+)?(?:url\(\s*(['\"]?)([^'\")]*)\2\s*\)|(['\"])(.*?)\4)\s*;",
+        css,
+    ):
+        prefix = (m.group(1) or "").strip()
+        uri = (m.group(3) if m.group(3) is not None else m.group(5)) or ""
+        out.append((prefix, uri))
+    return out
+
+
+def split_args(text: str) -> list[str]:
+    """The arguments of a call, split at top-level commas."""
+    out = []
+    depth = 0
+    quote = None
+    run = []
+    for ch in text:
+        if quote:
+            run.append(ch)
+            if ch == quote:
+                quote = None
+        elif ch in "'\"":
+            quote = ch
+            run.append(ch)
+        elif ch in "([{":
+            depth += 1
+            run.append(ch)
+        elif ch in ")]}":
+            depth -= 1
+            run.append(ch)
+        elif ch == "," and depth == 0:
+            out.append("".join(run).strip())
+            run = []
+        else:
+            run.append(ch)
+    if run:
+        out.append("".join(run).strip())
+    return out
+
+
+def call_arguments(script: str, name: str):
+    """Every call of `name`, as its list of arguments."""
+    out = []
+    for m in re.finditer(r"\b" + name + r"\s*\(", script):
+        depth = 1
+        i = m.end()
+        while i < len(script) and depth > 0:
+            ch = script[i]
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+            elif ch in "'\"":
+                quote = ch
+                i += 1
+                while i < len(script) and script[i] != quote:
+                    i += 1
+            i += 1
+        out.append(split_args(script[m.end() : i - 1]))
+    return out
+
+
+def is_lime(arg: str) -> bool:
+    flat = arg.strip().strip("'\"").lower().replace(" ", "")
+    return flat in ("lime", "rgb(0,255,0)")
+
+
 def asserted_ids(script: str):
     """The ids the script expects to match and not to match."""
     env = {}
@@ -108,49 +182,52 @@ def asserted_ids(script: str):
     expect = []
     reject = []
 
-    def is_lime(arg: str) -> bool:
-        a = arg.strip().strip("'\"").lower().replace(" ", "")
-        return a in ("lime", "rgb(0,255,0)")
+    # The colour argument decides: a lime assertion wants a match, "not lime"
+    # wants none, and any other colour says the element must not be lime.
+    for name, negated in (
+        ("assert_background_color", False),
+        ("assert_not_background_color", True),
+    ):
+        for args in call_arguments(script, name):
+            if len(args) < 2:
+                continue
+            ident = args[0].strip().strip("'\"")
+            lime = is_lime(args[1])
+            if lime and not negated:
+                expect.append(ident)
+            elif negated and not lime:
+                # "not red" says nothing about whether the lime rule matched.
+                pass
+            else:
+                reject.append(ident)
 
-    # The colour argument decides the expectation: `assert_background_color('t4',
-    # 'rgba(0, 0, 0, 0)')` asserts that t4 is *not* painted lime.
-    for m in re.finditer(
-        r"assert_(not_)?background_color\(\s*['\"]([^'\"]+)['\"]\s*,\s*([^)]*)\)", script
-    ):
-        negated = m.group(1) is not None
-        ident = m.group(2)
-        lime = is_lime(m.group(3))
-        if lime and not negated:
-            # The element is painted lime, so it must match the rule.
-            expect.append(ident)
-        elif negated and not lime:
-            # "not red" says nothing about whether the lime rule matched.
-            pass
-        else:
-            # Painted some other colour, or explicitly not lime: it must not
-            # match the rule under test.
-            reject.append(ident)
-    for m in re.finditer(
-        r"assert_(not_)?equals\(\s*getComputedStyle\(\s*"
-        r"(document\.getElementById\(\s*['\"][^'\"]+['\"]\s*\)|\w+)\s*\)\.backgroundColor\s*,\s*"
-        r"[\"'](?:rgb\(0, 255, 0\)|lime)[\"']",
-        script,
-    ):
-        name = m.group(1)
-        ident = resolve(m.group(2))
-        if ident is None:
-            continue
-        if name:
-            reject.append(ident)
-        else:
-            expect.append(ident)
+    # The older spelling: assert_equals on the computed background colour.
+    for name, negated in (("assert_equals", False), ("assert_not_equals", True)):
+        for args in call_arguments(script, name):
+            if len(args) < 2 or not is_lime(args[1]):
+                continue
+            target = re.match(
+                r"getComputedStyle\(\s*(.*?)\s*\)\s*\.backgroundColor$", args[0], re.S
+            )
+            if target is None:
+                continue
+            ident = resolve(target.group(1))
+            if ident is None:
+                continue
+            if negated:
+                reject.append(ident)
+            else:
+                expect.append(ident)
     return expect, reject
 
 
 def main() -> int:
-    files = sorted(p for p in CORPUS.glob("*.xml") if p.is_file())
+    corpus = pathlib.Path(sys.argv[1])
+    out_path = pathlib.Path(sys.argv[2])
+
+    files = sorted(p for p in corpus.glob("*.xml") if p.is_file())
     if not files:
-        print("no corpus files under", CORPUS, file=sys.stderr)
+        print("no corpus files under", corpus, file=sys.stderr)
         return 1
 
     docs = {}
@@ -163,7 +240,8 @@ def main() -> int:
         if "promise_test" in text or "test_driver" in text:
             skipped["interaction"] += 1
             continue
-        selectors = lime_selectors(style_text(text))
+        style = style_text(text)
+        selectors = lime_selectors(style)
         if not selectors:
             skipped["no-lime-rule"] += 1
             continue
@@ -173,54 +251,60 @@ def main() -> int:
         if not expect and not reject:
             skipped["no-ids"] += 1
             continue
-        usable = []
-        for sel in selectors:
-            low = sel.lower()
-            if any(p in low for p in DYNAMIC):
-                continue
-            usable.append(sel)
+        usable = [s for s in selectors if not any(p in s.lower() for p in DYNAMIC)]
         if not usable:
             skipped["dynamic"] += 1
             continue
+        decls = ";".join("%s=%s" % (prefix, uri) for prefix, uri in namespace_decls(style))
         docs[name] = text
         for sel in usable:
-            cases.append((name, sel, sorted(set(expect)), sorted(set(reject))))
+            cases.append((name, sel, sorted(set(expect)), sorted(set(reject)), decls))
 
     lines = [
-        "// Generated by scripts/gen_css_selector_cases.py from css-selectors.",
-        "// Do not edit: change the corpus or the generator and run it again.",
+        "// Generated by scripts/gen_css_corpus.py. Do not edit: change the corpus or the generator.",
         "",
-        "/// One rule from the W3C CSS3 selectors suite: the selector, and the ids",
-        "/// the test asserts must and must not match it.",
-        "pub struct CssSelectorCase {",
+        "///|",
+        "/// One rule from the W3C CSS3 selectors suite: the selector, the ids the",
+        "/// test asserts must and must not match it, and the namespaces its",
+        "/// prefixes resolve against, written `prefix=uri` and joined with `;`.",
+        "struct CssSelectorCase {",
         "  file : String",
         "  selector : String",
         "  expect : String",
         "  reject : String",
+        "  namespaces : String",
         "}",
         "",
+        "///|",
         "/// The test documents, by file name.",
-        "pub fn css_selector_docs() -> Array[(String, String)] {",
+        "fn css_selector_docs() -> Array[(String, String)] {",
         "  [",
     ]
     for name in sorted(docs):
-        lines.append('    ("%s", "%s"),' % (esc(name), esc(docs[name])))
+        lines.append("    (")
+        lines.append('      "%s", "%s",' % (esc(name), esc(docs[name])))
+        lines.append("    ),")
     lines.append("  ]")
     lines.append("}")
     lines.append("")
-    lines.append("pub fn css_selector_cases() -> Array[CssSelectorCase] {")
+    lines.append("///|")
+    lines.append("/// Every rule under test, in file order.")
+    lines.append("fn css_selector_cases() -> Array[CssSelectorCase] {")
     lines.append("  [")
-    for name, sel, expect, reject in cases:
-        lines.append(
-            '    { file: "%s", selector: "%s", expect: "%s", reject: "%s" },'
-            % (esc(name), esc(sel), ",".join(expect), ",".join(reject))
-        )
+    for name, sel, expect, reject, decls in cases:
+        lines.append("    {")
+        lines.append('      file: "%s",' % esc(name))
+        lines.append('      selector: "%s",' % esc(sel))
+        lines.append('      expect: "%s",' % ",".join(expect))
+        lines.append('      reject: "%s",' % ",".join(reject))
+        lines.append('      namespaces: "%s",' % esc(decls))
+        lines.append("    },")
     lines.append("  ]")
     lines.append("}")
-    OUT.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    out_path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     print(
         "wrote %s (%d cases from %d documents, skipped %s)"
-        % (OUT.relative_to(ROOT), len(cases), len(docs), skipped)
+        % (out_path, len(cases), len(docs), skipped)
     )
     return 0
 
