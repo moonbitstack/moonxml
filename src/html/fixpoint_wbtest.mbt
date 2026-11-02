@@ -8,12 +8,18 @@
 // the first read, and a writer that disagrees with the reader about the tree
 // they share passes it.
 //
-// Two families of trees are left out, because HTML has no syntax for them:
+// Some families of trees are left out, because HTML has no syntax for them:
 // a `plaintext` element swallows everything after its start tag, its own end
-// tag included; and a tree that nests an element inside a namesake whose start
-// tag closes or ignores a namesake (an `<a>` inside an `<a>`, a `<p>` inside a
-// `<p>`) cannot have come from text. The exclusions are counted, not dropped
-// quietly.
+// tag included; a tree that nests an element inside a namesake whose start tag
+// closes or ignores a namesake (an `<a>` inside an `<a>`, a `<p>` inside a
+// `<p>`) cannot have come from text; a script whose content carries `<!--` or
+// its own end tag leaves script data, so the end tag written after it is not
+// the end tag; a doctype identifier carrying a quote has no escaping; and a
+// fragment read in a context that takes its content as raw text or RCDATA has
+// no document form. Of the corpus's 1784 cases, 1575 round-trip today and 209
+// are excluded: 28 plaintext, 29 namesake, 143 script data, 3 doctype
+// identifiers, 6 text-only fragment contexts. The exclusions are counted, not
+// dropped quietly.
 
 ///|
 /// Elements whose start tag closes, ignores or merges a namesake, so a tree
@@ -76,8 +82,12 @@ fn holds_its_own_end_tag(element : @moonxml.Element) -> Bool {
   }
   for node in element.children {
     if node is @moonxml.TextNode(text) {
-      if text.to_lower().contains("</" + name) ||
-        text.to_lower().contains("<!--") {
+      let lower = text.to_lower()
+      // A script's content can also leave script data by writing `<!--`: from
+      // there the end tag is not the end tag, and the text written after it
+      // comes back as content.
+      if lower.contains("</" + name) ||
+        (name == "script" && lower.contains("<!--")) {
         return true
       }
     }
@@ -194,9 +204,11 @@ test "a written document reads back to the same text" {
     report = failed.length().to_string() +
       " of " +
       written.to_string() +
-      " do not round-trip:\n" +
+      " do not round-trip://n" +
       failed.join("\n")
   }
   assert_eq(report, "")
+  // Every case either round-trips or is excluded for a stated reason; a
+  // document that silently stops being tested is the failure mode to watch.
   assert_eq(excluded > 0, true)
 }
