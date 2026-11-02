@@ -201,12 +201,11 @@ fn write_html(node : Node, out : StringBuilder, raw~ : Bool) -> Unit {
       out.write_string("<" + tag)
       for pair in data.attrs {
         let value = pair.1
+        let name = html_attribute_name(pair.0)
         if value.is_empty() {
-          out.write_string(" " + pair.0)
+          out.write_string(" " + name)
         } else {
-          out.write_string(
-            " " + pair.0 + "=\"" + escape_html_attr(value) + "\"",
-          )
+          out.write_string(" " + name + "=\"" + escape_html_attr(value) + "\"")
         }
       }
       out.write_string(">")
@@ -214,6 +213,17 @@ fn write_html(node : Node, out : StringBuilder, raw~ : Bool) -> Unit {
       // exactly as they are. Foreign elements answer neither rule.
       if !foreign && is_void_element(tag) {
         return
+      }
+      // The reader drops one newline right after these tags' start tag, so one
+      // has to be written for it to drop.
+      if !foreign && keeps_leading_newline(tag) {
+        match data.children {
+          [TextNode(text), ..] =>
+            if text.has_prefix("\n") {
+              out.write_string("\n")
+            }
+          _ => ()
+        }
       }
       let raw_here = !foreign && is_raw_text_element(tag)
       for child in data.children {
@@ -245,11 +255,94 @@ fn write_html(node : Node, out : StringBuilder, raw~ : Bool) -> Unit {
     CommentNode(text) => out.write_string("<!--" + text + "-->")
     ProcessingInstructionNode(pi) =>
       out.write_string("<?" + pi.target + pi.data + "?>")
-    DoctypeNode(text) => out.write_string("<!DOCTYPE " + text + ">")
+    DoctypeNode(text) => write_doctype(text, out)
     // Attributes and namespaces are not children of anything, so there is no
     // position in a document for them to be written at.
     AttributeNode(_) | NamespaceNode(_) => ()
   }
+}
+
+///|
+/// The tags whose content the reader starts one newline later: a newline right
+/// after the start tag is dropped, the way an author's line break is.
+fn keeps_leading_newline(tag : String) -> Bool {
+  tag == "pre" || tag == "textarea" || tag == "listing"
+}
+
+///|
+/// An attribute name as HTML spells it. A foreign attribute is a Clark name in
+/// the tree; HTML has prefixes for exactly three namespaces, so those get
+/// theirs back and anything else is written by its local name.
+fn html_attribute_name(name : String) -> String {
+  match namespace_of(name) {
+    Some(uri) =>
+      match uri {
+        "http://www.w3.org/1999/xlink" => "xlink:" + local_of(name)
+        "http://www.w3.org/XML/1998/namespace" => "xml:" + local_of(name)
+        "http://www.w3.org/2000/xmlns/" => "xmlns:" + local_of(name)
+        _ => local_of(name)
+      }
+    None => name
+  }
+}
+
+///|
+/// A document type declaration as HTML spells it: the name, then `PUBLIC` with
+/// both identifiers or `SYSTEM` with the one. The tree keeps the declaration
+/// the way the test corpus writes it — `name "public" "system"` — so the
+/// keywords have to be put back.
+fn write_doctype(text : String, out : StringBuilder) -> Unit {
+  let space = match text.find(" ") {
+    Some(at) => at
+    None => -1
+  }
+  if space < 0 {
+    out.write_string("<!DOCTYPE " + text + ">")
+    return
+  }
+  let name = text[0:space].to_owned()
+  let rest = text[space + 1:text.length()].trim().to_owned()
+  match quoted_parts(rest) {
+    Some(pair) => {
+      let (public_id, system_id) = pair
+      if public_id.is_empty() {
+        out.write_string("<!DOCTYPE " + name + " SYSTEM \"" + system_id + "\">")
+      } else {
+        out.write_string(
+          "<!DOCTYPE " +
+          name +
+          " PUBLIC \"" +
+          public_id +
+          "\" \"" +
+          system_id +
+          "\">",
+        )
+      }
+    }
+    None => out.write_string("<!DOCTYPE " + name + ">")
+  }
+}
+
+///|
+/// The two quoted identifiers of a doctype, or nothing when they are not two
+/// quoted strings — an identifier that carries a quote of its own cannot be
+/// told from the closing one.
+fn quoted_parts(text : String) -> (String, String)? {
+  let n = text.length()
+  if n < 2 || text.at(0) != 0x22 || text.at(n - 1) != 0x22 {
+    return None
+  }
+  // The public identifier ends at the first quote followed by a space, the
+  // system one at the last quote.
+  let mut i = 1
+  while i < n - 1 {
+    if text.at(i) == 0x22 && text.at(i + 1) == 0x20 {
+      // Past the closing quote, the space and the next opening quote.
+      return Some((text[1:i].to_owned(), text[i + 3:n - 1].to_owned()))
+    }
+    i = i + 1
+  }
+  None
 }
 
 ///|
@@ -387,6 +480,7 @@ fn escape_html_text(text : String) -> String {
   if !(text.contains("&") ||
     text.contains("<") ||
     text.contains(">") ||
+    text.contains("\r") ||
     text.contains("\u{A0}")) {
     return text
   }
@@ -396,6 +490,9 @@ fn escape_html_text(text : String) -> String {
       '&' => out.write_string("&amp;")
       '<' => out.write_string("&lt;")
       '>' => out.write_string("&gt;")
+      // The reader folds a carriage return into a line feed, so a text that
+      // carries one has to write it as a reference.
+      '\r' => out.write_string("&#13;")
       _ =>
         if ch == '\u{A0}' {
           out.write_string("&nbsp;")
@@ -410,7 +507,10 @@ fn escape_html_text(text : String) -> String {
 ///|
 /// WHATWG's attribute-value escaping: `&`, the no-break space and the quote.
 fn escape_html_attr(text : String) -> String {
-  if !(text.contains("&") || text.contains("\"") || text.contains("\u{A0}")) {
+  if !(text.contains("&") ||
+    text.contains("\"") ||
+    text.contains("\r") ||
+    text.contains("\u{A0}")) {
     return text
   }
   let out = StringBuilder()
@@ -418,6 +518,7 @@ fn escape_html_attr(text : String) -> String {
     match ch {
       '&' => out.write_string("&amp;")
       '"' => out.write_string("&quot;")
+      '\r' => out.write_string("&#13;")
       _ =>
         if ch == '\u{A0}' {
           out.write_string("&nbsp;")

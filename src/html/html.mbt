@@ -86,6 +86,43 @@ pub fn loads_fragment(
 }
 
 ///|
+/// Read a text as the token stream the tokenizer answers, before any tree is
+/// built: the runs of characters, the start tags with their attributes, the end
+/// tags, the comments and the doctype, in the order they come.
+///
+/// This is the tokenizer's own reading, not the tree builder's: an end tag that
+/// matches nothing is still an end tag here, a stray table cell is still a cell,
+/// and the attributes a tag repeats are still repeated. `Document::events`
+/// answers the same shape for a document that has been built.
+pub fn scan(text : String, sink : &@event.Sink) -> Unit {
+  let doc = @moonxml.Document::new(flavour=@moonxml.Html)
+  let builder = Builder::new(doc)
+  let lexer = Lexer::new(preprocess(text), builder, out=fn(_, token) {
+    match token {
+      StartTag(name~, attrs~, self_closing~) =>
+        sink.push(@event.StartTag(name~, attrs~, self_closing~))
+      EndTag(name~) => sink.push(@event.EndTag(name~))
+      Characters(text~) => sink.push(@event.Text(text~))
+      CommentToken(text~) => sink.push(@event.Comment(text~))
+      DoctypeToken(name~, public_id~, system_id~, force_quirks~) => {
+        ignore(force_quirks)
+        sink.push(
+          @event.Doctype(
+            text=doctype_text(
+              name.unwrap_or(""),
+              public_id.unwrap_or(""),
+              system_id.unwrap_or(""),
+            ),
+          ),
+        )
+      }
+      Eof => ()
+    }
+  })
+  tokenize(lexer)
+}
+
+///|
 /// The input preprocessing the standard asks for: a carriage return that ends
 /// a line is a line feed, and nothing else about the text changes.
 fn preprocess(text : String) -> String {

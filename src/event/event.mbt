@@ -5,10 +5,10 @@
 /// One event of a document being read: a tag opening, a run of text, a
 /// comment. libexpat's second reading of a document, in one type.
 ///
-/// `@xml.scan` streams these; `Document::events` reads a finished tree back
-/// as the same stream. HTML has no streaming read — WHATWG's tree
-/// construction needs to see the tree it is building — so its events describe
-/// a tree that already exists.
+/// `@xml.scan` and `@html.scan` stream these; `Document::events` reads a
+/// finished tree back as the same stream. HTML's stream is its tokenizer's:
+/// the tree construction that follows needs to see the tree it is building, so
+/// a document's events describe a tree that already exists.
 pub(all) enum Event {
   StartTag(
     name~ : String,

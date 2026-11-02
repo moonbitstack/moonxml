@@ -453,3 +453,98 @@ test "an unclosed template at the end of a document still holds its content" {
     _ => assert_eq(true, false)
   }
 }
+
+///|
+test "pre drops one leading newline, and the writer puts it back" {
+  let doc = loads("<pre>\nfoo</pre>")
+  assert_eq(doc.css("pre").text(), "foo")
+  let two = loads("<pre>\n\nfoo</pre>")
+  assert_eq(two.css("pre").text(), "\nfoo")
+  // The newline the reader dropped has to be written again, or the second read
+  // would drop one of the two the text really holds.
+  assert_eq(
+    two.dumps(),
+    "<html><head></head><body><pre>\n\nfoo</pre></body></html>",
+  )
+  let again = loads(two.dumps())
+  assert_eq(again.css("pre").text(), "\nfoo")
+}
+
+///|
+test "a fostered title stays in the body" {
+  let doc = loads("<table><title>X</title></table>")
+  assert_eq(doc.css("body title").length(), 1)
+  assert_eq(doc.css("head title").length(), 0)
+}
+
+///|
+test "head and body attributes survive a read and a write" {
+  let doc = loads("<html lang=\"en\"><body class=\"b\"><p>x</p></body></html>")
+  assert_eq(doc.css("html").attr("lang"), Some("en"))
+  assert_eq(doc.css("body").attr("class"), Some("b"))
+  let again = loads(doc.dumps())
+  assert_eq(again.css("html").attr("lang"), Some("en"))
+  assert_eq(again.css("body").attr("class"), Some("b"))
+}
+
+///|
+test "a foreign attribute keeps its namespace, and gets its prefix back" {
+  let doc = loads("<svg xlink:href=\"a\" xml:lang=\"en\"></svg>")
+  let svg = doc.css("svg")
+  assert_eq(svg.attr("{http://www.w3.org/1999/xlink}href"), Some("a"))
+  assert_eq(svg.attr("{http://www.w3.org/XML/1998/namespace}lang"), Some("en"))
+  // HTML has a prefix for each of the three foreign namespaces, so writing the
+  // tree back has to use it rather than the Clark spelling.
+  assert_eq(doc.dumps().contains("xlink:href=\"a\""), true)
+  let again = loads(doc.dumps())
+  assert_eq(
+    again.css("svg").attr("{http://www.w3.org/1999/xlink}href"),
+    Some("a"),
+  )
+}
+
+///|
+test "a doctype with identifiers is written as HTML spells it" {
+  let doc = loads("<!DOCTYPE html SYSTEM \"about:legacy-compat\"><p>x</p>")
+  assert_eq(
+    doc.dumps(),
+    "<!DOCTYPE html SYSTEM \"about:legacy-compat\"><html><head></head><body><p>x</p></body></html>",
+  )
+  let again = loads(doc.dumps())
+  assert_eq(again.dumps(), doc.dumps())
+}
+
+///|
+/// Everything the tokenizer says, in order.
+struct Collected {
+  events : Array[@event.Event]
+}
+
+///|
+impl @event.Sink for Collected with fn push(self, event) {
+  self.events.push(event)
+}
+
+///|
+test "the tokenizer answers tokens, before any tree is built" {
+  let sink : Collected = { events: [], }
+  scan("<!DOCTYPE html><p class=\"a\" class=\"b\">x</p></div>", sink)
+  let seen : Array[String] = []
+  for event in sink.events {
+    seen.push(
+      match event {
+        @event.Doctype(text~) => "doctype " + text
+        @event.StartTag(name~, attrs~, ..) =>
+          "start " + name + " " + attrs.length().to_string()
+        @event.EndTag(name~) => "end " + name
+        @event.Text(text~) => "text " + text
+        @event.Comment(text~) => "comment " + text
+        _ => "other"
+      },
+    )
+  }
+  // The tokenizer keeps the first of a repeated attribute, and an end tag that
+  // matches nothing still comes through: the tree builder is what would have
+  // dropped it, and it has not run.
+  assert_eq(seen, ["doctype html", "start p 1", "text x", "end p", "end div"])
+}
