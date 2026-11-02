@@ -26,7 +26,7 @@
 </header>
 
 <main class="wrap" style="padding-top:44px">
-  <p class="eyebrow">186 public items</p>
+  <p class="eyebrow">193 public items</p>
   <h1 style="font-size:clamp(32px,4vw,44px);margin-bottom:10px">The API</h1>
   <p class="sub">Generated from each package's interface file, so it cannot describe something the code does not have — or miss something it does.</p>
   <div class="colophon-line">
@@ -45,9 +45,11 @@
 <a href="#moonxml-dumps">dumps</a>
 <a href="#moonxml-dumps-html">dumps_html</a>
 <a href="#moonxml-local-of">local_of</a>
+<a href="#moonxml-namespace-map">namespace_map</a>
 <a href="#moonxml-namespace-of">namespace_of</a>
 <a href="#moonxml-refused">Refused</a>
 <a href="#moonxml-pub-impl-show-for-refused">pub impl Show for Refused</a>
+<a href="#moonxml-attribute">Attribute</a>
 <a href="#moonxml-document">Document</a>
 <a href="#moonxml-document-append">Document::append</a>
 <a href="#moonxml-document-by-class">Document::by_class</a>
@@ -101,6 +103,8 @@
 <a href="#moonxml-element-insert">Element::insert</a>
 <a href="#moonxml-element-insert-after">Element::insert_after</a>
 <a href="#moonxml-element-insert-before">Element::insert_before</a>
+<a href="#moonxml-element-is-lang">Element::is_lang</a>
+<a href="#moonxml-element-lang">Element::lang</a>
 <a href="#moonxml-element-new">Element::new</a>
 <a href="#moonxml-element-prepend">Element::prepend</a>
 <a href="#moonxml-element-remove">Element::remove</a>
@@ -119,6 +123,8 @@
 <a href="#moonxml-element-xpath-value">Element::xpath_value</a>
 <a href="#moonxml-flavour">Flavour</a>
 <a href="#moonxml-pub-impl-show-for-flavour">pub impl Show for Flavour</a>
+<a href="#moonxml-namespace">Namespace</a>
+<a href="#moonxml-namespacemap">NamespaceMap</a>
 <a href="#moonxml-node">Node</a>
 <a href="#moonxml-node-by-class">Node::by_class</a>
 <a href="#moonxml-node-by-id">Node::by_id</a>
@@ -189,6 +195,7 @@
 <a href="#moonxml-html-loads">loads</a>
 <a href="#moonxml-html-loads-fragment">loads_fragment</a>
 <a href="#moonxml-html-named-reference">named_reference</a>
+<a href="#moonxml-html-scan">scan</a>
 <h4><a href="#moonxml-xml">xml</a></h4>
 <a href="#moonxml-xml-entity-limit">entity_limit</a>
 <a href="#moonxml-xml-limit">limit</a>
@@ -272,6 +279,15 @@
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">impl</span> <span class="ty">Show</span> for <span class="ty">Refused</span></span></pre>
 <p class="doc"><code>Refused</code> implements <code>Show</code>.</p>
 </div>
+<div class="api-item" id="moonxml-attribute" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">struct</span> <span class="ty">Attribute</span> {
+  owner : <span class="ty">Element</span>
+  name : <span class="ty">String</span>
+  value : <span class="ty">String</span>
+}</span></pre>
+<p class="doc">An attribute as a node of its own: XPath's attribute node. It is not a child of its element — the element's attributes stay in <code>attrs</code>, which is what the writer reads — but a query that asks for <code>@href</code> or for the attribute axis answers these, so that <code>attribute::x/self::node()</code> has something with an identity to answer.</p>
+</div>
 <div class="api-item" id="moonxml-document" data-kind="type">
 <span class="kind">type</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">struct</span> <span class="ty">Document</span> {
@@ -317,7 +333,7 @@
 </div>
 <div class="api-item" id="moonxml-document-css" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::css(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::css(<span class="ty">Self</span>, <span class="ty">String</span>, namespaces? : <span class="ty">NamespaceMap</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
 <p class="doc">Narrow with a CSS selector over the whole document. Descendant search from the virtual root, so every element is a candidate.</p>
 </div>
 <div class="api-item" id="moonxml-document-custom" data-kind="fn">
@@ -504,7 +520,7 @@
 </div>
 <div class="api-item" id="moonxml-element-css" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::css(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::css(<span class="ty">Self</span>, <span class="ty">String</span>, namespaces? : <span class="ty">NamespaceMap</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
 <p class="doc">Narrow to the descendants of this element that match a CSS selector.</p>
 </div>
 <div class="api-item" id="moonxml-element-custom" data-kind="fn">
@@ -546,6 +562,16 @@
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::insert_before(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Bool</span></span></pre>
 <p class="doc">Insert <code>node</code> before self among its siblings.</p>
+</div>
+<div class="api-item" id="moonxml-element-is-lang" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::is_lang(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Bool</span></span></pre>
+<p class="doc">Whether an element's language is <code>wanted</code>, or a regional variety of it: a document in <code>en-GB</code> answers <code>lang("en")</code> and <code>lang("en-gb")</code>.</p>
+</div>
+<div class="api-item" id="moonxml-element-lang" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::lang(<span class="ty">Self</span>) -&gt; <span class="ty">String</span>?</span></pre>
+<p class="doc">The language an element declares: its <code>lang</code> attribute in HTML, <code>xml:lang</code> in XML. A tree read from either may carry both spellings, so both are read.</p>
 </div>
 <div class="api-item" id="moonxml-element-new" data-kind="fn">
 <span class="kind">fn</span>
@@ -640,6 +666,23 @@
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">impl</span> <span class="ty">Show</span> for <span class="ty">Flavour</span></span></pre>
 <p class="doc"><code>Flavour</code> implements <code>Show</code>.</p>
 </div>
+<div class="api-item" id="moonxml-namespace" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">struct</span> <span class="ty">Namespace</span> {
+  owner : <span class="ty">Element</span>
+  prefix : <span class="ty">String</span>
+  uri : <span class="ty">String</span>
+}</span></pre>
+<p class="doc">A namespace as a node of its own: XPath's namespace node, answered by the <code>namespace</code> axis. <code>prefix</code> is <code>""</code> for the default namespace.</p>
+</div>
+<div class="api-item" id="moonxml-namespacemap" data-kind="type">
+<span class="kind">type</span>
+<pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">struct</span> <span class="ty">NamespaceMap</span> {
+  default : <span class="ty">String</span>
+  prefixes : <span class="ty">Array</span>[(<span class="ty">String</span>, <span class="ty">String</span>)]
+}</span></pre>
+<p class="doc">The namespaces a selector's prefixes resolve against — what <code>@namespace</code> declares in a stylesheet, handed over by the caller.  doc.css("a|ref", namespaces={ default: "", prefixes: [("a", "urn:x")] })</p>
+</div>
 <div class="api-item" id="moonxml-node" data-kind="type">
 <span class="kind">type</span>
 <pre><span class="sig"><span class="kw">pub</span>(<span class="kw">all</span>) <span class="kw">enum</span> <span class="ty">Node</span> {
@@ -649,6 +692,8 @@
   <span class="ty">CommentNode</span>(<span class="ty">String</span>)
   <span class="ty">ProcessingInstructionNode</span>(<span class="ty">ProcessingInstruction</span>)
   <span class="ty">DoctypeNode</span>(<span class="ty">String</span>)
+  <span class="ty">AttributeNode</span>(<span class="ty">Attribute</span>)
+  <span class="ty">NamespaceNode</span>(<span class="ty">Namespace</span>)
 }</span></pre>
 <p class="doc">One node of the tree. Mixed content survives: text, CDATA, elements, comments, processing instructions and the doctype are all nodes, in document order — none of which fits in a JSON-shaped value, which is why this is not moonjson.</p>
 </div>
@@ -684,7 +729,7 @@
 </div>
 <div class="api-item" id="moonxml-node-css" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::css(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::css(<span class="ty">Self</span>, <span class="ty">String</span>, namespaces? : <span class="ty">NamespaceMap</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
 <p class="doc">Narrow to the descendants of this node that match a CSS selector; a node that is not an element answers empty.</p>
 </div>
 <div class="api-item" id="moonxml-node-custom" data-kind="fn">
@@ -820,13 +865,13 @@
 </div>
 <div class="api-item" id="moonxml-selection-closest" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::closest(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span> raise <span class="ty">Refused</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::closest(<span class="ty">Self</span>, <span class="ty">String</span>, namespaces? : <span class="ty">NamespaceMap</span>) -&gt; <span class="ty">Self</span> raise <span class="ty">Refused</span></span></pre>
 <p class="doc">The nearest ancestor — self included — matching a CSS selector.</p>
 </div>
 <div class="api-item" id="moonxml-selection-css" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::css(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span> raise <span class="ty">Refused</span></span></pre>
-<p class="doc">Narrow with a CSS selector, Selectors Level 4's statically decidable subset. Searches the descendants of the selected nodes — the context itself is never a candidate, <code>querySelectorAll</code>'s rule.</p>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::css(<span class="ty">Self</span>, <span class="ty">String</span>, namespaces? : <span class="ty">NamespaceMap</span>) -&gt; <span class="ty">Self</span> raise <span class="ty">Refused</span></span></pre>
+<p class="doc">Narrow with a CSS selector, Selectors Level 4's statically decidable subset. Searches the descendants of the selected nodes — the context itself is never a candidate, <code>querySelectorAll</code>'s rule.  <code>namespaces</code> resolves the prefixes a selector writes, the way a stylesheet's <code>@namespace</code> rules do; the default matches no prefix at all.</p>
 </div>
 <div class="api-item" id="moonxml-selection-custom" data-kind="fn">
 <span class="kind">fn</span>
@@ -1006,15 +1051,20 @@
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> local_of(<span class="ty">String</span>) -&gt; <span class="ty">String</span></span></pre>
 <p class="doc">The local part of a <code>{uri}local</code> name.</p>
 </div>
+<div class="api-item" id="moonxml-namespace-map" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">let</span> namespace_map : <span class="ty">NamespaceMap</span></span></pre>
+<p class="doc">No namespaces declared: type selectors match any namespace, and an unprefixed attribute selector matches the attribute with no namespace.</p>
+</div>
 </section>
 <section id="moonxml-html">
 <div class="sec-head"><h2>moonxml/html</h2></div>
 <p class="sub">The WHATWG parser: tolerant, repairing, and never refusing.</p>
 <h3 class="group" data-group="traits">Traits</h3>
-<div class="api-item" id="moonxml-html-named-reference" data-kind="fn">
+<div class="api-item" id="moonxml-html-scan" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> named_reference(<span class="ty">String</span>) -&gt; <span class="ty">String</span>?</span></pre>
-<p class="doc">The named character references HTML defines — all 2231 spellings of them, in the table the standard keeps, generated into <code>entities_table.mbt</code>.  A name that may be written without its semicolon is in the table twice, so <code>named_reference("amp")</code> and <code>named_reference("amp;")</code> answer the same <code>&amp;</code>. An unknown name answers <code>None</code>, which is the tokenizer's cue to leave the text as it stands.</p>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> scan(<span class="ty">String</span>, &amp;@event.<span class="ty">Sink</span>) -&gt; <span class="ty">Unit</span></span></pre>
+<p class="doc">Read a text as the token stream the tokenizer answers, before any tree is built: the runs of characters, the start tags with their attributes, the end tags, the comments and the doctype, in the order they come.  This is the tokenizer's own reading, not the tree builder's: an end tag that matches nothing is still an end tag here, a stray table cell is still a cell, and the attributes a tag repeats are still repeated. <code>Document::events</code> answers the same shape for a document that has been built.</p>
 </div>
 <h3 class="group" data-group="values">Values</h3>
 <div class="api-item" id="moonxml-html-load" data-kind="fn">
@@ -1031,6 +1081,11 @@
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads_fragment(<span class="ty">String</span>, context? : <span class="ty">String</span>) -&gt; @moonxml.<span class="ty">Document</span></span></pre>
 <p class="doc">Read a fragment the way <code>innerHTML</code> does: the markup is read inside <code>context</code>, an element named as one would write it, and the fragment's nodes come back under the document's root.  The name may be a foreign one — <code>svg desc</code>, <code>math mi</code> — in the spelling the standard's test corpus uses, since an SVG <code>&lt;title&gt;</code> is not an HTML one.</p>
+</div>
+<div class="api-item" id="moonxml-html-named-reference" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> named_reference(<span class="ty">String</span>) -&gt; <span class="ty">String</span>?</span></pre>
+<p class="doc">The named character references HTML defines — all 2231 spellings of them, in the table the standard keeps, generated into <code>entities_table.mbt</code>.  A name that may be written without its semicolon is in the table twice, so <code>named_reference("amp")</code> and <code>named_reference("amp;")</code> answer the same <code>&amp;</code>. An unknown name answers <code>None</code>, which is the tokenizer's cue to leave the text as it stands.</p>
 </div>
 </section>
 <section id="moonxml-xml">
@@ -1084,7 +1139,7 @@
   <span class="ty">ProcessingInstruction</span>(target~ : <span class="ty">String</span>, data~ : <span class="ty">String</span>)
   <span class="ty">Doctype</span>(text~ : <span class="ty">String</span>)
 }</span></pre>
-<p class="doc">One event of a document being read: a tag opening, a run of text, a comment. libexpat's second reading of a document, in one type.  <code>@xml.scan</code> streams these; <code>Document::events</code> reads a finished tree back as the same stream. HTML has no streaming read — WHATWG's tree construction needs to see the tree it is building — so its events describe a tree that already exists.</p>
+<p class="doc">One event of a document being read: a tag opening, a run of text, a comment. libexpat's second reading of a document, in one type.  <code>@xml.scan</code> and <code>@html.scan</code> stream these; <code>Document::events</code> reads a finished tree back as the same stream. HTML's stream is its tokenizer's: the tree construction that follows needs to see the tree it is building, so a document's events describe a tree that already exists.</p>
 </div>
 <div class="api-item" id="moonxml-event-sink" data-kind="type">
 <span class="kind">type</span>

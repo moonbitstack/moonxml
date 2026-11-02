@@ -64,8 +64,20 @@ page.<span class="f">css</span>(<span class="s">"li:first-child"</span>)
 page.<span class="f">css</span>(<span class="s">"ul :not(.done)"</span>)
 page.<span class="f">css</span>(<span class="s">"a[href^='https']"</span>)       <span class="cm">// attribute prefix</span>
 page.<span class="f">css</span>(<span class="s">"ul:has(li.done)"</span>)        <span class="cm">// a parent, by its child</span>
-page.<span class="f">css</span>(<span class="s">"li:nth-child(2n+1)"</span>)</pre>
-        <p>A pseudo-class that only a browser can answer — <code>:hover</code>, <code>:visited</code> — is a <code>Refused</code> parse error, not a silent miss.</p>
+page.<span class="f">css</span>(<span class="s">"li:nth-child(2n+1)"</span>)
+page.<span class="f">css</span>(<span class="s">"li:lang(en-GB)"</span>)          <span class="cm">// a language, by prefix</span>
+page.<span class="f">css</span>(<span class="s">"input:enabled"</span>)</pre>
+        <p>A pseudo-class that only a browser can answer — <code>:hover</code>, <code>:visited</code> — is a <code>Refused</code> parse error, not a silent miss. <code>:lang()</code> reads the nearest ancestor that declares a language, and <code>:enabled</code> and <code>:disabled</code> reach only what a document can actually disable, so a paragraph is neither.</p>
+        <p class="filename">step2b.mbt</p>
+<pre><span class="cm">// a namespace prefix is resolved by the map you pass, the way a</span>
+<span class="cm">// stylesheet's @namespace rules would</span>
+<span class="k">let</span> ns : <span class="f">@moonxml.NamespaceMap</span> = {
+  default: <span class="s">""</span>,
+  prefixes: [(<span class="s">"svg"</span>, <span class="s">"http://www.w3.org/2000/svg"</span>)],
+}
+page.<span class="f">css</span>(<span class="s">"svg|rect"</span>, namespaces=ns)
+page.<span class="f">css</span>(<span class="s">"*|rect"</span>, namespaces=ns)    <span class="cm">// any namespace</span>
+page.<span class="f">css</span>(<span class="s">"|rect"</span>, namespaces=ns)    <span class="cm">// no namespace</span></pre>
       </li>
 
       <li>
@@ -77,7 +89,14 @@ page.<span class="f">xpath</span>(<span class="s">"//li[2]"</span>).<span class=
 
 <span class="cm">// anything else, as the value it is</span>
 <span class="k">let</span> count = page.<span class="f">xpath_value</span>(<span class="s">"count(//li)"</span>)   <span class="cm">// Num(2.0)</span>
-<span class="k">let</span> yes   = page.<span class="f">xpath_value</span>(<span class="s">"//li = 'tea'"</span>)  <span class="cm">// Flag(true)</span></pre>
+<span class="k">let</span> yes   = page.<span class="f">xpath_value</span>(<span class="s">"//li = 'tea'"</span>)  <span class="cm">// Flag(true)</span>
+
+<span class="cm">// an attribute is a node with an identity of its own</span>
+page.<span class="f">xpath</span>(<span class="s">"//li/@id"</span>).<span class="f">text</span>()
+page.<span class="f">xpath</span>(<span class="s">"//li/@id/ancestor::*"</span>).<span class="f">length</span>()
+
+<span class="cm">// the namespace axis answers what is in scope on an element</span>
+page.<span class="f">xpath_value</span>(<span class="s">"count(//li/namespace::*)"</span>)</pre>
       </li>
 
       <li>
@@ -148,7 +167,11 @@ feed.<span class="f">dumps</span>() == src                    <span class="cm">/
 
 <span class="k">let</span> tagger = { tags: 0 }
 <span class="f">@xml.scan</span>(<span class="s">"&lt;a&gt;&lt;b/&gt;&lt;c/&gt;&lt;/a&gt;"</span>, tagger)
-println(tagger.tags)                    <span class="cm">// 3, no tree built</span></pre>
+println(tagger.tags)                    <span class="cm">// 3, no tree built</span>
+
+<span class="cm">// HTML answers its tokens the same way, before any tree is built</span>
+<span class="f">@html.scan</span>(<span class="s">"&lt;p class=a class=b&gt;x&lt;/div&gt;"</span>, tagger)</pre>
+        <p>The HTML stream is the tokenizer's own reading: a repeated attribute keeps the first, and an end tag that matches nothing is still an end tag, because the tree builder is what would have dealt with it and it has not run.</p>
 
       </li>
 

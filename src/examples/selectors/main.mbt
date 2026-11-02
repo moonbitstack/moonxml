@@ -193,6 +193,8 @@ fn pseudo(
     "td:nth-last-of-type(1)",
     page.css("td:nth-last-of-type(1)"),
   )
+  row(article, g, "css", "li:lang(en-GB)", page.css("li:lang(en-GB)"))
+  row(article, g, "css", "li:lang(en)", page.css("li:lang(en)"))
   row(article, g, "css", "a:link", page.css("a:link"))
   row(article, g, "css", "a:any-link", page.css("a:any-link"))
   row(article, g, "css", "li:not(.sold)", page.css("li:not(.sold)"))
@@ -334,6 +336,12 @@ fn values(page : @moonxml.Document) -> Unit raise @moonxml.Refused {
     page.css("#items li").last().html(),
   )
   value(g, "html", "page.css(\"#order\").html()", page.css("#order").html())
+  value(
+    g,
+    "xpath",
+    "page.css(\"#items\").xpath(\"./li/@data-price\")",
+    page.css("#items").xpath("./li/@data-price").text(),
+  )
   value(
     g,
     "xpath",

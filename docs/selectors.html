@@ -31,7 +31,7 @@
     <h1>Every selector, run<br>against one <em>document</em>.</h1>
     <p class="lede">These tables are not examples of what the engines should answer — they are what they answered. Each row is a query, the number of nodes it returned, and those nodes, printed by a program that ran against the document in the box below.</p>
     <div class="colophon-line">
-      <span><b>85 rows</b></span><span class="sep">·</span>
+      <span><b>88 rows</b></span><span class="sep">·</span>
       <span>CSS Selectors</span><span class="sep">·</span>
       <span>XPath 1.0</span><span class="sep">·</span>
       <span>the chain</span>
@@ -55,7 +55,7 @@
       </div>
     </div>
     <div class="demo-box">
-      <div class="demo-cap"><span>the article, rendered</span><span>42 elements · 85 queries below</span></div>
+      <div class="demo-cap"><span>the article, rendered</span><span>42 elements · 88 queries below</span></div>
       <article id="shop" class="catalogue" data-region="eu">
         <header id="masthead" class="masthead">
           <h1>Field Notes</h1>
@@ -206,6 +206,8 @@
 <tr data-hit="2/2" tabindex="0"><td><code>input:optional</code></td><td class="n">1</td><td>input#gift</td></tr>
 <tr data-hit="1/4/0" tabindex="0"><td><code>li &gt; a:only-child</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
 <tr data-hit="3/2/0/1 3/2/1/1" tabindex="0"><td><code>td:nth-last-of-type(1)</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
+<tr data-hit="1/1" tabindex="0"><td><code>li:lang(en-GB)</code></td><td class="n">1</td><td>li.item &quot;Huila&quot;</td></tr>
+<tr data-hit="1/0 1/1 1/2 1/3 1/4" tabindex="0"><td><code>li:lang(en)</code></td><td class="n">5</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Sencha&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
 <tr data-hit="1/4/0" tabindex="0"><td><code>a:link</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
 <tr data-hit="1/4/0" tabindex="0"><td><code>a:any-link</code></td><td class="n">1</td><td>a &quot;House&quot;</td></tr>
 <tr data-hit="1/0 1/1 1/3 1/4" tabindex="0"><td><code>li:not(.sold)</code></td><td class="n">4</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Huila&quot; · li.item &quot;Assam&quot; · li.item &quot;House&quot;</td></tr>
@@ -255,6 +257,7 @@
 <tr><td><span class="eng">attr</span><code>page.css(&quot;#prices tbody tr&quot;).attr(&quot;data-band&quot;)</code></td><td class="n">—</td><td>high</td></tr>
 <tr><td><span class="eng">html</span><code>page.css(&quot;#items li&quot;).last().html()</code></td><td class="n">—</td><td>&lt;a href=&quot;https://example.com/b/1&quot;&gt;House&lt;/a&gt;</td></tr>
 <tr><td><span class="eng">html</span><code>page.css(&quot;#order&quot;).html()</code></td><td class="n">—</td><td>&lt;label for=&quot;qty&quot;&gt;Quantity&lt;/label&gt; &lt;input id=&quot;qty&quot; name=&quot;qty&quot; type=&quot;number&quot; value=&quot;2&quot; required&gt; &lt;input id=&quot;gift&quot; name=&quot;gift&quot; type=&quot;checkbox&quot; disabled&gt; &lt;select name=&quot;grind&quot;&gt; &lt;option value=&quot;fine&quot;&gt;Fine&lt;/option&gt; &lt;option value=&quot;coarse&quot; selected&gt;Coarse&lt;/option&gt; &lt;/select&gt; &lt;button id=&quot;send&quot; type=&quot;submit&quot; class=&quot;btn primary&quot;&gt;Order&lt;/button&gt; &lt;span id=&quot;hollow&quot; class=&quot;flag&quot;&gt;&lt;/span&gt;</td></tr>
+<tr><td><span class="eng">xpath</span><code>page.css(&quot;#items&quot;).xpath(&quot;./li/@data-price&quot;)</code></td><td class="n">—</td><td>182291416</td></tr>
 <tr><td><span class="eng">xpath</span><code>page.xpath_value(&quot;count(//li)&quot;)</code></td><td class="n">—</td><td>5</td></tr>
 <tr><td><span class="eng">xpath</span><code>page.xpath_value(&quot;string(//abbr/@title)&quot;)</code></td><td class="n">—</td><td>United States dollars</td></tr>
 <tr><td><span class="eng">xpath</span><code>page.xpath_value(&quot;//li[@data-price &gt; 15]&quot;)</code></td><td class="n">—</td><td>3 nodes</td></tr>
