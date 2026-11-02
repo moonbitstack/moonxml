@@ -548,3 +548,23 @@ test "the tokenizer answers tokens, before any tree is built" {
   // dropped it, and it has not run.
   assert_eq(seen, ["doctype html", "start p 1", "text x", "end p", "end div"])
 }
+
+///|
+test "the repairs are counted, not hidden" {
+  // What the parser had to invent, close or drop is answerable afterwards: a
+  // document that reads is not the same as a document that was written.
+  //
+  // Every document's tree has html, head and body whether or not it wrote
+  // them, so even a clean one carries those three implications; what a caller
+  // watches is the count above that floor.
+  let clean = loads("<div><p>x</p></div>")
+  assert_eq(clean.repairs().implied, 3)
+  let floor = clean.repairs().total()
+  assert_eq(clean.repairs().dropped, 0)
+  for source in ["<div></span></div>", "<div></br></div>", "<div></p></div>"] {
+    assert_eq(loads(source).repairs().total() > floor, true)
+  }
+  // The tally names the kinds rather than one number, so a caller can tell an
+  // implied element from a dropped tag.
+  assert_eq(loads("<div></span></div>").repairs().dropped > 0, true)
+}

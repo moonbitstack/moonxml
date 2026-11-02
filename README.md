@@ -128,16 +128,19 @@ is named — which is not an operation a caller can mean. They stay on
 | | |
 |:--|:--|
 | fields | `name` `attrs` `children` `parent` `closed` |
-| structure | `append` `prepend` `insert(at, node)` `insert_before` `insert_after` `replace_with` `remove` `unwrap` `wrap` `clear` `smooth` |
+| structure | `append` `prepend` `insert(at, node)` `insert_before` `insert_after` `replace_with` `remove` `unwrap` `wrap` `clear` `set_children(nodes)` `smooth` |
+| position | `child_elements()` `index_in_parent()` `previous_element_sibling()` `next_element_sibling()` |
 | attributes | `attr` `has_attr` `set_attr` `remove_attr` `classes` `has_class` `add_class` `remove_class` |
 | content | `text()` `set_text(s)` `html()` `walk(f)` `document()` |
 | language | `lang()` `is_lang(tag)` |
 
 ### `Node`
 
-`name()` `is_element()` `is_text()` `text()` `children()`, plus the query
-methods above. A node that is not an element answers an empty selection
-rather than refusing, so `.items[0].css("a")` never needs a guard.
+`name()` `is_element()` `is_text()` `text()` `children()` `clone_deep()`, plus
+the query methods above. A node that is not an element answers an empty
+selection rather than refusing, so `.items[0].css("a")` never needs a guard.
+`clone_deep` answers a copy that belongs to no tree, so an edit to it leaves
+the original alone.
 
 Selection-level edits apply to every matched element; the verbs that need a
 position (`insert`, `insert_before`, `insert_after`) live on `Element`, where

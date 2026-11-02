@@ -26,7 +26,7 @@
 </header>
 
 <main class="wrap" style="padding-top:44px">
-  <p class="eyebrow">193 public items</p>
+  <p class="eyebrow">200 public items</p>
   <h1 style="font-size:clamp(32px,4vw,44px);margin-bottom:10px">The API</h1>
   <p class="sub">Generated from each package's interface file, so it cannot describe something the code does not have — or miss something it does.</p>
   <div class="colophon-line">
@@ -90,6 +90,7 @@
 <a href="#moonxml-element-by-id">Element::by_id</a>
 <a href="#moonxml-element-by-name">Element::by_name</a>
 <a href="#moonxml-element-by-tag">Element::by_tag</a>
+<a href="#moonxml-element-child-elements">Element::child_elements</a>
 <a href="#moonxml-element-classes">Element::classes</a>
 <a href="#moonxml-element-clear">Element::clear</a>
 <a href="#moonxml-element-closest">Element::closest</a>
@@ -100,20 +101,25 @@
 <a href="#moonxml-element-has-attr">Element::has_attr</a>
 <a href="#moonxml-element-has-class">Element::has_class</a>
 <a href="#moonxml-element-html">Element::html</a>
+<a href="#moonxml-element-index-in-parent">Element::index_in_parent</a>
 <a href="#moonxml-element-insert">Element::insert</a>
 <a href="#moonxml-element-insert-after">Element::insert_after</a>
 <a href="#moonxml-element-insert-before">Element::insert_before</a>
 <a href="#moonxml-element-is-lang">Element::is_lang</a>
 <a href="#moonxml-element-lang">Element::lang</a>
 <a href="#moonxml-element-new">Element::new</a>
+<a href="#moonxml-element-next-element-sibling">Element::next_element_sibling</a>
 <a href="#moonxml-element-prepend">Element::prepend</a>
+<a href="#moonxml-element-previous-element-sibling">Element::previous_element_sibling</a>
 <a href="#moonxml-element-remove">Element::remove</a>
 <a href="#moonxml-element-remove-attr">Element::remove_attr</a>
 <a href="#moonxml-element-remove-class">Element::remove_class</a>
 <a href="#moonxml-element-replace-with">Element::replace_with</a>
 <a href="#moonxml-element-selector">Element::selector</a>
 <a href="#moonxml-element-set-attr">Element::set_attr</a>
+<a href="#moonxml-element-set-children">Element::set_children</a>
 <a href="#moonxml-element-set-content">Element::set_content</a>
+<a href="#moonxml-element-set-text">Element::set_text</a>
 <a href="#moonxml-element-smooth">Element::smooth</a>
 <a href="#moonxml-element-text">Element::text</a>
 <a href="#moonxml-element-unwrap">Element::unwrap</a>
@@ -131,6 +137,7 @@
 <a href="#moonxml-node-by-name">Node::by_name</a>
 <a href="#moonxml-node-by-tag">Node::by_tag</a>
 <a href="#moonxml-node-children">Node::children</a>
+<a href="#moonxml-node-clone-deep">Node::clone_deep</a>
 <a href="#moonxml-node-closest">Node::closest</a>
 <a href="#moonxml-node-css">Node::css</a>
 <a href="#moonxml-node-custom">Node::custom</a>
@@ -498,6 +505,11 @@
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::by_tag(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span></span></pre>
 <p class="doc">The descendants of this element named <code>name</code>; <code>*</code> answers every element.</p>
 </div>
+<div class="api-item" id="moonxml-element-child-elements" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::child_elements(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[<span class="ty">Self</span>]</span></pre>
+<p class="doc">The element children, in order: what a walk of the tree skips the text of.</p>
+</div>
 <div class="api-item" id="moonxml-element-classes" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::classes(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[<span class="ty">String</span>]</span></pre>
@@ -506,7 +518,7 @@
 <div class="api-item" id="moonxml-element-clear" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::clear(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
-<p class="doc">Drop every child.</p>
+<p class="doc">Drop every child, answering each of them to no parent: a node that is no longer in a tree must not still name the tree it left.</p>
 </div>
 <div class="api-item" id="moonxml-element-closest" data-kind="fn">
 <span class="kind">fn</span>
@@ -548,6 +560,11 @@
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::html(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
 <p class="doc">The element's inner markup, written in the flavour its document was read as.</p>
 </div>
+<div class="api-item" id="moonxml-element-index-in-parent" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::index_in_parent(<span class="ty">Self</span>) -&gt; <span class="ty">Int32</span></span></pre>
+<p class="doc">The position among the parent's children, counting every node; <code>-1</code> when the element has no parent.</p>
+</div>
 <div class="api-item" id="moonxml-element-insert" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::insert(<span class="ty">Self</span>, <span class="ty">Int32</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Unit</span></span></pre>
@@ -578,10 +595,20 @@
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::new(<span class="ty">String</span>, children? : <span class="ty">Array</span>[<span class="ty">Node</span>], attrs? : <span class="ty">Array</span>[(<span class="ty">String</span>, <span class="ty">String</span>)], closed? : <span class="ty">Bool</span>) -&gt; <span class="ty">Self</span></span></pre>
 <p class="doc">A fresh element. The constructor claims the parentage of the children it is given, so a tree built this way keeps its parent pointers true.</p>
 </div>
+<div class="api-item" id="moonxml-element-next-element-sibling" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::next_element_sibling(<span class="ty">Self</span>) -&gt; <span class="ty">Self</span>?</span></pre>
+<p class="doc">The element just after this one among its siblings, skipping text and the other node kinds.</p>
+</div>
 <div class="api-item" id="moonxml-element-prepend" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::prepend(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Unit</span></span></pre>
 <p class="doc">Insert <code>node</code> as the first child.</p>
+</div>
+<div class="api-item" id="moonxml-element-previous-element-sibling" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::previous_element_sibling(<span class="ty">Self</span>) -&gt; <span class="ty">Self</span>?</span></pre>
+<p class="doc">The element just before this one among its siblings, skipping text and the other node kinds.</p>
 </div>
 <div class="api-item" id="moonxml-element-remove" data-kind="fn">
 <span class="kind">fn</span>
@@ -613,10 +640,20 @@
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::set_attr(<span class="ty">Self</span>, <span class="ty">String</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
 <p class="doc">Set or replace an attribute, keeping its place when it is already there.</p>
 </div>
+<div class="api-item" id="moonxml-element-set-children" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::set_children(<span class="ty">Self</span>, <span class="ty">Array</span>[<span class="ty">Node</span>]) -&gt; <span class="ty">Unit</span></span></pre>
+<p class="doc">Replace the children with these, in this order. Every node named is taken out of wherever it sat, and every node the element held is let go, so the parent pointers are true afterwards whichever side of the edit a node was on.</p>
+</div>
 <div class="api-item" id="moonxml-element-set-content" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::set_content(<span class="ty">Self</span>, <span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
 <p class="doc">Give a <code>&lt;template&gt;</code> a content fragment. A caller who builds one by hand uses this; the parser does it on its own.</p>
+</div>
+<div class="api-item" id="moonxml-element-set-text" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::set_text(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
+<p class="doc">Replace the contents with one text node: the DOM's <code>textContent = …</code>, and what an edit that rewrites a label wants.</p>
 </div>
 <div class="api-item" id="moonxml-element-smooth" data-kind="fn">
 <span class="kind">fn</span>
@@ -721,6 +758,11 @@
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::children(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[<span class="ty">Self</span>]</span></pre>
 <p class="doc">The children of a node that is an element; a node with no children answers an empty list.</p>
+</div>
+<div class="api-item" id="moonxml-node-clone-deep" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::clone_deep(<span class="ty">Self</span>) -&gt; <span class="ty">Self</span></span></pre>
+<p class="doc">A copy of this node and everything under it, belonging to no tree: editing the copy leaves the original alone. An attribute or a namespace node answers itself — it is not a tree of its own, it is a name on an element, and copying the element copies it.</p>
 </div>
 <div class="api-item" id="moonxml-node-closest" data-kind="fn">
 <span class="kind">fn</span>

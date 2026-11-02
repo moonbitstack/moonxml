@@ -1136,7 +1136,9 @@ fn end_in_body(b : Builder, lx : Lexer, name : String, depth : Int32) -> Unit {
         clear_afe_to_marker(b)
       }
     "br" => {
-      // A closing br is a br.
+      // A closing br is a br: the element the document did not write is one the
+      // parser invented, and the tally says so.
+      note_implied(b)
       reconstruct_afe(b)
       ignore(insert_element_open(b, "br", []))
       ignore(pop(b))

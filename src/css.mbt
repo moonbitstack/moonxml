@@ -781,7 +781,7 @@ fn chain_matches(
       false
     }
     NextSibling =>
-      match previous_element(element) {
+      match element.previous_element_sibling() {
         Some(sibling) =>
           compound_matches(compound, sibling, namespaces) &&
           chain_matches(complex, idx - 1, sibling, namespaces)
@@ -790,7 +790,7 @@ fn chain_matches(
     LaterSibling =>
       match element.parent {
         Some(parent) => {
-          let siblings = element_children(parent)
+          let siblings = parent.child_elements()
           let mut found = false
           for sibling in siblings {
             if physical_equal(sibling, element) {
@@ -1036,14 +1036,15 @@ fn pseudo_matches(
   namespaces : NamespaceMap,
 ) -> Bool {
   match pseudo {
-    FirstChild => previous_element(element) is None
-    LastChild => next_element(element) is None
+    FirstChild => element.previous_element_sibling() is None
+    LastChild => element.next_element_sibling() is None
     OnlyChild =>
-      previous_element(element) is None && next_element(element) is None
+      element.previous_element_sibling() is None &&
+      element.next_element_sibling() is None
     NthChild(anb) =>
       match element.parent {
         Some(parent) => {
-          let siblings = element_children(parent)
+          let siblings = parent.child_elements()
           let mut at = 0
           for k = 0; k < siblings.length(); k = k + 1 {
             if physical_equal(siblings[k], element) {
@@ -1058,7 +1059,7 @@ fn pseudo_matches(
     NthLastChild(anb) =>
       match element.parent {
         Some(parent) => {
-          let siblings = element_children(parent)
+          let siblings = parent.child_elements()
           let mut at = 0
           for k = siblings.length() - 1; k >= 0; k = k - 1 {
             if physical_equal(siblings[k], element) {
@@ -1136,7 +1137,7 @@ fn is_disableable(element : Element) -> Bool {
 fn of_type_position(element : Element, from_end~ : Bool) -> Int32 {
   match element.parent {
     Some(parent) => {
-      let siblings = element_children(parent)
+      let siblings = parent.child_elements()
       let same : Array[Element] = []
       for sibling in siblings {
         if sibling.name == element.name {
@@ -1188,14 +1189,14 @@ fn has_matches(
           }
         }
       NextSibling =>
-        match next_element(element) {
+        match element.next_element_sibling() {
           Some(sibling) => candidates.push(sibling)
           None => ()
         }
       LaterSibling =>
         match element.parent {
           Some(parent) => {
-            let siblings = element_children(parent)
+            let siblings = parent.child_elements()
             let mut past = false
             for sibling in siblings {
               if past {
@@ -1252,7 +1253,7 @@ fn relative_chain(
       false
     }
     NextSibling =>
-      match next_element(element) {
+      match element.next_element_sibling() {
         Some(sibling) =>
           compound_matches(compound, sibling, namespaces) &&
           relative_chain(complex, idx + 1, sibling, namespaces)
@@ -1261,7 +1262,7 @@ fn relative_chain(
     LaterSibling =>
       match element.parent {
         Some(parent) => {
-          let siblings = element_children(parent)
+          let siblings = parent.child_elements()
           let mut past = false
           for sibling in siblings {
             if past && compound_matches(compound, sibling, namespaces) {
@@ -1286,50 +1287,6 @@ fn descendant_elements(element : Element) -> Array[Element] {
   let out : Array[Element] = []
   element.walk(fn(node) { if node is ElementNode(data) { out.push(data) } })
   out
-}
-
-///|
-/// The element children of a parent, in order.
-fn element_children(parent : Element) -> Array[Element] {
-  let out : Array[Element] = []
-  for child in parent.children {
-    if child is ElementNode(data) {
-      out.push(data)
-    }
-  }
-  out
-}
-
-///|
-fn previous_element(element : Element) -> Element? {
-  match element.parent {
-    Some(parent) => {
-      let siblings = element_children(parent)
-      for k = 1; k < siblings.length(); k = k + 1 {
-        if physical_equal(siblings[k], element) {
-          return Some(siblings[k - 1])
-        }
-      }
-      None
-    }
-    None => None
-  }
-}
-
-///|
-fn next_element(element : Element) -> Element? {
-  match element.parent {
-    Some(parent) => {
-      let siblings = element_children(parent)
-      for k = 0; k < siblings.length() - 1; k = k + 1 {
-        if physical_equal(siblings[k], element) {
-          return Some(siblings[k + 1])
-        }
-      }
-      None
-    }
-    None => None
-  }
 }
 
 ///|

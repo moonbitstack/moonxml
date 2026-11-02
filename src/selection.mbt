@@ -445,8 +445,7 @@ pub fn Selection::clear(self : Selection) -> Unit {
 pub fn Selection::set_text(self : Selection, text : String) -> Unit {
   for item in self.items {
     if item is ElementNode(data) {
-      data.clear()
-      data.append(TextNode(text))
+      data.set_text(text)
     }
   }
 }

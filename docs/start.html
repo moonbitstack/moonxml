@@ -123,6 +123,7 @@ page.<span class="f">css</span>(<span class="s">"ul"</span>).<span class="f">app
 page.<span class="f">css</span>(<span class="s">"li"</span>).<span class="f">first</span>().<span class="f">wrap</span>(<span class="s">"strong"</span>)   <span class="cm">// one node, one wrapper</span></pre>
         <p class="filename">output</p>
 <pre>&lt;ul id=<span class="s">"list"</span>&gt;&lt;strong&gt;&lt;li&gt;espresso&lt;/li&gt;&lt;/strong&gt;&lt;li class=<span class="s">"done"</span>&gt;tea&lt;/li&gt;&lt;li&gt;cocoa&lt;/li&gt;&lt;/ul&gt;</pre>
+        <p>A node that moved is in one place only, and the queries that read the tree's shape answer from the tree as it stands: <code>index_in_parent()</code>, <code>previous_element_sibling()</code>, <code>child_elements()</code>. <code>set_children</code> replaces the lot in one edit, and <code>clone_deep</code> answers a copy that belongs to no tree.</p>
       </li>
 
       <li>

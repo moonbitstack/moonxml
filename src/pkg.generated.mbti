@@ -95,6 +95,7 @@ pub fn Element::by_class(Self, String) -> Selection
 pub fn Element::by_id(Self, String) -> Selection
 pub fn Element::by_name(Self, String) -> Selection
 pub fn Element::by_tag(Self, String) -> Selection
+pub fn Element::child_elements(Self) -> Array[Self]
 pub fn Element::classes(Self) -> Array[String]
 pub fn Element::clear(Self) -> Unit
 pub fn Element::closest(Self, String) -> Selection raise Refused
@@ -105,20 +106,25 @@ pub fn Element::document(Self) -> Document?
 pub fn Element::has_attr(Self, String) -> Bool
 pub fn Element::has_class(Self, String) -> Bool
 pub fn Element::html(Self) -> String
+pub fn Element::index_in_parent(Self) -> Int32
 pub fn Element::insert(Self, Int32, Node) -> Unit
 pub fn Element::insert_after(Self, Node) -> Bool
 pub fn Element::insert_before(Self, Node) -> Bool
 pub fn Element::is_lang(Self, String) -> Bool
 pub fn Element::lang(Self) -> String?
 pub fn Element::new(String, children? : Array[Node], attrs? : Array[(String, String)], closed? : Bool) -> Self
+pub fn Element::next_element_sibling(Self) -> Self?
 pub fn Element::prepend(Self, Node) -> Unit
+pub fn Element::previous_element_sibling(Self) -> Self?
 pub fn Element::remove(Self) -> Bool
 pub fn Element::remove_attr(Self, String) -> Bool
 pub fn Element::remove_class(Self, String) -> Unit
 pub fn Element::replace_with(Self, Node) -> Bool
 pub fn Element::selector(Self, String, String) -> Selection raise Refused
 pub fn Element::set_attr(Self, String, String) -> Unit
+pub fn Element::set_children(Self, Array[Node]) -> Unit
 pub fn Element::set_content(Self, Self) -> Unit
+pub fn Element::set_text(Self, String) -> Unit
 pub fn Element::smooth(Self) -> Unit
 pub fn Element::text(Self) -> String
 pub fn Element::unwrap(Self) -> Bool
@@ -164,6 +170,7 @@ pub fn Node::by_id(Self, String) -> Selection
 pub fn Node::by_name(Self, String) -> Selection
 pub fn Node::by_tag(Self, String) -> Selection
 pub fn Node::children(Self) -> Array[Self]
+pub fn Node::clone_deep(Self) -> Self
 pub fn Node::closest(Self, String) -> Selection raise Refused
 pub fn Node::css(Self, String, namespaces? : NamespaceMap) -> Selection raise Refused
 pub fn Node::custom(Self, &Selector) -> Selection raise Refused

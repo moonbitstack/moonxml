@@ -353,6 +353,68 @@ pub fn Element::text(self : Element) -> String {
   Node::text(ElementNode(self))
 }
 
+///|
+/// The element children, in order: what a walk of the tree skips the text of.
+pub fn Element::child_elements(self : Element) -> Array[Element] {
+  let out : Array[Element] = []
+  for child in self.children {
+    if child is ElementNode(data) {
+      out.push(data)
+    }
+  }
+  out
+}
+
+///|
+/// The position among the parent's children, counting every node; `-1` when
+/// the element has no parent.
+pub fn Element::index_in_parent(self : Element) -> Int32 {
+  match self.parent {
+    Some(parent) =>
+      match index_of(parent, self) {
+        Some(at) => at
+        None => -1
+      }
+    None => -1
+  }
+}
+
+///|
+/// The element just before this one among its siblings, skipping text and the
+/// other node kinds.
+pub fn Element::previous_element_sibling(self : Element) -> Element? {
+  match self.parent {
+    Some(parent) => {
+      let siblings = parent.child_elements()
+      for k = 1; k < siblings.length(); k = k + 1 {
+        if physical_equal(siblings[k], self) {
+          return Some(siblings[k - 1])
+        }
+      }
+      None
+    }
+    None => None
+  }
+}
+
+///|
+/// The element just after this one among its siblings, skipping text and the
+/// other node kinds.
+pub fn Element::next_element_sibling(self : Element) -> Element? {
+  match self.parent {
+    Some(parent) => {
+      let siblings = parent.child_elements()
+      for k = 0; k + 1 < siblings.length(); k = k + 1 {
+        if physical_equal(siblings[k], self) {
+          return Some(siblings[k + 1])
+        }
+      }
+      None
+    }
+    None => None
+  }
+}
+
 // The editing verbs, bs4's set. Each is the element's method — the tree is
 // mutable with parent pointers, and a verb repairs the pointers it breaks. A
 // node has one parent: placing one that already sits in a tree moves it
@@ -498,9 +560,35 @@ pub fn Element::wrap(self : Element, name : String) -> Element? {
 }
 
 ///|
-/// Drop every child.
+/// Drop every child, answering each of them to no parent: a node that is no
+/// longer in a tree must not still name the tree it left.
 pub fn Element::clear(self : Element) -> Unit {
+  for child in self.children {
+    if child is ElementNode(data) {
+      data.parent = None
+    }
+  }
   self.children.clear()
+}
+
+///|
+/// Replace the contents with one text node: the DOM's `textContent = …`, and
+/// what an edit that rewrites a label wants.
+pub fn Element::set_text(self : Element, text : String) -> Unit {
+  self.clear()
+  self.append(TextNode(text))
+}
+
+///|
+/// Replace the children with these, in this order. Every node named is taken
+/// out of wherever it sat, and every node the element held is let go, so the
+/// parent pointers are true afterwards whichever side of the edit a node was
+/// on.
+pub fn Element::set_children(self : Element, children : Array[Node]) -> Unit {
+  self.clear()
+  for child in children {
+    self.append(child)
+  }
 }
 
 ///|
@@ -519,11 +607,69 @@ pub fn Element::smooth(self : Element) -> Unit {
       k = k + 1
     }
   }
+  // A text node that carries nothing is not a node a writer needs: an edit that
+  // cut a run down to nothing should leave the tree without it.
+  let mut k = 0
+  while k < self.children.length() {
+    let empty = match self.children[k] {
+      TextNode(text) => text.is_empty()
+      _ => false
+    }
+    if empty {
+      ignore(self.children.remove(k))
+    } else {
+      k = k + 1
+    }
+  }
   for child in self.children {
     if child is ElementNode(data) {
       data.smooth()
     }
   }
+}
+
+///|
+/// A copy of this node and everything under it, belonging to no tree: editing
+/// the copy leaves the original alone. An attribute or a namespace node answers
+/// itself — it is not a tree of its own, it is a name on an element, and
+/// copying the element copies it.
+pub fn Node::clone_deep(self : Node) -> Node {
+  match self {
+    ElementNode(element) => ElementNode(clone_element(element))
+    TextNode(text) => TextNode(text)
+    CDataNode(text) => CDataNode(text)
+    CommentNode(text) => CommentNode(text)
+    ProcessingInstructionNode(pi) =>
+      ProcessingInstructionNode({ target: pi.target, data: pi.data, })
+    DoctypeNode(text) => DoctypeNode(text)
+    other => other
+  }
+}
+
+///|
+/// The element copy: the same name, attributes, closed form and contents, with
+/// every child copied.
+fn clone_element(element : Element) -> Element {
+  let copy = Element::new(
+    element.name,
+    attrs=element.attrs.copy(),
+    closed=element.closed,
+  )
+  for child in element.children {
+    copy.append(child.clone_deep())
+  }
+  // A template's contents are not its children, and they travel with it.
+  match element.content() {
+    Some(fragment) => {
+      let inner = Element::new("#content")
+      for child in fragment.children {
+        inner.append(child.clone_deep())
+      }
+      copy.set_content(inner)
+    }
+    None => ()
+  }
+  copy
 }
 
 ///|
