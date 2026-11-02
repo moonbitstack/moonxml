@@ -90,9 +90,12 @@
       <div>
         <h3>What "repair" means concretely</h3>
         <p>Implied <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, <code>&lt;body&gt;</code> and <code>&lt;tbody&gt;</code>; cells that close themselves; stray content fostered in front of a table; formatting reopened after a block closed it; misnested markup rearranged by the adoption agency.</p>
+        <h3>Reading without building</h3>
+        <p>The tree builder is one consumer of the tokenizer, not the tokenizer itself. <code>@html.scan(text, sink)</code> hands the tokens — a run of characters, a start tag with its attributes, an end tag, a comment, a doctype — to any <code>Sink</code>, before a tree exists. An end tag that matches nothing is still an end tag there, and a repeated attribute keeps the first: the tree builder is what would have dealt with them.</p>
+        <p>The algorithm has one switch, and it shows in one place. With <code>scripting</code> on, a <code>noscript</code>'s content is what a browser would run, so it is raw text; with it off, it is markup a reader can walk. A document remembers which way it was read, and the writer asks, because text read as raw text has to be written without escaping.</p>
       </div>
     </div>
-    <div class="callout"><b>Judged by the corpus.</b> html5lib's tree-construction tests are part of the test suite — every file, every case, documents and fragments alike, and every one of them reproduces. <code>scripts/gen_html5lib.py</code> writes the fixture: the inputs, the contexts, and the trees they are expected to produce.</div>
+    <div class="callout"><b>Judged by the corpus.</b> html5lib's tree-construction tests are part of the test suite — every file, every case, documents and fragments, script-off and script-on alike, and every one of them reproduces. <code>scripts/gen_html5lib.py</code> writes the fixture: the inputs, the contexts, the flag each case asks for, and the trees they are expected to produce.</div>
   </section>
 
   <section>
@@ -141,6 +144,8 @@
     </div>
     <h3>Identity, not equality</h3>
     <p class="sub">Nodes are compared with <code>physical_equal</code>, never by value: two <code>&lt;li&gt;coffee&lt;/li&gt;</code> elements are different nodes, and a set that contains both must keep both.</p>
+    <p class="sub">Inside the XPath engine a node is named by where it sits — its parent and its index — rather than by what it holds. A text node carries no pointer of its own, and two texts that spell the same thing are still two nodes: <code>//.</code> answering the whole document, and a node reached twice counting once, both depend on that.</p>
+    <p class="sub">Attributes and namespaces are nodes of the same engine. An attribute knows the element it belongs to and its own name; a namespace knows its owner and its prefix. Neither is a child, so the writer never walks them, but <code>//a/@href</code> answers something with an identity and <code>attribute::x/self::node()</code> has an answer. A name test keeps the axis's principal node type, so <code>attribute::*</code> is every attribute while <code>self::*</code> on one is nothing.</p>
     <h3>XPath's two answers</h3>
     <p class="sub">XPath can answer a number. A chain cannot: it is always a set of nodes. So <code>xpath()</code> answers the node-set, and <code>xpath_value()</code> answers the typed <code>XPathValue</code> — nodes, string, number or boolean — for the queries that are questions rather than selections.</p>
   </section>
