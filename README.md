@@ -152,6 +152,9 @@ a position means one thing.
 `html`/`head`/`body`/`tbody`, cells that close themselves, foster parenting in
 front of tables, formatting reopened after a block closed it, the adoption
 agency for misnested markup, character references with the Windows-1252 repair.
+The one switch the algorithm takes is `scripting`: off by default, because
+reading a document is not running it, and when on a `noscript`'s content is
+text rather than markup — as a browser that would run it reads it.
 Foreign content is parsed as foreign: `<svg>` and `<math>` carry their
 namespaces, their tags and attributes are spelled the way SVG and MathML spell
 them, and the integration points (`foreignObject`, `desc`, `title`, `mi`,

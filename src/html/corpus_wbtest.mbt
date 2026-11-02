@@ -6,19 +6,19 @@
 /// a document read, or a fragment read in its context, then the tree spelled
 /// the way the corpus spells it. A failure is a diff.
 ///
-/// Every case that speaks for scripting off is here; the eight marked
-/// `#script-on` are not, and each of them has a `#script-off` twin that is.
+/// Every case is here, script-on and script-off alike: the flag each one asks
+/// for travels with it, and the reader is asked for the same one.
 ///
 /// The documents are the corpus's, in `html_corpus_wbtest.mbt`.
 test "the corpus: every case reproduces exactly" {
   let mut passed = 0
   let failed : Array[String] = []
   for entry in corpus {
-    let (name, kind, context, source, expected) = entry
+    let (name, kind, context, source, expected, scripting) = entry
     let got = if kind == "fragment" {
-      shape_in(source, context)
+      shape_in(source, context, scripting~)
     } else {
-      shape(source)
+      shape(source, scripting~)
     }
     if got == expected {
       passed = passed + 1

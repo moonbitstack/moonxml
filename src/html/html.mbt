@@ -12,9 +12,15 @@
 
 ///|
 /// Read a document.
-pub fn loads(text : String) -> @moonxml.Document {
-  let doc = @moonxml.Document::new(flavour=@moonxml.Html)
+///
+/// `scripting` is whether the reader may run what it reads. It changes one
+/// thing: a `noscript`'s content is markup when nothing is going to run it, and
+/// raw text when something is, which is what a browser does. Off by default —
+/// a library reads documents, and reading them is not running them.
+pub fn loads(text : String, scripting~ : Bool = false) -> @moonxml.Document {
+  let doc = @moonxml.Document::new(flavour=@moonxml.Html, scripting~)
   let builder = Builder::new(doc)
+  builder.scripting = scripting
   let lexer = Lexer::new(preprocess(@text.strip_bom(text)), builder)
   tokenize(lexer)
   finish(builder)
@@ -24,8 +30,8 @@ pub fn loads(text : String) -> @moonxml.Document {
 ///|
 /// Read a document from bytes; UTF-8, with a leading byte-order mark skipped.
 /// A byte that is not UTF-8 reads as U+FFFD, the way a browser reads it.
-pub fn load(bytes : Bytes) -> @moonxml.Document {
-  loads(@utf8.decode_lossy(bytes, ignore_bom=true))
+pub fn load(bytes : Bytes, scripting~ : Bool = false) -> @moonxml.Document {
+  loads(@utf8.decode_lossy(bytes, ignore_bom=true), scripting~)
 }
 
 ///|
@@ -38,9 +44,11 @@ pub fn load(bytes : Bytes) -> @moonxml.Document {
 pub fn loads_fragment(
   text : String,
   context~ : String = "body",
+  scripting~ : Bool = false,
 ) -> @moonxml.Document {
-  let doc = @moonxml.Document::new(flavour=@moonxml.Html)
+  let doc = @moonxml.Document::new(flavour=@moonxml.Html, scripting~)
   let builder = Builder::new(doc)
+  builder.scripting = scripting
   let (space, local_name) = read_context(context)
   let element_name = if space.is_empty() {
     local_name
@@ -94,9 +102,14 @@ pub fn loads_fragment(
 /// matches nothing is still an end tag here, a stray table cell is still a cell,
 /// and the attributes a tag repeats are still repeated. `Document::events`
 /// answers the same shape for a document that has been built.
-pub fn scan(text : String, sink : &@event.Sink) -> Unit {
-  let doc = @moonxml.Document::new(flavour=@moonxml.Html)
+pub fn scan(
+  text : String,
+  sink : &@event.Sink,
+  scripting~ : Bool = false,
+) -> Unit {
+  let doc = @moonxml.Document::new(flavour=@moonxml.Html, scripting~)
   let builder = Builder::new(doc)
+  builder.scripting = scripting
   let lexer = Lexer::new(preprocess(text), builder, out=fn(_, token) {
     match token {
       StartTag(name~, attrs~, self_closing~) =>

@@ -26,7 +26,7 @@
 </header>
 
 <main class="wrap" style="padding-top:44px">
-  <p class="eyebrow">200 public items</p>
+  <p class="eyebrow">201 public items</p>
   <h1 style="font-size:clamp(32px,4vw,44px);margin-bottom:10px">The API</h1>
   <p class="sub">Generated from each package's interface file, so it cannot describe something the code does not have — or miss something it does.</p>
   <div class="colophon-line">
@@ -73,6 +73,7 @@
 <a href="#moonxml-document-prepend">Document::prepend</a>
 <a href="#moonxml-document-register">Document::register</a>
 <a href="#moonxml-document-repairs">Document::repairs</a>
+<a href="#moonxml-document-scripting">Document::scripting</a>
 <a href="#moonxml-document-selector">Document::selector</a>
 <a href="#moonxml-document-set-repairs">Document::set_repairs</a>
 <a href="#moonxml-document-set-unresolved">Document::set_unresolved</a>
@@ -395,7 +396,7 @@
 </div>
 <div class="api-item" id="moonxml-document-new" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::new(flavour? : <span class="ty">Flavour</span>) -&gt; <span class="ty">Self</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::new(flavour? : <span class="ty">Flavour</span>, scripting? : <span class="ty">Bool</span>) -&gt; <span class="ty">Self</span></span></pre>
 <p class="doc">A fresh document. A tree built by hand has no syntax it was read from, so it writes back with XML's exact rules; ask for <code>flavour=Html</code> when the tree came from HTML.</p>
 </div>
 <div class="api-item" id="moonxml-document-prepend" data-kind="fn">
@@ -412,6 +413,11 @@
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::repairs(<span class="ty">Self</span>) -&gt; <span class="ty">Repairs</span></span></pre>
 <p class="doc">What the HTML parser repaired; a tree that was not parsed as HTML has an empty tally.</p>
+</div>
+<div class="api-item" id="moonxml-document-scripting" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::scripting(<span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+<p class="doc">Whether the reader that made this document was allowed to run what it read.</p>
 </div>
 <div class="api-item" id="moonxml-document-selector" data-kind="fn">
 <span class="kind">fn</span>
@@ -1105,23 +1111,23 @@
 <h3 class="group" data-group="traits">Traits</h3>
 <div class="api-item" id="moonxml-html-scan" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> scan(<span class="ty">String</span>, &amp;@event.<span class="ty">Sink</span>) -&gt; <span class="ty">Unit</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> scan(<span class="ty">String</span>, &amp;@event.<span class="ty">Sink</span>, scripting? : <span class="ty">Bool</span>) -&gt; <span class="ty">Unit</span></span></pre>
 <p class="doc">Read a text as the token stream the tokenizer answers, before any tree is built: the runs of characters, the start tags with their attributes, the end tags, the comments and the doctype, in the order they come.  This is the tokenizer's own reading, not the tree builder's: an end tag that matches nothing is still an end tag here, a stray table cell is still a cell, and the attributes a tag repeats are still repeated. <code>Document::events</code> answers the same shape for a document that has been built.</p>
 </div>
 <h3 class="group" data-group="values">Values</h3>
 <div class="api-item" id="moonxml-html-load" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> load(<span class="ty">Bytes</span>) -&gt; @moonxml.<span class="ty">Document</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> load(<span class="ty">Bytes</span>, scripting? : <span class="ty">Bool</span>) -&gt; @moonxml.<span class="ty">Document</span></span></pre>
 <p class="doc">Read a document from bytes; UTF-8, with a leading byte-order mark skipped. A byte that is not UTF-8 reads as U+FFFD, the way a browser reads it.</p>
 </div>
 <div class="api-item" id="moonxml-html-loads" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads(<span class="ty">String</span>) -&gt; @moonxml.<span class="ty">Document</span></span></pre>
-<p class="doc">Read a document.</p>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads(<span class="ty">String</span>, scripting? : <span class="ty">Bool</span>) -&gt; @moonxml.<span class="ty">Document</span></span></pre>
+<p class="doc">Read a document.  <code>scripting</code> is whether the reader may run what it reads. It changes one thing: a <code>noscript</code>'s content is markup when nothing is going to run it, and raw text when something is, which is what a browser does. Off by default — a library reads documents, and reading them is not running them.</p>
 </div>
 <div class="api-item" id="moonxml-html-loads-fragment" data-kind="fn">
 <span class="kind">fn</span>
-<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads_fragment(<span class="ty">String</span>, context? : <span class="ty">String</span>) -&gt; @moonxml.<span class="ty">Document</span></span></pre>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads_fragment(<span class="ty">String</span>, context? : <span class="ty">String</span>, scripting? : <span class="ty">Bool</span>) -&gt; @moonxml.<span class="ty">Document</span></span></pre>
 <p class="doc">Read a fragment the way <code>innerHTML</code> does: the markup is read inside <code>context</code>, an element named as one would write it, and the fragment's nodes come back under the document's root.  The name may be a foreign one — <code>svg desc</code>, <code>math mi</code> — in the spelling the standard's test corpus uses, since an SVG <code>&lt;title&gt;</code> is not an HTML one.</p>
 </div>
 <div class="api-item" id="moonxml-html-named-reference" data-kind="fn">

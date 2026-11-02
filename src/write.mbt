@@ -32,7 +32,7 @@ pub fn dump(node : Node) -> Bytes {
 /// The HTML serialization of a node, WHATWG's rules.
 pub fn dumps_html(node : Node) -> String {
   let out = StringBuilder()
-  write_html(node, out, raw=false)
+  write_html(node, out, raw=false, scripting=false)
   out.to_string()
 }
 
@@ -67,8 +67,9 @@ pub fn Document::dump(self : Document) -> Bytes {
 /// A whole document, HTML rules whatever it was read as.
 pub fn Document::dumps_html(self : Document) -> String {
   let out = StringBuilder()
+  let scripting = self.scripting()
   for child in self.root.children {
-    write_html(child, out, raw=false)
+    write_html(child, out, raw=false, scripting~)
   }
   out.to_string()
 }
@@ -193,7 +194,12 @@ fn qualify(
 // The HTML writer, WHATWG's serialization rules.
 
 ///|
-fn write_html(node : Node, out : StringBuilder, raw~ : Bool) -> Unit {
+fn write_html(
+  node : Node,
+  out : StringBuilder,
+  raw~ : Bool,
+  scripting~ : Bool,
+) -> Unit {
   match node {
     ElementNode(data) => {
       let foreign = data.name.has_prefix("{")
@@ -225,16 +231,19 @@ fn write_html(node : Node, out : StringBuilder, raw~ : Bool) -> Unit {
           _ => ()
         }
       }
-      let raw_here = !foreign && is_raw_text_element(tag)
+      // With scripting on, a `noscript`'s content is raw text, because that is
+      // how it was read: escaping it would put the escapes in the text.
+      let raw_here = !foreign &&
+        (is_raw_text_element(tag) || (tag == "noscript" && scripting))
       for child in data.children {
-        write_html(child, out, raw=raw_here || raw)
+        write_html(child, out, raw=raw_here || raw, scripting~)
       }
       // A template's children are its contents, and they belong inside the
       // element when it is written.
       match data.content() {
         Some(fragment) =>
           for child in fragment.children {
-            write_html(child, out, raw=raw_here || raw)
+            write_html(child, out, raw=raw_here || raw, scripting~)
           }
         None => ()
       }

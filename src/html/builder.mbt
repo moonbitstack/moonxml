@@ -95,6 +95,9 @@ priv struct Builder {
   mut context : @moonxml.Element?
   /// The root of the document being built.
   root : @moonxml.Element
+  /// Whether the reader is allowed to run what it reads: with scripting on, a
+  /// `noscript` is text rather than markup, which is the only place it shows.
+  mut scripting : Bool
 }
 
 ///|
@@ -118,6 +121,7 @@ fn Builder::new(doc : @moonxml.Document) -> Builder {
     pending_space: true,
     context: None,
     root: doc.root,
+    scripting: false,
   }
 }
 

@@ -7,15 +7,15 @@ import {
 }
 
 // Values
-pub fn load(Bytes) -> @moonxml.Document
+pub fn load(Bytes, scripting? : Bool) -> @moonxml.Document
 
-pub fn loads(String) -> @moonxml.Document
+pub fn loads(String, scripting? : Bool) -> @moonxml.Document
 
-pub fn loads_fragment(String, context? : String) -> @moonxml.Document
+pub fn loads_fragment(String, context? : String, scripting? : Bool) -> @moonxml.Document
 
 pub fn named_reference(String) -> String?
 
-pub fn scan(String, &@event.Sink) -> Unit
+pub fn scan(String, &@event.Sink, scripting? : Bool) -> Unit
 
 // Errors
 

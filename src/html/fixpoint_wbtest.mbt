@@ -142,11 +142,12 @@ fn read_case(
   source : String,
   kind : String,
   context : String,
+  scripting~ : Bool,
 ) -> @moonxml.Document {
   if kind == "fragment" {
-    loads_fragment(source, context~)
+    loads_fragment(source, context~, scripting~)
   } else {
-    loads(source)
+    loads(source, scripting~)
   }
 }
 
@@ -180,18 +181,18 @@ test "a written document reads back to the same text" {
   let mut excluded = 0
   let failed : Array[String] = []
   for entry in corpus {
-    let (name, kind, context, source, _) = entry
+    let (name, kind, context, source, _, scripting) = entry
     if context_is_text_only(kind, context) {
       excluded = excluded + 1
       continue
     }
-    let first = read_case(source, kind, context)
+    let first = read_case(source, kind, context, scripting~)
     if cannot_be_written(first.root) {
       excluded = excluded + 1
       continue
     }
     let text = first.dumps()
-    let second = read_case(text, kind, context)
+    let second = read_case(text, kind, context, scripting~)
     written = written + 1
     if second.dumps() != text {
       if failed.length() < 40 {

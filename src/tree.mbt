@@ -95,6 +95,10 @@ pub struct Document {
   root : Element
   priv selectors : Map[String, &Selector]
   priv mut flavour : Flavour
+  /// How the document was read: whether the reader was allowed to run what it
+  /// read. A `noscript`'s content is text when it was and markup when it was
+  /// not, so the writer needs the answer the reader had.
+  priv mut scripting : Bool
   priv mut repairs : Repairs
   priv mut nesting : Array[Element]
   priv mut unresolved : Array[String]
@@ -104,12 +108,16 @@ pub struct Document {
 /// A fresh document. A tree built by hand has no syntax it was read from, so
 /// it writes back with XML's exact rules; ask for `flavour=Html` when the tree
 /// came from HTML.
-pub fn Document::new(flavour~ : Flavour = Xml) -> Document {
+pub fn Document::new(
+  flavour~ : Flavour = Xml,
+  scripting~ : Bool = false,
+) -> Document {
   let root = Element::new("#document")
   let doc : Document = {
     root,
     selectors: Map([]),
     flavour,
+    scripting,
     repairs: Repairs::new(),
     nesting: [],
     unresolved: [],
@@ -164,6 +172,12 @@ pub fn Document::document_element(self : Document) -> Element? {
     }
   }
   None
+}
+
+///|
+/// Whether the reader that made this document was allowed to run what it read.
+pub fn Document::scripting(self : Document) -> Bool {
+  self.scripting
 }
 
 ///|

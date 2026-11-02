@@ -344,9 +344,13 @@ fn inner_html(element : Element) -> String {
     Some(doc) => doc.flavour is Html
     None => false
   }
+  let scripting = match element.document() {
+    Some(doc) => doc.scripting()
+    None => false
+  }
   for child in element.children {
     if html {
-      write_html(child, out, raw=false)
+      write_html(child, out, raw=false, scripting~)
     } else {
       write_xml(child, out)
     }

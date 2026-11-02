@@ -65,11 +65,12 @@ pub fn Document::dumps_html(Self) -> String
 pub fn Document::events(Self) -> Array[@event.Event]
 pub fn Document::flavour(Self) -> Flavour
 pub fn Document::html(Self) -> String
-pub fn Document::new(flavour? : Flavour) -> Self
+pub fn Document::new(flavour? : Flavour, scripting? : Bool) -> Self
 pub fn Document::prepend(Self, Node) -> Unit
 pub fn Document::push(Self, @event.Event) -> Unit
 pub fn Document::register(Self, String, &Selector) -> Unit
 pub fn Document::repairs(Self) -> Repairs
+pub fn Document::scripting(Self) -> Bool
 pub fn Document::selector(Self, String, String) -> Selection raise Refused
 pub fn Document::set_repairs(Self, Repairs) -> Unit
 pub fn Document::set_unresolved(Self, Array[String]) -> Unit

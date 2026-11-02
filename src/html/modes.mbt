@@ -372,11 +372,21 @@ fn in_head(b : Builder, lx : Lexer, token : Token, depth : Int32) -> Unit {
           b.text_mode = b.mode
           b.mode = Text
         }
-        "noscript" => {
-          let element = insert_element(b, "noscript", attrs)
-          push(b, element)
-          b.mode = InHeadNoscript
-        }
+        "noscript" =>
+          if b.scripting {
+            // With scripting on the content is what a browser would run, not
+            // markup a reader can walk: the tokenizer takes it as raw text.
+            let element = insert_element(b, "noscript", attrs)
+            push(b, element)
+            lx.raw_name = "noscript"
+            lx.state = Rawtext
+            b.text_mode = b.mode
+            b.mode = Text
+          } else {
+            let element = insert_element(b, "noscript", attrs)
+            push(b, element)
+            b.mode = InHeadNoscript
+          }
         "noframes" | "style" => {
           let element = insert_element(b, name, attrs)
           push(b, element)
@@ -950,6 +960,17 @@ fn start_in_body(
       b.text_mode = b.mode
       b.mode = Text
     }
+    "noscript" =>
+      if b.scripting {
+        ignore(insert_element_open(b, "noscript", attrs))
+        lx.raw_name = "noscript"
+        lx.state = Rawtext
+        b.text_mode = b.mode
+        b.mode = Text
+      } else {
+        reconstruct_afe(b)
+        ignore(insert_element_open(b, "noscript", attrs))
+      }
     "noembed" => {
       ignore(insert_element_open(b, "noembed", attrs))
       lx.raw_name = "noembed"

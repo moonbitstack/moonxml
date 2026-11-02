@@ -93,13 +93,17 @@ fn render(doc : @moonxml.Document) -> String {
 }
 
 ///|
-fn shape(text : String) -> String {
-  render(loads(text))
+fn shape(text : String, scripting~ : Bool = false) -> String {
+  render(loads(text, scripting~))
 }
 
 ///|
-fn shape_in(text : String, context : String) -> String {
-  render(loads_fragment(text, context~))
+fn shape_in(
+  text : String,
+  context : String,
+  scripting~ : Bool = false,
+) -> String {
+  render(loads_fragment(text, context~, scripting~))
 }
 
 ///|
@@ -567,4 +571,26 @@ test "the repairs are counted, not hidden" {
   // The tally names the kinds rather than one number, so a caller can tell an
   // implied element from a dropped tag.
   assert_eq(loads("<div></span></div>").repairs().dropped > 0, true)
+}
+
+///|
+test "scripting on makes noscript raw text" {
+  // With scripting on, what is inside a `noscript` is what a browser would run,
+  // so it is text here: nothing to walk, and nothing that could be a node.
+  let doc = loads("<body><noscript><b>x</b></noscript>", scripting=true)
+  assert_eq(doc.css("noscript").text(), "<b>x</b>")
+  assert_eq(doc.css("noscript b").length(), 0)
+  // In the head the same rule holds: the element is one text node.
+  let head = loads("<head><noscript><link></noscript></head>", scripting=true)
+  assert_eq(head.css("noscript").text(), "<link>")
+  assert_eq(head.css("noscript link").length(), 0)
+}
+
+///|
+test "scripting off parses noscript content" {
+  let doc = loads("<body><noscript><b>x</b></noscript>")
+  assert_eq(doc.css("noscript b").length(), 1)
+  assert_eq(doc.css("noscript").text(), "x")
+  let head = loads("<head><noscript><link></noscript></head>")
+  assert_eq(head.css("noscript link").length(), 1)
 }
