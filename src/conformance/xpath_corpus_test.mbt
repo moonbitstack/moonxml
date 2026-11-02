@@ -32,6 +32,8 @@ fn xp_node_label(node : @moonxml.Node) -> String {
     @moonxml.CommentNode(_) => "COMMENT"
     @moonxml.ProcessingInstructionNode(pi) => "PI " + pi.target
     @moonxml.DoctypeNode(_) => "DOCTYPE"
+    @moonxml.AttributeNode(attr) => "ATTRIBUTE " + @moonxml.local_of(attr.name)
+    @moonxml.NamespaceNode(_) => "NAMESPACE"
   }
 }
 
@@ -188,26 +190,10 @@ let specified : Array[String] = [
 ]
 
 ///|
-/// What does not pass yet, each a gap in the engine. A case leaving this list has
-/// to be taken off it, so the list can only shrink.
-let known : Array[String] = [
-  "expr/base 1e2147483648", "expr/base 1e4294967296", "expr/base 1e9223372036854775808",
-  "expr/base 1e18446744073709551616", "expr/base 1e-2147483649", "expr/base 1e-4294967296",
-  "expr/base 1e-9223372036854775809", "expr/base 1e-18446744073709551616", "expr/compare 'b' > 'a'",
-  "expr/compare 'a' < 'b'", "expr/compare 'a' >= 'a'", "expr/compare 'b' >= 'a'",
-  "expr/compare 'a' <= 'a'", "expr/compare 'a' <= 'b'", "expr/compare 'a' > '0.0'",
-  "expr/floats 1.23e3", "expr/floats 1.23e-3", "expr/floats 1 div -0", "expr/floats (1 div -0) > 0",
-  "expr/floats (1 div -0) < 0", "expr/floats 1 div floor(-0)", "expr/floats 1 div ceiling(-0)",
-  "expr/floats 1 div round(-0.1)", "expr/floats 1 div round(-0)", "expr/strings substring(\"12345\",0 div 0, 3)",
-  "expr/strings substring(\"12345\",-5000000000,5000000004)", "tests/chaptersprefol /preceding::*",
-  "tests/langsimple //*[lang('en')]", "tests/langsimple //*[lang('en-us')]", "tests/nodespat //.",
-  "tests/nodespat /root//.", "tests/nodespat //.//./././/.", "tests/nodespat /root//././/bar//.",
-  "tests/nssimple /doc/elem/namespace::node()/..", "tests/nssimple /doc/elem/namespace::*/self::node()[true()]",
-  "tests/nssimple //*[namespace::ns1]", "tests/nssimple /doc/elem/namespace::ns2/following::*",
-  "tests/nssimple /doc/elem/namespace::ns2/preceding::*", "tests/simplebase /child::EXAMPLE/attribute::prop1/self::node()",
-  "tests/simplebase /child::EXAMPLE/attribute::prop1/descendant-or-self::node()",
-  "tests/simplebase /child::EXAMPLE/attribute::prop1/ancestor-or-self::node()", "tests/simplebase /child::EXAMPLE/attribute::prop1/ancestor-or-self::*",
-]
+/// What does not pass yet, each a gap in the engine. Empty: every case in the
+/// corpus passes. A case leaving this list has to be taken off it, so the list
+/// can only shrink.
+let known : Array[String] = []
 
 ///|
 fn xp_run(doc : @moonxml.Document, c : XPathCase) -> XpActual {

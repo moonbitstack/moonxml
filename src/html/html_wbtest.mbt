@@ -80,6 +80,10 @@ fn render(doc : @moonxml.Document) -> String {
       @moonxml.ProcessingInstructionNode(pi) =>
         line(depth, "<?" + pi.target + " " + pi.data + "?>")
       @moonxml.DoctypeNode(text) => line(depth, "<!DOCTYPE " + text + ">")
+      @moonxml.AttributeNode(attr) =>
+        line(depth, "@" + attr.name + "=" + attr.value)
+      @moonxml.NamespaceNode(space) =>
+        line(depth, "xmlns:" + space.prefix + "=" + space.uri)
     }
   }
   for child in doc.root.children {

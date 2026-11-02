@@ -367,6 +367,11 @@ fn read_var_name(query : String, from : Int32) -> (String, Int32) {
 }
 
 ///|
+/// A number: digits with an optional fraction and an optional exponent.
+/// XPath 1.0 spells no exponent, but libxml2 accepts one and the corpus uses
+/// it, so `1.23e3` reads as 1230 here too. The exponent is applied by hand:
+/// `1e2147483648` is beyond what any parser's arithmetic should be asked to
+/// raise, and the answer the corpus wants is simply infinity.
 fn read_number(query : String, from : Int32) -> (Double, Int32) raise Refused {
   let n = query.length()
   let mut i = from
@@ -384,11 +389,74 @@ fn read_number(query : String, from : Int32) -> (Double, Int32) raise Refused {
     }
   }
   let text = run.to_string()
-  let value = Some(@string.parse_double(text)) catch { _ => None }
-  match value {
-    Some(value) => (value, i)
+  let mantissa = Some(@string.parse_double(text)) catch { _ => None }
+  let value = match mantissa {
+    Some(value) => value
     None => raise BadQuery(at=from, why="a number that does not read")
   }
+  let (exponent, next) = read_exponent(query, i)
+  (scale_by_power_of_ten(value, exponent), next)
+}
+
+///|
+/// The exponent of a number, as a count of decimal places to move: `e3` is 3,
+/// `e-3` is -3, and no exponent at all is 0.
+fn read_exponent(query : String, from : Int32) -> (Int32, Int32) {
+  let n = query.length()
+  if from >= n || (query.at(from) != 0x65 && query.at(from) != 0x45) {
+    return (0, from)
+  }
+  let mut i = from + 1
+  let mut negative = false
+  if i < n && (query.at(i) == 0x2B || query.at(i) == 0x2D) {
+    negative = query.at(i) == 0x2D
+    i = i + 1
+  }
+  if i >= n || !is_digit(query.at(i)) {
+    return (0, from)
+  }
+  // A saturating count: past a thousand places the answer is infinity or
+  // zero either way, and a number that big would only overflow.
+  let mut magnitude = 0
+  while i < n && is_digit(query.at(i)) {
+    if magnitude < 100000 {
+      magnitude = magnitude * 10 + (Char::to_int(u16_char(query.at(i))) - 48)
+    }
+    i = i + 1
+  }
+  (if negative { -magnitude } else { magnitude }, i)
+}
+
+///|
+fn infinity() -> Double {
+  1.0 / 0.0
+}
+
+///|
+fn scale_by_power_of_ten(value : Double, exponent : Int32) -> Double {
+  if exponent == 0 {
+    return value
+  }
+  if exponent > 400 {
+    if value == 0.0 {
+      return value
+    }
+    return if value < 0.0 { -infinity() } else { infinity() }
+  }
+  if exponent < -400 {
+    return if value < 0.0 { -0.0 } else { 0.0 }
+  }
+  let mut out = value
+  let mut left = if exponent < 0 { -exponent } else { exponent }
+  while left > 0 {
+    if exponent > 0 {
+      out = out * 10.0
+    } else {
+      out = out / 10.0
+    }
+    left = left - 1
+  }
+  out
 }
 
 ///|
@@ -712,6 +780,9 @@ fn axis_of(name : String) -> Axis? {
     "following" => Some(Axis::Following)
     "preceding" => Some(Axis::Preceding)
     "attribute" => Some(Axis::Attribute)
+    "namespace" => Some(Axis::Namespace)
+    // The axis was called `space` before it took XPath's own spelling; a query
+    // written against the old name still reads.
     "space" => Some(Axis::Namespace)
     "self" => Some(Axis::SelfAxis)
     "descendant-or-self" => Some(Axis::DescendantOrSelf)
@@ -824,92 +895,261 @@ fn expect_rparen(p : Parser) -> Unit raise Refused {
 // Evaluation.
 
 ///|
-/// A node with the position and size the predicate that sees it was given.
-priv struct Ctx {
-  node : Node
-  order : Int32
-  size : Int32
+/// Where a node sits in its tree. Text, comment, CDATA and
+/// processing-instruction nodes carry no pointer, so a node is named by the
+/// place it occupies — its parent and its index — rather than by its value.
+/// Two text nodes that hold the same characters are still two nodes, which is
+/// what `//.` and deduplication need. Attributes and namespaces are nodes of
+/// their own, named by their owner and their name or prefix.
+priv enum Spot {
+  El(Element)
+  Kid(Element, Int32)
+  Attr(Element, String)
+  Space(Element, String)
 }
 
 ///|
-fn eval_expr(
-  expr : Expr,
-  ctx : Ctx,
-  doc : Document?,
-) -> XPathValue raise Refused {
-  match expr {
-    Literal(text) => Str(text)
-    Number(value) => Num(value)
-    Variable(name) =>
-      raise Unsupported(what="the XPath variable $\{name} has no binding")
-    Path(absolute~, steps~) => {
-      let start = if absolute { document_root(ctx.node) } else { ctx.node }
-      let found = walk_steps([start], steps, doc)
-      Nodes(selection_for(found, doc))
-    }
-    Union(lhs~, rhs~) => {
-      let left = nodes_of(eval_expr(lhs, ctx, doc), doc)
-      let right = nodes_of(eval_expr(rhs, ctx, doc), doc)
-      let merged : Array[Node] = []
-      for node in left {
-        merged.push(node)
-      }
-      for node in right {
-        merged.push(node)
-      }
-      Nodes(selection_for(normalize(merged), doc))
-    }
-    Filter(base~, predicates~) => {
-      let base_value = eval_expr(base, ctx, doc)
-      match base_value {
-        Nodes(sel) => {
-          let kept = apply_predicates(sel.items, predicates, doc)
-          Nodes(selection_for(kept, doc))
-        }
-        other => other
-      }
-    }
-    StepsFrom(base~, steps~) => {
-      let base_value = eval_expr(base, ctx, doc)
-      let found = walk_steps(nodes_of(base_value, doc), steps, doc)
-      Nodes(selection_for(found, doc))
-    }
-    Or(lhs~, rhs~) =>
-      Flag(truthy(eval_expr(lhs, ctx, doc)) || truthy(eval_expr(rhs, ctx, doc)))
-    And(lhs~, rhs~) =>
-      Flag(truthy(eval_expr(lhs, ctx, doc)) && truthy(eval_expr(rhs, ctx, doc)))
-    Eq(lhs~, rhs~) =>
-      Flag(compare(eval_expr(lhs, ctx, doc), eval_expr(rhs, ctx, doc), "="))
-    Ne(lhs~, rhs~) =>
-      Flag(compare(eval_expr(lhs, ctx, doc), eval_expr(rhs, ctx, doc), "!="))
-    Lt(lhs~, rhs~) =>
-      Flag(compare(eval_expr(lhs, ctx, doc), eval_expr(rhs, ctx, doc), "<"))
-    Le(lhs~, rhs~) =>
-      Flag(compare(eval_expr(lhs, ctx, doc), eval_expr(rhs, ctx, doc), "<="))
-    Gt(lhs~, rhs~) =>
-      Flag(compare(eval_expr(lhs, ctx, doc), eval_expr(rhs, ctx, doc), ">"))
-    Ge(lhs~, rhs~) =>
-      Flag(compare(eval_expr(lhs, ctx, doc), eval_expr(rhs, ctx, doc), ">="))
-    Add(lhs~, rhs~) =>
-      Num(numeric(eval_expr(lhs, ctx, doc)) + numeric(eval_expr(rhs, ctx, doc)))
-    Sub(lhs~, rhs~) =>
-      Num(numeric(eval_expr(lhs, ctx, doc)) - numeric(eval_expr(rhs, ctx, doc)))
-    Mul(lhs~, rhs~) =>
-      Num(numeric(eval_expr(lhs, ctx, doc)) * numeric(eval_expr(rhs, ctx, doc)))
-    Div(lhs~, rhs~) =>
-      Num(numeric(eval_expr(lhs, ctx, doc)) / numeric(eval_expr(rhs, ctx, doc)))
-    Mod(lhs~, rhs~) =>
-      Num(numeric(eval_expr(lhs, ctx, doc)) % numeric(eval_expr(rhs, ctx, doc)))
-    Neg(inner) => Num(0.0 - numeric(eval_expr(inner, ctx, doc)))
-    Call(name~, args~) => call(name, args, ctx, doc)
+/// The node a spot names.
+fn spot_node(spot : Spot) -> Node {
+  match spot {
+    El(element) => ElementNode(element)
+    Kid(parent, at) => parent.children[at]
+    Attr(owner, name) =>
+      AttributeNode({ owner, name, value: owner.attr(name).unwrap_or(""), })
+    Space(owner, prefix) =>
+      NamespaceNode({
+        owner,
+        prefix,
+        uri: namespace_uri_in_scope(owner, prefix).unwrap_or(""),
+      })
   }
 }
 
 ///|
-/// The document root of a node: walk up as far as there is a parent.
-fn document_root(node : Node) -> Node {
+/// The element a spot names, or `None` for a spot that is not one.
+fn spot_element(spot : Spot) -> Element? {
+  match spot {
+    El(element) => Some(element)
+    Kid(parent, at) =>
+      match parent.children[at] {
+        ElementNode(data) => Some(data)
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+/// The element that owns a spot whatever the spot's kind: what `lang()`, the
+/// following and preceding axes and the writer ask for.
+fn spot_owner(spot : Spot) -> Element? {
+  match spot {
+    El(element) => Some(element)
+    Kid(parent, at) =>
+      match parent.children[at] {
+        ElementNode(data) => Some(data)
+        _ => Some(parent)
+      }
+    Attr(owner, _) => Some(owner)
+    Space(owner, _) => Some(owner)
+  }
+}
+
+///|
+/// The spot of an element: the root, which has no parent, is the only element
+/// named on its own.
+fn spot_of_element(element : Element) -> Spot {
+  match element.parent {
+    Some(parent) => {
+      for k = 0; k < parent.children.length(); k = k + 1 {
+        match parent.children[k] {
+          ElementNode(data) =>
+            if physical_equal(data, element) {
+              return Kid(parent, k)
+            }
+          _ => ()
+        }
+      }
+      El(element)
+    }
+    None => El(element)
+  }
+}
+
+///|
+/// Whether a spot is the document's root node — the virtual container that
+/// XPath calls the root rather than an element.
+fn spot_is_root(spot : Spot) -> Bool {
+  match spot {
+    El(element) => element.parent is None && element.name == "#document"
+    _ => false
+  }
+}
+
+///|
+fn same_spot(a : Spot, b : Spot) -> Bool {
+  match (a, b) {
+    (El(x), El(y)) => physical_equal(x, y)
+    (Kid(px, ax), Kid(py, ay)) => ax == ay && physical_equal(px, py)
+    (Attr(ox, nx), Attr(oy, ny)) => nx == ny && physical_equal(ox, oy)
+    (Space(ox, nx), Space(oy, ny)) => nx == ny && physical_equal(ox, oy)
+    _ => false
+  }
+}
+
+///|
+fn is_namespace_declaration(name : String) -> Bool {
+  name == "xmlns" || name.has_prefix("xmlns:")
+}
+
+///|
+/// The prefix an `xmlns` attribute declares, `""` for the default namespace.
+fn declared_prefix(name : String) -> String? {
+  if name == "xmlns" {
+    Some("")
+  } else if name.has_prefix("xmlns:") {
+    Some(name[6:name.length()].to_owned())
+  } else {
+    None
+  }
+}
+
+///|
+/// The namespaces in scope on an element, nearest declaration first, with the
+/// `xml` prefix always there. An undeclaration (`xmlns=""`) declares nothing.
+fn namespaces_in_scope(element : Element) -> Array[(String, String)] {
+  let out : Array[(String, String)] = [
+    ("xml", "http://www.w3.org/XML/1998/namespace"),
+  ]
+  let mut current : Element? = Some(element)
+  while current is Some(here) {
+    for pair in here.attrs {
+      match declared_prefix(pair.0) {
+        Some(prefix) =>
+          if pair.1 != "" && !out.iter().any(seen => seen.0 == prefix) {
+            out.push((prefix, pair.1))
+          }
+        None => ()
+      }
+    }
+    current = here.parent
+  }
+  out
+}
+
+///|
+fn namespace_uri_in_scope(element : Element, prefix : String) -> String? {
+  for pair in namespaces_in_scope(element) {
+    if pair.0 == prefix {
+      return Some(pair.1)
+    }
+  }
+  None
+}
+
+///|
+fn spot_parent(spot : Spot) -> Spot? {
+  match spot {
+    El(element) =>
+      match element.parent {
+        Some(above) => Some(spot_of_element(above))
+        None => None
+      }
+    Kid(parent, _) => Some(spot_of_element(parent))
+    Attr(owner, _) => Some(spot_of_element(owner))
+    Space(owner, _) => Some(spot_of_element(owner))
+  }
+}
+
+///|
+fn is_xml_declaration(parent : Element, node : Node) -> Bool {
   match node {
-    ElementNode(start) => {
+    ProcessingInstructionNode(pi) =>
+      pi.target == "xml" && parent.name == "#document"
+    _ => false
+  }
+}
+
+///|
+/// The children of a spot, in document order. The XML declaration is not a
+/// node of XPath's data model, so it is not a child here either.
+fn spot_children(spot : Spot) -> Array[Spot] {
+  let out : Array[Spot] = []
+  match spot_element(spot) {
+    Some(element) =>
+      for at = 0; at < element.children.length(); at = at + 1 {
+        if !is_xml_declaration(element, element.children[at]) {
+          out.push(Kid(element, at))
+        }
+      }
+    None => ()
+  }
+  out
+}
+
+///|
+/// The attribute nodes of a spot, in document order. A namespace declaration
+/// is not an attribute.
+fn spot_attributes(spot : Spot) -> Array[Spot] {
+  let out : Array[Spot] = []
+  match spot_element(spot) {
+    Some(element) =>
+      for pair in element.attrs {
+        if !is_namespace_declaration(pair.0) {
+          out.push(Attr(element, pair.0))
+        }
+      }
+    None => ()
+  }
+  out
+}
+
+///|
+fn spot_namespaces(spot : Spot) -> Array[Spot] {
+  let out : Array[Spot] = []
+  match spot_element(spot) {
+    Some(element) =>
+      for pair in namespaces_in_scope(element) {
+        out.push(Space(element, pair.0))
+      }
+    None => ()
+  }
+  out
+}
+
+///|
+fn push_descendants(spot : Spot, out : Array[Spot]) -> Unit {
+  for child in spot_children(spot) {
+    out.push(child)
+    push_descendants(child, out)
+  }
+}
+
+///|
+/// Every spot of the tree under `spot`, in document order: a node, then the
+/// namespaces and attributes of an element, then its children.
+fn push_walk(spot : Spot, out : Array[Spot]) -> Unit {
+  out.push(spot)
+  match spot_element(spot) {
+    Some(_) => {
+      for found in spot_namespaces(spot) {
+        out.push(found)
+      }
+      for found in spot_attributes(spot) {
+        out.push(found)
+      }
+      for child in spot_children(spot) {
+        push_walk(child, out)
+      }
+    }
+    None => ()
+  }
+}
+
+///|
+fn document_root_spot(spot : Spot) -> Spot {
+  match spot_owner(spot) {
+    Some(start) => {
       let mut top = start
       let mut climbing = true
       while climbing {
@@ -918,55 +1158,175 @@ fn document_root(node : Node) -> Node {
           None => climbing = false
         }
       }
-      ElementNode(top)
+      El(top)
     }
-    _ => node
+    None => spot
   }
 }
 
 ///|
-/// The nodes of a typed value: a node-set answers itself, anything else is a
-/// type error where a node-set is required, so it answers nothing.
-fn nodes_of(value : XPathValue, doc : Document?) -> Array[Node] {
-  match value {
-    Nodes(sel) => sel.items
-    _ => {
-      ignore(doc)
-      []
+/// Whether `spot` sits inside `ancestor`'s subtree, itself excluded.
+fn is_descendant_spot(spot : Spot, ancestor : Spot) -> Bool {
+  let mut current = spot_parent(spot)
+  while current is Some(above) {
+    if same_spot(above, ancestor) {
+      return true
     }
+    current = spot_parent(above)
+  }
+  false
+}
+
+///|
+/// A spot's value as a number, for the node-set rules of §3.4.
+fn spot_number(spot : Spot) -> Double {
+  text_to_number(string_value(spot))
+}
+
+///|
+/// A spot's string value: an element answers its text, an attribute its value,
+/// a namespace its URI.
+fn string_value(spot : Spot) -> String {
+  match spot {
+    Kid(parent, at) => node_string(parent.children[at])
+    El(element) => element.text()
+    Attr(owner, name) => owner.attr(name).unwrap_or("")
+    Space(owner, prefix) => namespace_uri_in_scope(owner, prefix).unwrap_or("")
   }
 }
 
 ///|
-/// A selection over these nodes, carrying the document they were found in.
-fn selection_for(nodes : Array[Node], doc : Document?) -> Selection {
-  match doc {
-    Some(doc) => doc.selection(nodes)
-    None => { doc: None, items: nodes, }
+fn node_string(node : Node) -> String {
+  match node {
+    TextNode(text) => text
+    CDataNode(text) => text
+    CommentNode(text) => text
+    ProcessingInstructionNode(pi) => pi.data
+    AttributeNode(attr) => attr.value
+    NamespaceNode(space) => space.uri
+    ElementNode(element) => element.text()
+    DoctypeNode(_) => ""
   }
 }
 
 ///|
-/// Run the steps from the starting nodes.
+/// A spot with the position and size the predicate that sees it was given.
+priv struct Ctx {
+  spot : Spot
+  order : Int32
+  size : Int32
+}
+
+///|
+/// An XPath value while it is being computed: node-sets are arrays of spots,
+/// so that two nodes carrying the same text stay two nodes.
+priv enum Val {
+  VNodes(Array[Spot])
+  VStr(String)
+  VNum(Double)
+  VFlag(Bool)
+}
+
+///|
+fn eval_expr(expr : Expr, ctx : Ctx, doc : Document?) -> Val raise Refused {
+  match expr {
+    Literal(text) => VStr(text)
+    Number(value) => VNum(value)
+    Variable(name) =>
+      raise Unsupported(what="the XPath variable $\{name} has no binding")
+    Path(absolute~, steps~) => {
+      let start = if absolute { document_root_spot(ctx.spot) } else { ctx.spot }
+      VNodes(walk_steps([start], steps, doc))
+    }
+    Union(lhs~, rhs~) => {
+      let merged : Array[Spot] = []
+      match eval_expr(lhs, ctx, doc) {
+        VNodes(found) => merged.push_iter(found.iter())
+        _ => ()
+      }
+      match eval_expr(rhs, ctx, doc) {
+        VNodes(found) => merged.push_iter(found.iter())
+        _ => ()
+      }
+      VNodes(normalize(merged))
+    }
+    Filter(base~, predicates~) =>
+      match eval_expr(base, ctx, doc) {
+        VNodes(found) => VNodes(apply_predicates(found, predicates, doc))
+        other => other
+      }
+    StepsFrom(base~, steps~) =>
+      match eval_expr(base, ctx, doc) {
+        VNodes(found) => VNodes(walk_steps(found, steps, doc))
+        _ => VNodes([])
+      }
+    Or(lhs~, rhs~) =>
+      VFlag(
+        truthy(eval_expr(lhs, ctx, doc)) || truthy(eval_expr(rhs, ctx, doc)),
+      )
+    And(lhs~, rhs~) =>
+      VFlag(
+        truthy(eval_expr(lhs, ctx, doc)) && truthy(eval_expr(rhs, ctx, doc)),
+      )
+    Eq(lhs~, rhs~) =>
+      VFlag(compare(eval_expr(lhs, ctx, doc), eval_expr(rhs, ctx, doc), "="))
+    Ne(lhs~, rhs~) =>
+      VFlag(compare(eval_expr(lhs, ctx, doc), eval_expr(rhs, ctx, doc), "!="))
+    Lt(lhs~, rhs~) =>
+      VFlag(compare(eval_expr(lhs, ctx, doc), eval_expr(rhs, ctx, doc), "<"))
+    Le(lhs~, rhs~) =>
+      VFlag(compare(eval_expr(lhs, ctx, doc), eval_expr(rhs, ctx, doc), "<="))
+    Gt(lhs~, rhs~) =>
+      VFlag(compare(eval_expr(lhs, ctx, doc), eval_expr(rhs, ctx, doc), ">"))
+    Ge(lhs~, rhs~) =>
+      VFlag(compare(eval_expr(lhs, ctx, doc), eval_expr(rhs, ctx, doc), ">="))
+    Add(lhs~, rhs~) =>
+      VNum(
+        numeric(eval_expr(lhs, ctx, doc)) + numeric(eval_expr(rhs, ctx, doc)),
+      )
+    Sub(lhs~, rhs~) =>
+      VNum(
+        numeric(eval_expr(lhs, ctx, doc)) - numeric(eval_expr(rhs, ctx, doc)),
+      )
+    Mul(lhs~, rhs~) =>
+      VNum(
+        numeric(eval_expr(lhs, ctx, doc)) * numeric(eval_expr(rhs, ctx, doc)),
+      )
+    Div(lhs~, rhs~) =>
+      VNum(
+        numeric(eval_expr(lhs, ctx, doc)) / numeric(eval_expr(rhs, ctx, doc)),
+      )
+    Mod(lhs~, rhs~) =>
+      VNum(
+        numeric(eval_expr(lhs, ctx, doc)) % numeric(eval_expr(rhs, ctx, doc)),
+      )
+    // Unary minus negates rather than subtracting from zero: `-0` has to stay
+    // negative, because `1 div -0` is -Infinity and the sign is observable.
+    Neg(inner) => VNum(-numeric(eval_expr(inner, ctx, doc)))
+    Call(name~, args~) => call(name, args, ctx, doc)
+  }
+}
+
+///|
+/// Run the steps from the starting spots.
 fn walk_steps(
-  start : Array[Node],
+  start : Array[Spot],
   steps : Array[Step],
   doc : Document?,
-) -> Array[Node] raise Refused {
+) -> Array[Spot] raise Refused {
   let mut current = start
   for step in steps {
     // A step is evaluated with respect to each context node and its
     // predicates see that node's own node-set — which is why `//div/p[1]` is
     // the first paragraph of every div, not the first of all of them.
-    let gathered : Array[Node] = []
-    for node in current {
-      let reached = if step.axis is Axis::Attribute {
-        // An attribute is not a node here, so the axis answers the test
-        // itself: `@id` keeps the id, `@*` keeps them all.
-        attribute_values(node, step.probe)
-      } else {
-        apply_test(step.probe, apply_axis(step.axis, node), doc)
-      }
+    let gathered : Array[Spot] = []
+    for spot in current {
+      let reached = apply_test(
+        step.probe,
+        step.axis,
+        apply_axis(step.axis, spot),
+        doc,
+      )
       // The axis already answers in its own order — proximity first for a
       // reverse axis — which is the order a predicate's position counts in.
       for found in apply_predicates(reached, step.predicates, doc) {
@@ -979,236 +1339,110 @@ fn walk_steps(
 }
 
 ///|
-/// Every node the axis reaches from the context node, in the axis's own order.
-fn apply_axis(axis : Axis, node : Node) -> Array[Node] {
-  let out : Array[Node] = []
+/// Every spot the axis reaches from the context node, in the axis's own order.
+fn apply_axis(axis : Axis, spot : Spot) -> Array[Spot] {
+  let out : Array[Spot] = []
   match axis {
-    Axis::SelfAxis => out.push(node)
-    Axis::Child =>
-      for child in node.children() {
-        out.push(child)
-      }
-    Axis::Descendant => {
-      for child in node.children() {
-        out.push(child)
-      }
-      match node {
-        ElementNode(data) => data.walk(fn(found) { out.push(found) })
-        _ => ()
-      }
-    }
+    Axis::SelfAxis => out.push(spot)
+    Axis::Child => out.push_iter(spot_children(spot).iter())
+    Axis::Descendant => push_descendants(spot, out)
     Axis::DescendantOrSelf => {
-      out.push(node)
-      match node {
-        ElementNode(data) => data.walk(fn(found) { out.push(found) })
-        _ => ()
-      }
+      out.push(spot)
+      push_descendants(spot, out)
     }
     Axis::Parent =>
-      match node {
-        ElementNode(data) =>
-          match data.parent {
-            Some(above) =>
-              if !is_virtual_root(above) {
-                out.push(ElementNode(above))
-              }
-            None => ()
-          }
-        _ => ()
+      match spot_parent(spot) {
+        Some(above) => out.push(above)
+        None => ()
       }
-    Axis::Ancestor =>
-      match node {
-        ElementNode(start) => {
-          let mut current = start.parent
-          while current is Some(above) {
-            if !is_virtual_root(above) {
-              out.push(ElementNode(above))
-            }
-            current = above.parent
-          }
-        }
-        _ => ()
+    Axis::Ancestor => {
+      let mut current = spot_parent(spot)
+      while current is Some(above) {
+        out.push(above)
+        current = spot_parent(above)
       }
+    }
     Axis::AncestorOrSelf => {
-      out.push(node)
-      match node {
-        ElementNode(start) => {
-          let mut current = start.parent
-          while current is Some(above) {
-            if !is_virtual_root(above) {
-              out.push(ElementNode(above))
-            }
-            current = above.parent
-          }
-        }
-        _ => ()
+      out.push(spot)
+      let mut current = spot_parent(spot)
+      while current is Some(above) {
+        out.push(above)
+        current = spot_parent(above)
       }
     }
     Axis::FollowingSibling =>
-      match node {
-        ElementNode(data) =>
-          match data.parent {
-            Some(parent) => {
-              let siblings = element_children_of(parent)
-              let mut past = false
-              for sibling in siblings {
-                if past {
-                  out.push(ElementNode(sibling))
-                }
-                if physical_equal(sibling, data) {
-                  past = true
-                }
-              }
+      match spot {
+        Kid(parent, at) =>
+          for k = at + 1; k < parent.children.length(); k = k + 1 {
+            if !is_xml_declaration(parent, parent.children[k]) {
+              out.push(Kid(parent, k))
             }
-            None => ()
           }
         _ => ()
       }
     Axis::PrecedingSibling =>
-      match node {
-        ElementNode(data) =>
-          match data.parent {
-            Some(parent) => {
-              let siblings = element_children_of(parent)
-              let before : Array[Element] = []
-              for sibling in siblings {
-                if physical_equal(sibling, data) {
-                  break
-                }
-                before.push(sibling)
-              }
-              // proximity order: nearest first
-              for k = before.length() - 1; k >= 0; k = k - 1 {
-                out.push(ElementNode(before[k]))
-              }
+      match spot {
+        Kid(parent, at) =>
+          for k = at - 1; k >= 0; k = k - 1 {
+            if !is_xml_declaration(parent, parent.children[k]) {
+              out.push(Kid(parent, k))
             }
-            None => ()
           }
         _ => ()
       }
-    Axis::Following =>
-      match document_root(node) {
-        ElementNode(root) => {
-          let all : Array[Node] = []
-          root.walk(fn(found) { all.push(found) })
-          let mut past = false
-          for found in all {
-            if past && !is_descendant_of(found, node) {
-              out.push(found)
-            }
-            if physical_equal_node(found, node) {
-              past = true
-            }
+    Axis::Following => {
+      let walk : Array[Spot] = []
+      push_walk(document_root_spot(spot), walk)
+      let mut past = false
+      for found in walk {
+        if past && !is_descendant_spot(found, spot) {
+          match found {
+            Attr(_, _) | Space(_, _) => ()
+            _ => out.push(found)
           }
         }
-        _ => ()
-      }
-    Axis::Preceding =>
-      match document_root(node) {
-        ElementNode(root) => {
-          let all : Array[Node] = []
-          root.walk(fn(found) { all.push(found) })
-          let before : Array[Node] = []
-          for found in all {
-            if physical_equal_node(found, node) {
-              break
-            }
-            if !is_descendant_of(node, found) {
-              before.push(found)
-            }
-          }
-          for k = before.length() - 1; k >= 0; k = k - 1 {
-            out.push(before[k])
-          }
-        }
-        _ => ()
-      }
-    Axis::Attribute => ()
-    Axis::Namespace => ()
-  }
-  out
-}
-
-///|
-
-///|
-/// The attribute axis: each value the probe names, as a text node.
-fn attribute_values(node : Node, probe : Test) -> Array[Node] {
-  let out : Array[Node] = []
-  match node {
-    ElementNode(data) =>
-      for pair in data.attrs {
-        let keep = match probe {
-          Name(probe) => probe == "*" || pair.0 == probe
-          AnyTest => true
-          _ => false
-        }
-        if keep {
-          out.push(TextNode(pair.1))
+        if !past && same_spot(found, spot) {
+          past = true
         }
       }
-    _ => ()
-  }
-  out
-}
-
-///|
-/// Whether an element is the document's virtual container: infrastructure,
-/// never a match, so `ancestor::*` answers the elements a reader can see.
-fn is_virtual_root(element : Element) -> Bool {
-  element.name == "#document" && element.parent is None
-}
-
-///|
-fn element_children_of(parent : Element) -> Array[Element] {
-  let out : Array[Element] = []
-  for child in parent.children {
-    if child is ElementNode(data) {
-      out.push(data)
     }
+    Axis::Preceding => {
+      let walk : Array[Spot] = []
+      push_walk(document_root_spot(spot), walk)
+      let before : Array[Spot] = []
+      for found in walk {
+        if same_spot(found, spot) {
+          break
+        }
+        match found {
+          Attr(_, _) | Space(_, _) => ()
+          _ => if !is_descendant_spot(spot, found) { before.push(found) }
+        }
+      }
+      for k = before.length() - 1; k >= 0; k = k - 1 {
+        out.push(before[k])
+      }
+    }
+    Axis::Attribute => out.push_iter(spot_attributes(spot).iter())
+    Axis::Namespace => out.push_iter(spot_namespaces(spot).iter())
   }
   out
-}
-
-///|
-/// Whether `node` sits inside `ancestor`'s subtree (itself excluded).
-fn is_descendant_of(node : Node, ancestor : Node) -> Bool {
-  match node {
-    ElementNode(data) => {
-      let mut current = data.parent
-      while current is Some(above) {
-        if physical_equal_node(ElementNode(above), ancestor) {
-          return true
-        }
-        current = above.parent
-      }
-      false
-    }
-    _ => false
-  }
-}
-
-///|
-/// Identity for a node: elements by reference, the rest by their text — a text
-/// node carries no pointer, so it can only be the same node if it is the same
-/// place in the same walk, which the ranges this is called with guarantee.
-fn physical_equal_node(a : Node, b : Node) -> Bool {
-  match (a, b) {
-    (ElementNode(x), ElementNode(y)) => physical_equal(x, y)
-    _ => false
-  }
 }
 
 ///|
 /// The nodes of an axis result that the test keeps.
 fn apply_test(
   probe : Test,
-  nodes : Array[Node],
+  axis : Axis,
+  spots : Array[Spot],
   doc : Document?,
-) -> Array[Node] {
-  let out : Array[Node] = []
-  for node in nodes {
+) -> Array[Spot] {
+  let out : Array[Spot] = []
+  for spot in spots {
+    let node = spot_node(spot)
     let keep = match probe {
+      // `node()` is every node of the data model but the doctype: XPath has no
+      // node for a document type declaration.
       AnyTest => !(node is DoctypeNode(_))
       TextTest => node.is_text()
       CommentTest => node is CommentNode(_)
@@ -1221,14 +1455,38 @@ fn apply_test(
             }
           _ => false
         }
-      Name(probe) =>
-        match node {
-          ElementNode(data) => name_matches(data.name, probe)
-          _ => false
+      // A name test keeps the axis's principal node type: attributes on the
+      // attribute axis, namespaces on the namespace axis, elements elsewhere.
+      // So `attribute::*` is every attribute while `self::*` on an attribute
+      // is nothing.
+      Name(wanted) =>
+        match axis {
+          Axis::Attribute =>
+            match spot {
+              Attr(_, name) => wanted == "*" || name == wanted
+              _ => false
+            }
+          Axis::Namespace =>
+            match spot {
+              Space(_, prefix) => wanted == "*" || prefix == wanted
+              _ => false
+            }
+          _ =>
+            match spot {
+              El(element) =>
+                !spot_is_root(spot) && xpath_name_matches(element.name, wanted)
+              Kid(parent, at) =>
+                match parent.children[at] {
+                  ElementNode(element) =>
+                    xpath_name_matches(element.name, wanted)
+                  _ => false
+                }
+              _ => false
+            }
         }
     }
     if keep {
-      out.push(node)
+      out.push(spot)
     } else {
       ignore(doc)
     }
@@ -1237,22 +1495,40 @@ fn apply_test(
 }
 
 ///|
+/// A name test against a `{uri}local` name. XPath here binds no prefixes, so a
+/// prefixed test matches by its local part, and a test with no prefix matches
+/// the local part of any name.
+fn xpath_name_matches(full : String, probe : String) -> Bool {
+  if probe == "*" || full == probe {
+    return true
+  }
+  if probe.contains("{") {
+    return false
+  }
+  let want = match probe.find(":") {
+    Some(at) => probe[at + 1:probe.length()].to_owned()
+    None => probe
+  }
+  local_of(full) == want
+}
+
+///|
 /// Apply the predicates in order: each sees the node-set as it stands, with
 /// the position and size the node had among it.
 fn apply_predicates(
-  nodes : Array[Node],
+  spots : Array[Spot],
   predicates : Array[Expr],
   doc : Document?,
-) -> Array[Node] raise Refused {
-  let mut current = nodes
+) -> Array[Spot] raise Refused {
+  let mut current = spots
   for predicate in predicates {
-    let kept : Array[Node] = []
+    let kept : Array[Spot] = []
     let size = current.length()
     for k = 0; k < size; k = k + 1 {
-      let ctx : Ctx = { node: current[k], order: k + 1, size, }
+      let ctx : Ctx = { spot: current[k], order: k + 1, size, }
       let value = eval_expr(predicate, ctx, doc)
       let hold = match value {
-        Num(wanted) => wanted.to_int() == k + 1
+        VNum(wanted) => wanted == (k + 1).to_double()
         other => truthy(other)
       }
       if hold {
@@ -1267,55 +1543,37 @@ fn apply_predicates(
 // Typed conversions, XPath 1.0 §4.
 
 ///|
-/// The string value of a node.
-fn string_value(node : Node) -> String {
-  match node {
-    TextNode(text) => text
-    CDataNode(text) => text
-    CommentNode(text) => text
-    ProcessingInstructionNode(pi) => pi.data
-    ElementNode(data) => data.text()
-    DoctypeNode(_) => ""
+fn to_string_value(value : Val) -> String {
+  match value {
+    VStr(text) => text
+    VNum(number) => number_to_string(number)
+    VFlag(flag) => if flag { "true" } else { "false" }
+    VNodes(spots) => if spots.is_empty() { "" } else { string_value(spots[0]) }
   }
 }
 
 ///|
-fn to_string_value(value : XPathValue) -> String {
+fn numeric(value : Val) -> Double {
   match value {
-    Str(text) => text
-    Num(number) => number_to_string(number)
-    Flag(flag) => if flag { "true" } else { "false" }
-    Nodes(sel) =>
-      if sel.items.is_empty() {
-        ""
-      } else {
-        string_value(sel.items[0])
-      }
-  }
-}
-
-///|
-fn numeric(value : XPathValue) -> Double {
-  match value {
-    Num(number) => number
-    Str(text) => text_to_number(text)
-    Flag(flag) => if flag { 1.0 } else { 0.0 }
-    Nodes(sel) =>
-      if sel.items.is_empty() {
+    VNum(number) => number
+    VStr(text) => text_to_number(text)
+    VFlag(flag) => if flag { 1.0 } else { 0.0 }
+    VNodes(spots) =>
+      if spots.is_empty() {
         f64_nan()
       } else {
-        text_to_number(string_value(sel.items[0]))
+        spot_number(spots[0])
       }
   }
 }
 
 ///|
-fn truthy(value : XPathValue) -> Bool {
+fn truthy(value : Val) -> Bool {
   match value {
-    Flag(flag) => flag
-    Num(number) => number != 0.0 && !is_nan(number)
-    Str(text) => !text.is_empty()
-    Nodes(sel) => !sel.items.is_empty()
+    VFlag(flag) => flag
+    VNum(number) => number != 0.0 && !is_nan(number)
+    VStr(text) => !text.is_empty()
+    VNodes(spots) => !spots.is_empty()
   }
 }
 
@@ -1359,19 +1617,18 @@ fn number_to_string(number : Double) -> String {
 }
 
 ///|
-/// The comparisons of §3.4, with their node-set rules.
-fn compare(lhs : XPathValue, rhs : XPathValue, op : String) -> Bool {
+/// The comparisons of §3.4. A relational comparison is numeric on both sides —
+/// `'b' > 'a'` compares two NaNs and is false, which is the specification's
+/// answer, not lexicographic order. Equality compares strings when neither
+/// side is a number or a boolean.
+fn compare(lhs : Val, rhs : Val, op : String) -> Bool {
+  let relational = op == "<" || op == "<=" || op == ">" || op == ">="
   match (lhs, rhs) {
-    (Nodes(left), Nodes(right)) => {
-      let relational = op != "=" && op != "!="
-      for a in left.items {
-        for b in right.items {
+    (VNodes(left), VNodes(right)) => {
+      for a in left {
+        for b in right {
           let same = if relational {
-            compare_numbers(
-              text_to_number(string_value(a)),
-              text_to_number(string_value(b)),
-              op,
-            )
+            compare_numbers(spot_number(a), spot_number(b), op)
           } else if op == "=" {
             string_value(a) == string_value(b)
           } else {
@@ -1384,42 +1641,46 @@ fn compare(lhs : XPathValue, rhs : XPathValue, op : String) -> Bool {
       }
       false
     }
-    (Nodes(left), other) => node_set_against(left, other, op)
-    (other, Nodes(right)) => node_set_against(right, other, op)
-    (Flag(a), _) => compare_booleans(a, truthy(rhs), op)
-    (_, Flag(b)) => compare_booleans(truthy(lhs), b, op)
-    (Num(a), _) => compare_numbers(a, numeric(rhs), op)
-    (_, Num(b)) => compare_numbers(numeric(lhs), b, op)
-    (Str(a), Str(b)) => compare_strings(a, b, op)
+    (VNodes(left), other) => spot_set_against(left, other, op, relational)
+    (other, VNodes(right)) => spot_set_against(right, other, op, relational)
+    _ =>
+      if relational {
+        compare_numbers(numeric(lhs), numeric(rhs), op)
+      } else {
+        match (lhs, rhs) {
+          (VFlag(a), _) => compare_booleans(a, truthy(rhs), op)
+          (_, VFlag(b)) => compare_booleans(truthy(lhs), b, op)
+          (VNum(a), _) => compare_numbers(a, numeric(rhs), op)
+          (_, VNum(b)) => compare_numbers(numeric(lhs), b, op)
+          (VStr(a), VStr(b)) => compare_strings(a, b, op)
+          _ => false
+        }
+      }
   }
 }
 
 ///|
-fn node_set_against(nodes : Selection, other : XPathValue, op : String) -> Bool {
+fn spot_set_against(
+  spots : Array[Spot],
+  other : Val,
+  op : String,
+  relational : Bool,
+) -> Bool {
   match other {
-    Flag(flag) => return compare_booleans(!nodes.items.is_empty(), flag, op)
-    Num(wanted) =>
-      for node in nodes.items {
-        if compare_numbers(text_to_number(string_value(node)), wanted, op) {
-          return true
-        }
+    VFlag(flag) => compare_booleans(!spots.is_empty(), flag, op)
+    VNum(wanted) =>
+      spots.iter().any(spot => compare_numbers(spot_number(spot), wanted, op))
+    VStr(wanted) =>
+      if relational {
+        let number = text_to_number(wanted)
+        spots.iter().any(spot => compare_numbers(spot_number(spot), number, op))
+      } else if op == "=" {
+        spots.iter().any(spot => string_value(spot) == wanted)
+      } else {
+        spots.iter().any(spot => string_value(spot) != wanted)
       }
-    Str(wanted) =>
-      for node in nodes.items {
-        if compare_strings(string_value(node), wanted, op) {
-          return true
-        }
-      }
-    Nodes(other_nodes) =>
-      for a in nodes.items {
-        for b in other_nodes.items {
-          if compare_strings(string_value(a), string_value(b), op) {
-            return true
-          }
-        }
-      }
+    VNodes(_) => false
   }
-  false
 }
 
 ///|
@@ -1495,42 +1756,45 @@ fn call(
   args : Array[Expr],
   ctx : Ctx,
   doc : Document?,
-) -> XPathValue raise Refused {
+) -> Val raise Refused {
   match name {
-    "last" => Num(ctx.size.to_double())
-    "position" => Num(ctx.order.to_double())
-    "count" => Num(nodes_arg(args, 0, ctx, doc).length().to_double())
+    "last" => VNum(ctx.size.to_double())
+    "position" => VNum(ctx.order.to_double())
+    "count" => VNum(nodes_arg(args, 0, ctx, doc).length().to_double())
     "id" => id_function(args, ctx, doc)
     "local-name" => name_part(args, ctx, doc, LocalName)
+    "namespace-uri" => name_part(args, ctx, doc, NamespaceUri)
+    // `space-uri` is the spelling this library used before it took XPath's
+    // own, and a query written against it still reads.
     "space-uri" => name_part(args, ctx, doc, NamespaceUri)
     "name" => name_part(args, ctx, doc, FullName)
     "string" =>
       if args.is_empty() {
-        Str(string_value(ctx.node))
+        VStr(string_value(ctx.spot))
       } else {
-        Str(to_string_value(eval_expr(args[0], ctx, doc)))
+        VStr(to_string_value(eval_expr(args[0], ctx, doc)))
       }
     "concat" => {
       let out = StringBuilder()
       for arg in args {
         out.write_string(to_string_value(eval_expr(arg, ctx, doc)))
       }
-      Str(out.to_string())
+      VStr(out.to_string())
     }
     "starts-with" => {
       let text = to_string_value(eval_expr(arg_at(args, 0), ctx, doc))
       let part = to_string_value(eval_expr(arg_at(args, 1), ctx, doc))
-      Flag(starts_with_text(text, part))
+      VFlag(starts_with_text(text, part))
     }
     "contains" => {
       let text = to_string_value(eval_expr(arg_at(args, 0), ctx, doc))
       let part = to_string_value(eval_expr(arg_at(args, 1), ctx, doc))
-      Flag(text.contains(part))
+      VFlag(text.contains(part))
     }
     "substring-before" => {
       let text = to_string_value(eval_expr(arg_at(args, 0), ctx, doc))
       let part = to_string_value(eval_expr(arg_at(args, 1), ctx, doc))
-      Str(
+      VStr(
         match find_text(text, part, 0) {
           Some(at) => text[0:at].to_owned()
           None => ""
@@ -1540,7 +1804,7 @@ fn call(
     "substring-after" => {
       let text = to_string_value(eval_expr(arg_at(args, 0), ctx, doc))
       let part = to_string_value(eval_expr(arg_at(args, 1), ctx, doc))
-      Str(
+      VStr(
         match find_text(text, part, 0) {
           Some(at) => text[at + part.length():text.length()].to_owned()
           None => ""
@@ -1549,61 +1813,61 @@ fn call(
     }
     "substring" => {
       let text = to_string_value(eval_expr(arg_at(args, 0), ctx, doc))
-      let start = numeric(eval_expr(arg_at(args, 1), ctx, doc)).round().to_int()
+      let start = round_half_up(numeric(eval_expr(arg_at(args, 1), ctx, doc)))
       let length = if args.length() > 2 {
-        Some(numeric(eval_expr(args[2], ctx, doc)).round().to_int())
+        Some(round_half_up(numeric(eval_expr(args[2], ctx, doc))))
       } else {
         None
       }
-      Str(substring_of(text, start, length))
+      VStr(substring_of(text, start, length))
     }
     "string-length" => {
       let text = if args.is_empty() {
-        string_value(ctx.node)
+        string_value(ctx.spot)
       } else {
         to_string_value(eval_expr(args[0], ctx, doc))
       }
-      Num(text.char_length().to_double())
+      VNum(text.char_length().to_double())
     }
     "normalize-space" => {
       let text = if args.is_empty() {
-        string_value(ctx.node)
+        string_value(ctx.spot)
       } else {
         to_string_value(eval_expr(args[0], ctx, doc))
       }
-      Str(normalise_space(text))
+      VStr(normalise_space(text))
     }
     "translate" => {
       let text = to_string_value(eval_expr(arg_at(args, 0), ctx, doc))
       let from = to_string_value(eval_expr(arg_at(args, 1), ctx, doc))
       let to = to_string_value(eval_expr(arg_at(args, 2), ctx, doc))
-      Str(translate_text(text, from, to))
+      VStr(translate_text(text, from, to))
     }
-    "boolean" => Flag(truthy(eval_expr(arg_at(args, 0), ctx, doc)))
-    "not" => Flag(!truthy(eval_expr(arg_at(args, 0), ctx, doc)))
-    "true" => Flag(true)
-    "false" => Flag(false)
+    "boolean" => VFlag(truthy(eval_expr(arg_at(args, 0), ctx, doc)))
+    "not" => VFlag(!truthy(eval_expr(arg_at(args, 0), ctx, doc)))
+    "true" => VFlag(true)
+    "false" => VFlag(false)
     "number" =>
       if args.is_empty() {
-        Num(text_to_number(string_value(ctx.node)))
+        VNum(text_to_number(string_value(ctx.spot)))
       } else {
-        Num(numeric(eval_expr(args[0], ctx, doc)))
+        VNum(numeric(eval_expr(args[0], ctx, doc)))
       }
     "sum" => {
-      let sel = nodes_arg(args, 0, ctx, doc)
       let mut total = 0.0
-      for node in sel {
-        total = total + text_to_number(string_value(node))
+      for spot in nodes_arg(args, 0, ctx, doc) {
+        total = total + spot_number(spot)
       }
-      Num(total)
+      VNum(total)
     }
-    "floor" => Num(numeric(eval_expr(arg_at(args, 0), ctx, doc)).floor())
-    "ceiling" => Num(numeric(eval_expr(arg_at(args, 0), ctx, doc)).ceil())
-    "round" => Num(round_half_up(numeric(eval_expr(arg_at(args, 0), ctx, doc))))
+    "floor" => VNum(numeric(eval_expr(arg_at(args, 0), ctx, doc)).floor())
+    "ceiling" => VNum(numeric(eval_expr(arg_at(args, 0), ctx, doc)).ceil())
+    "round" =>
+      VNum(round_half_up(numeric(eval_expr(arg_at(args, 0), ctx, doc))))
     "lang" =>
-      Flag(
+      VFlag(
         lang_matches(
-          ctx.node,
+          ctx.spot,
           to_string_value(eval_expr(arg_at(args, 0), ctx, doc)),
         ),
       )
@@ -1627,11 +1891,14 @@ fn nodes_arg(
   at : Int32,
   ctx : Ctx,
   doc : Document?,
-) -> Array[Node] raise Refused {
+) -> Array[Spot] raise Refused {
   if at >= args.length() {
     return []
   }
-  nodes_of(eval_expr(args[at], ctx, doc), doc)
+  match eval_expr(args[at], ctx, doc) {
+    VNodes(spots) => spots
+    _ => []
+  }
 }
 
 ///|
@@ -1641,24 +1908,18 @@ fn id_function(
   args : Array[Expr],
   ctx : Ctx,
   doc : Document?,
-) -> XPathValue raise Refused {
+) -> Val raise Refused {
   let wanted : Array[String] = []
   if args.is_empty() {
     ignore(ctx)
   } else {
     match eval_expr(args[0], ctx, doc) {
-      Nodes(sel) =>
-        for node in sel.items {
-          for part in string_value(node).split(" ") {
+      VNodes(spots) =>
+        for spot in spots {
+          for part in string_value(spot).split(" ") {
             if !part.is_empty() {
               wanted.push(part.to_owned())
             }
-          }
-        }
-      Str(text) =>
-        for part in text.split(" ") {
-          if !part.is_empty() {
-            wanted.push(part.to_owned())
           }
         }
       other =>
@@ -1669,21 +1930,23 @@ fn id_function(
         }
     }
   }
-  let root = document_root(ctx.node)
-  let found : Array[Node] = []
-  match root {
-    ElementNode(data) =>
-      data.walk(fn(node) {
+  let found : Array[Spot] = []
+  match document_root_spot(ctx.spot) {
+    El(root) =>
+      root.walk(fn(node) {
         if node is ElementNode(element) {
           match element.attr("id") {
-            Some(id) => if wanted.contains(id) { found.push(node) }
+            Some(id) =>
+              if wanted.contains(id) {
+                found.push(spot_of_element(element))
+              }
             None => ()
           }
         }
       })
     _ => ()
   }
-  Nodes(selection_for(normalize(found), doc))
+  VNodes(normalize(found))
 }
 
 ///|
@@ -1700,42 +1963,77 @@ fn name_part(
   ctx : Ctx,
   doc : Document?,
   part : NamePart,
-) -> XPathValue raise Refused {
-  let nodes = if args.is_empty() {
-    [ctx.node]
+) -> Val raise Refused {
+  let spots = if args.is_empty() {
+    [ctx.spot]
   } else {
     nodes_arg(args, 0, ctx, doc)
   }
-  if nodes.is_empty() {
-    return Str("")
+  if spots.is_empty() {
+    return VStr("")
   }
-  let name = match nodes[0] {
-    ElementNode(data) => data.name
-    _ => ""
-  }
-  Str(
-    match part {
-      LocalName => local_of(name)
-      NamespaceUri =>
-        match namespace_of(name) {
-          Some(uri) => uri
-          None => ""
+  VStr(
+    match spots[0] {
+      El(element) => name_of_text(element.name, part)
+      Kid(parent, at) =>
+        match parent.children[at] {
+          ElementNode(element) => name_of_text(element.name, part)
+          _ => ""
         }
-      FullName => name
+      // An attribute's name is its own; a namespace's is its prefix, and a
+      // namespace node has no URI of its own.
+      Attr(_, name) =>
+        match part {
+          FullName => name
+          LocalName =>
+            match namespace_of(name) {
+              Some(_) => local_of(name)
+              None => name
+            }
+          NamespaceUri =>
+            match namespace_of(name) {
+              Some(uri) => uri
+              None => ""
+            }
+        }
+      Space(_, prefix) =>
+        match part {
+          NamespaceUri => ""
+          _ => prefix
+        }
     },
   )
 }
 
 ///|
+fn name_of_text(name : String, part : NamePart) -> String {
+  match part {
+    LocalName => local_of(name)
+    NamespaceUri =>
+      match namespace_of(name) {
+        Some(uri) => uri
+        None => ""
+      }
+    FullName => name
+  }
+}
+
+///|
 /// `lang()`: the `xml:lang` of the node or its nearest ancestor that carries
 /// one, matched case-insensitively by prefix.
-fn lang_matches(node : Node, wanted : String) -> Bool {
-  let mut current = match node {
-    ElementNode(data) => Some(data)
-    _ => None
-  }
+fn lang_matches(spot : Spot, wanted : String) -> Bool {
+  let mut current = spot_owner(spot)
   while current is Some(element) {
-    match element.attr("xml:lang") {
+    let mut found : String? = None
+    for pair in element.attrs {
+      if pair.0 == "{http://www.w3.org/XML/1998/namespace}lang" ||
+        pair.0 == "xml:lang" ||
+        pair.0 == "lang" {
+        found = Some(pair.1)
+        break
+      }
+    }
+    match found {
       Some(have) => return lang_prefix(have, wanted)
       None => ()
     }
@@ -1790,28 +2088,32 @@ fn find_text(text : String, part : String, from : Int32) -> Int32? {
 }
 
 ///|
-/// XPath's substring(): one-based, with the rounding the spec spells out.
-fn substring_of(text : String, start : Int32, length : Int32?) -> String {
+/// XPath's substring(): the characters at positions `p` with
+/// `p >= round(start)` and `p < round(start) + round(length)`, one-based. The
+/// arithmetic stays in doubles all the way, because the arguments can be NaN or
+/// beyond what an `Int` holds, and truncating either would answer wrongly.
+fn substring_of(text : String, start : Double, length : Double?) -> String {
   let chars = text.to_array()
-  let n = chars.length()
-  let mut from = start
-  if from < 1 {
-    from = 1
-  }
-  let mut to = n + 1
-  match length {
-    Some(size) => to = start + size
-    None => ()
-  }
-  if to > n + 1 {
-    to = n + 1
-  }
-  if from >= to {
+  let n = chars.length().to_double()
+  if start != start {
     return ""
   }
+  let from = if start < 1.0 { 1.0 } else { start }
+  let to = match length {
+    Some(size) => if size != size { return "" } else { start + size }
+    None => n + 1.0
+  }
+  if from >= to || from > n {
+    return ""
+  }
+  let last = if to > n + 1.0 { n + 1.0 } else { to }
   let out = StringBuilder()
-  for k = from - 1; k < to - 1 && k < chars.length(); k = k + 1 {
-    out.write_char(chars[k])
+  let mut k = from.to_int() - 1
+  while (k + 1).to_double() < last && k < chars.length() {
+    if k >= 0 {
+      out.write_char(chars[k])
+    }
+    k = k + 1
   }
   out.to_string()
 }
@@ -1865,17 +2167,19 @@ fn translate_text(text : String, from : String, to : String) -> String {
 }
 
 ///|
-/// XPath's round(): the nearest integer, halves going up.
+/// XPath's round(): the nearest integer, halves going up, and a small negative
+/// number rounds to negative zero — `1 div round(-0.1)` is -Infinity, so the
+/// sign has to survive.
 fn round_half_up(number : Double) -> Double {
   if is_nan(number) {
     return number
   }
   let floor = number.floor()
-  if number - floor >= 0.5 {
-    floor + 1.0
-  } else {
-    floor
+  let rounded = if number - floor >= 0.5 { floor + 1.0 } else { floor }
+  if rounded == 0.0 && number < 0.0 {
+    return -0.0
   }
+  rounded
 }
 
 ///|
@@ -1892,44 +2196,37 @@ fn f64_nan() -> Double {
 // Document order.
 
 ///|
-/// Deduplicate by identity and sort into document order. The rank of a node is
-/// its place in a pre-order walk of the root it hangs from; the walk is taken
-/// once per call, and only when there is something to sort.
-fn normalize(nodes : Array[Node]) -> Array[Node] {
-  if nodes.length() <= 1 {
-    return nodes
+/// Deduplicate by identity and sort into document order. A spot's rank is its
+/// place in a walk of the tree it hangs from, and that walk names every node
+/// exactly once — so two text nodes that carry the same characters keep their
+/// places, and the node reached twice is one node.
+fn normalize(spots : Array[Spot]) -> Array[Spot] {
+  if spots.length() <= 1 {
+    return spots
   }
-  let unique : Array[Node] = []
-  for node in nodes {
-    let mut seen = false
-    for have in unique {
-      if same_node(node, have) {
-        seen = true
-        break
-      }
-    }
-    if !seen {
-      unique.push(node)
+  let unique : Array[Spot] = []
+  for spot in spots {
+    if !unique.iter().any(seen => same_spot(seen, spot)) {
+      unique.push(spot)
     }
   }
-  let ranked : Array[(Int32, Node)] = []
-  let root = document_root(unique[0])
-  let walk : Array[Node] = []
-  match root {
-    ElementNode(data) => data.walk(fn(found) { walk.push(found) })
-    _ => ()
+  if unique.length() <= 1 {
+    return unique
   }
-  for node in unique {
+  let walk : Array[Spot] = []
+  push_walk(document_root_spot(unique[0]), walk)
+  let ranked : Array[(Int32, Spot)] = []
+  for spot in unique {
     let mut rank = walk.length()
     for k = 0; k < walk.length(); k = k + 1 {
-      if same_node(walk[k], node) {
+      if same_spot(walk[k], spot) {
         rank = k
         break
       }
     }
-    ranked.push((rank, node))
+    ranked.push((rank, spot))
   }
-  ranked.sort_by(fn(a : (Int32, Node), b : (Int32, Node)) -> Int32 {
+  ranked.sort_by(fn(a : (Int32, Spot), b : (Int32, Spot)) -> Int32 {
     let (left, _) = a
     let (right, _) = b
     if left < right {
@@ -1940,7 +2237,7 @@ fn normalize(nodes : Array[Node]) -> Array[Node] {
       0
     }
   })
-  let out : Array[Node] = []
+  let out : Array[Spot] = []
   for pair in ranked {
     out.push(pair.1)
   }
@@ -1948,18 +2245,25 @@ fn normalize(nodes : Array[Node]) -> Array[Node] {
 }
 
 ///|
-/// Identity for nodes: elements by reference; the other kinds have no
-/// pointer, so they compare by the values they carry.
-fn same_node(a : Node, b : Node) -> Bool {
-  match (a, b) {
-    (ElementNode(x), ElementNode(y)) => physical_equal(x, y)
-    (TextNode(x), TextNode(y)) => x == y
-    (CDataNode(x), CDataNode(y)) => x == y
-    (CommentNode(x), CommentNode(y)) => x == y
-    (DoctypeNode(x), DoctypeNode(y)) => x == y
-    (ProcessingInstructionNode(x), ProcessingInstructionNode(y)) =>
-      x.target == y.target && x.data == y.data
-    _ => false
+/// A node-set as the public answer: the nodes of its spots, in document order.
+fn selection_for(spots : Array[Spot], doc : Document?) -> Selection {
+  let nodes : Array[Node] = []
+  for spot in spots {
+    nodes.push(spot_node(spot))
+  }
+  match doc {
+    Some(document) => document.selection(nodes)
+    None => { doc: None, items: nodes, }
+  }
+}
+
+///|
+fn to_value(value : Val, doc : Document?) -> XPathValue {
+  match value {
+    VNodes(spots) => Nodes(selection_for(spots, doc))
+    VStr(text) => Str(text)
+    VNum(number) => Num(number)
+    VFlag(flag) => Flag(flag)
   }
 }
 
@@ -1978,17 +2282,79 @@ pub fn Selection::xpath(
   query : String,
 ) -> Selection raise Refused {
   let expr = xpath_parse(query)
-  let out : Array[Node] = []
+  let spots : Array[Spot] = []
+  let texts : Array[Node] = []
   for node in self.items {
-    match eval_expr(expr, { node, order: 1, size: 1, }, self.doc) {
-      Nodes(sel) =>
-        for found in sel.items {
-          out.push(found)
-        }
-      other => out.push(TextNode(to_string_value(other)))
+    let spot = spot_of_node(node, self.doc)
+    match eval_expr(expr, { spot, order: 1, size: 1, }, self.doc) {
+      VNodes(found) => spots.push_iter(found.iter())
+      other => texts.push(TextNode(to_string_value(other)))
     }
   }
-  selection_for(normalize(out), self.doc)
+  let found = selection_for(normalize(spots), self.doc)
+  for text in texts {
+    found.items.push(text)
+  }
+  found
+}
+
+///|
+/// Where a node sits, for a node that came from outside a step: an element is
+/// found in its tree, and a node without a pointer is anchored to the first
+/// place its value occupies.
+fn spot_of_node(node : Node, doc : Document?) -> Spot {
+  match node {
+    ElementNode(element) => spot_of_element(element)
+    AttributeNode(attr) => Attr(attr.owner, attr.name)
+    NamespaceNode(space) => Space(space.owner, space.prefix)
+    _ =>
+      match doc {
+        Some(document) =>
+          match find_child_spot(El(document.root), node) {
+            Some(found) => found
+            None => El(document.root)
+          }
+        None => El(Element::new("#document"))
+      }
+  }
+}
+
+///|
+/// The first place in a tree where a node with this value lies.
+fn find_child_spot(spot : Spot, node : Node) -> Spot? {
+  for child in spot_children(spot) {
+    if same_node_value(child, node) {
+      return Some(child)
+    }
+    match find_child_spot(child, node) {
+      Some(found) => return Some(found)
+      None => ()
+    }
+  }
+  None
+}
+
+///|
+fn same_node_value(spot : Spot, node : Node) -> Bool {
+  match spot {
+    Kid(parent, at) =>
+      match (parent.children[at], node) {
+        (TextNode(have), TextNode(text)) => have == text
+        (CDataNode(have), CDataNode(text)) => have == text
+        (CommentNode(have), CommentNode(text)) => have == text
+        (DoctypeNode(have), DoctypeNode(text)) => have == text
+        (ProcessingInstructionNode(have), ProcessingInstructionNode(pi)) =>
+          have.target == pi.target && have.data == pi.data
+        (ElementNode(have), ElementNode(other)) => physical_equal(have, other)
+        _ => false
+      }
+    El(element) =>
+      match node {
+        ElementNode(other) => physical_equal(element, other)
+        _ => false
+      }
+    _ => false
+  }
 }
 
 ///|
@@ -2001,7 +2367,14 @@ pub fn Selection::xpath_value(
   match self.items {
     [] => Flag(false)
     [first, ..] =>
-      eval_expr(expr, { node: first, order: 1, size: 1, }, self.doc)
+      to_value(
+        eval_expr(
+          expr,
+          { spot: spot_of_node(first, self.doc), order: 1, size: 1, },
+          self.doc,
+        ),
+        self.doc,
+      )
   }
 }
 

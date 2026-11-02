@@ -176,6 +176,8 @@ fn copy_node(node : @moonxml.Node) -> @moonxml.Node {
     @moonxml.ProcessingInstructionNode(instruction) =>
       @moonxml.ProcessingInstructionNode(instruction)
     @moonxml.DoctypeNode(text) => @moonxml.DoctypeNode(text)
+    @moonxml.AttributeNode(attr) => @moonxml.AttributeNode(attr)
+    @moonxml.NamespaceNode(space) => @moonxml.NamespaceNode(space)
   }
 }
 

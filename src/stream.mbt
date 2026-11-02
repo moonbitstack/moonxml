@@ -62,6 +62,9 @@ pub fn Document::events(self : Document) -> Array[@event.Event] {
       ProcessingInstructionNode(pi) =>
         out.push(@event.ProcessingInstruction(target=pi.target, data=pi.data))
       DoctypeNode(text) => out.push(@event.Doctype(text~))
+      // An attribute or a namespace is not part of the document's node
+      // stream: it is carried by the start tag that owns it.
+      AttributeNode(_) | NamespaceNode(_) => ()
     }
   }
   for child in self.root.children {

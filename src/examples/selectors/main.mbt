@@ -555,6 +555,13 @@ fn label(node : @moonxml.Node) -> String {
     @moonxml.CommentNode(_) => "<!-- -->"
     @moonxml.ProcessingInstructionNode(pi) => "<?" + pi.target + "?>"
     @moonxml.DoctypeNode(text) => "<!DOCTYPE " + text + ">"
+    @moonxml.AttributeNode(attr) => "@" + attr.name + "=" + quote(attr.value)
+    @moonxml.NamespaceNode(space) =>
+      if space.prefix.is_empty() {
+        "xmlns=" + space.uri
+      } else {
+        "xmlns:" + space.prefix + "=" + space.uri
+      }
   }
 }
 

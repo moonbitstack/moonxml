@@ -35,6 +35,12 @@ pub fn Refused::to_string(Self) -> String
 pub impl Show for Refused
 
 // Types and methods
+pub(all) struct Attribute {
+  owner : Element
+  name : String
+  value : String
+}
+
 pub struct Document {
   root : Element
   // private fields
@@ -128,6 +134,12 @@ pub fn Flavour::to_repr(Self) -> @debug.Repr
 pub fn Flavour::to_string(Self) -> String
 pub impl Show for Flavour
 
+pub(all) struct Namespace {
+  owner : Element
+  prefix : String
+  uri : String
+}
+
 pub(all) enum Node {
   ElementNode(Element)
   TextNode(String)
@@ -135,6 +147,8 @@ pub(all) enum Node {
   CommentNode(String)
   ProcessingInstructionNode(ProcessingInstruction)
   DoctypeNode(String)
+  AttributeNode(Attribute)
+  NamespaceNode(Namespace)
 }
 pub fn Node::by_class(Self, String) -> Selection
 pub fn Node::by_id(Self, String) -> Selection

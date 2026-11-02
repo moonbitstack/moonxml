@@ -128,7 +128,13 @@ test "axes" {
   assert_eq(doc.xpath("//book/@*").length(), 4)
   assert_eq(texts(doc, "//book/@*"), "b1,1998,b2,2004")
   assert_eq(texts(doc, "//book/attribute::year"), "1998,2004")
-  assert_eq(doc.xpath("//note/space::*").length(), 0)
+  // The namespace axis answers the namespaces in scope, and `xml` is always
+  // one of them: `space` is this library's older spelling of `namespace`.
+  assert_eq(doc.xpath("//note/space::*").length(), 1)
+  assert_eq(
+    texts(doc, "//note/namespace::*"),
+    "http://www.w3.org/XML/1998/namespace",
+  )
 }
 
 ///|

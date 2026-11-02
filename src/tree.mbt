@@ -13,6 +13,29 @@ pub(all) enum Node {
   CommentNode(String)
   ProcessingInstructionNode(ProcessingInstruction)
   DoctypeNode(String)
+  AttributeNode(Attribute)
+  NamespaceNode(Namespace)
+}
+
+///|
+/// An attribute as a node of its own: XPath's attribute node. It is not a
+/// child of its element — the element's attributes stay in `attrs`, which is
+/// what the writer reads — but a query that asks for `@href` or for the
+/// attribute axis answers these, so that `attribute::x/self::node()` has
+/// something with an identity to answer.
+pub(all) struct Attribute {
+  owner : Element
+  name : String
+  value : String
+}
+
+///|
+/// A namespace as a node of its own: XPath's namespace node, answered by the
+/// `namespace` axis. `prefix` is `""` for the default namespace.
+pub(all) struct Namespace {
+  owner : Element
+  prefix : String
+  uri : String
 }
 
 ///|
@@ -249,6 +272,8 @@ pub fn Node::text(self : Node) -> String {
     CommentNode(text) => text
     ProcessingInstructionNode(pi) => pi.data
     DoctypeNode(_) => ""
+    AttributeNode(attr) => attr.value
+    NamespaceNode(space) => space.uri
     ElementNode(_) => {
       let out = StringBuilder()
       fn walk(node : Node) -> Unit {

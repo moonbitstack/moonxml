@@ -140,6 +140,9 @@ fn write_xml_in(
     ProcessingInstructionNode(pi) =>
       out.write_string("<?" + pi.target + pi.data + "?>")
     DoctypeNode(text) => out.write_string("<!DOCTYPE " + text + ">")
+    // Attributes and namespaces are not children of anything, so there is no
+    // position in a document for them to be written at.
+    AttributeNode(_) | NamespaceNode(_) => ()
   }
 }
 
@@ -243,6 +246,9 @@ fn write_html(node : Node, out : StringBuilder, raw~ : Bool) -> Unit {
     ProcessingInstructionNode(pi) =>
       out.write_string("<?" + pi.target + pi.data + "?>")
     DoctypeNode(text) => out.write_string("<!DOCTYPE " + text + ">")
+    // Attributes and namespaces are not children of anything, so there is no
+    // position in a document for them to be written at.
+    AttributeNode(_) | NamespaceNode(_) => ()
   }
 }
 
