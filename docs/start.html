@@ -239,6 +239,26 @@ request.<span class="f">headers</span>()      <span class="cm">// HX-Request, HX
       </li>
 
       <li>
+        <h3>Filter what a node says</h3>
+        <p>A selector narrows by structure. When what you need to narrow on is the text itself — a price, an id, a version string — a regular expression is the tool for it, and <code>filter</code> is where it joins the chain.</p>
+        <p class="filename">step12.mbt</p>
+<pre><span class="k">let</span> page = <span class="f">@html.loads</span>(<span class="s">"&lt;ul id=list&gt;&lt;li&gt;coffee 4.5&lt;li&gt;tea&lt;li&gt;beans 12&lt;/ul&gt;"</span>)
+<span class="k">let</span> amount = <span class="f">@moonregex.compile</span>(<span class="s">"\\d+(\\.\\d+)?"</span>)
+
+<span class="k">let</span> priced = page.<span class="f">css</span>(<span class="s">"li"</span>).<span class="f">filter</span>(fn(li) {
+  <span class="k">try</span> {
+    amount.<span class="f">search</span>(li.<span class="f">text</span>()) <span class="k">is</span> <span class="f">Some</span>(_)
+  } <span class="k">catch</span> {
+    _ =&gt; <span class="k">false</span>
+  }
+})
+
+println(priced.<span class="f">length</span>())        <span class="cm">// 2</span>
+println(priced.<span class="f">last</span>().<span class="f">text</span>())   <span class="cm">// beans 12</span></pre>
+        <p>None of this belongs in the library: the pattern is the caller's, and <code>moonbitstack/moonregex</code> is what compiles it. The chain keeps its shape — what comes back is still a <code>Selection</code>, so the next step is another query or an edit.</p>
+      </li>
+
+      <li>
         <h3>Then the API</h3>
         <div class="callout"><b>Next:</b> the <a href="api.html">complete API</a>, or <a href="inside.html">how the parsers and the chain work</a>.</div>
       </li>

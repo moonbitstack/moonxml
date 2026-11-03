@@ -60,3 +60,7 @@ jobs:
       - name: the selector board matches the engine
         run: |
           python3 scripts/gen_selectors.py && git diff --exit-code docs/selectors.html
+
+      - name: the README's caller-side snippet compiles
+        run: |
+          python3 scripts/check_caller_snippet.py
