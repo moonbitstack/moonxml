@@ -246,16 +246,26 @@ fn context_takes_text_raw(kind : String, context : String) -> Bool {
 ///|
 /// The cases each family is allowed to keep. A family that grows past its
 /// ceiling is a regression the family's own construct does not explain.
-fn family_ceiling(family : String) -> Int32 {
-  match family {
-    "plaintext" => 28
-    "namesake" => 8
-    "script" => 24
-    "doctype" => 1
-    "fragment" => 3
-    _ => 0
-  }
-}
+let plaintext_ceiling : Int32 = 28
+
+///|
+let namesake_ceiling : Int32 = 8
+
+///|
+let script_ceiling : Int32 = 24
+
+///|
+let doctype_ceiling : Int32 = 1
+
+///|
+let fragment_ceiling : Int32 = 3
+
+///|
+let exclusion_ceiling : Int32 = plaintext_ceiling +
+  namesake_ceiling +
+  script_ceiling +
+  doctype_ceiling +
+  fragment_ceiling
 
 ///|
 test "a written document reads back to the same text" {
@@ -302,19 +312,19 @@ test "a written document reads back to the same text" {
       failures.join("\n")
   }
   // Each family is capped at what its construct explains, counted case by case.
-  if plaintext > family_ceiling("plaintext") {
+  if plaintext > plaintext_ceiling {
     report = report + "\nplaintext: " + plaintext.to_string() + " over"
   }
-  if namesake > family_ceiling("namesake") {
+  if namesake > namesake_ceiling {
     report = report + "\nnamesake: " + namesake.to_string() + " over"
   }
-  if script > family_ceiling("script") {
+  if script > script_ceiling {
     report = report + "\nscript: " + script.to_string() + " over"
   }
-  if doctype > family_ceiling("doctype") {
+  if doctype > doctype_ceiling {
     report = report + "\ndoctype: " + doctype.to_string() + " over"
   }
-  if fragment > family_ceiling("fragment") {
+  if fragment > fragment_ceiling {
     report = report + "\nfragment: " + fragment.to_string() + " over"
   }
   assert_eq(report, "")
@@ -325,5 +335,8 @@ test "a written document reads back to the same text" {
     corpus.length(),
   )
   // The exclusion is a shrinking set, not a budget to spend.
-  assert_eq(plaintext + namesake + script + doctype + fragment <= 64, true)
+  assert_eq(
+    plaintext + namesake + script + doctype + fragment <= exclusion_ceiling,
+    true,
+  )
 }
