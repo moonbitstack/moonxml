@@ -350,6 +350,9 @@ fn content(scanner : Scan, depth : Int32) -> Unit raise @moonxml.Refused {
     if scanner.scopes.length() > 1 {
       ignore(scanner.scopes.pop())
     }
+    // The event still closes: a sink that counts depth sees a balanced stream,
+    // and `self_closing` is what tells it the syntax the source used.
+    scanner.sink.push(@event.EndTag(name~))
     return
   }
   while true {

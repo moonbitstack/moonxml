@@ -14,9 +14,10 @@ pub impl @event.Sink for Document with fn push(self, event) {
     StartTag(name~, attrs~, self_closing~) => {
       let element = Element::new(name, attrs=attrs.copy(), closed=self_closing)
       parent.append(ElementNode(element))
-      if !self_closing {
-        self.nesting.push(element)
-      }
+      // A self-closing tag is opened like any other and closed by the end tag
+      // that follows it, so a close of the same name never reaches past it to
+      // an ancestor of the same name.
+      self.nesting.push(element)
     }
     EndTag(name~) =>
       // The scanner checks pairing; a stray close is still not a reason to

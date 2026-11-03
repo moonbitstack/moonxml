@@ -148,6 +148,67 @@ test "the streaming read sees events without a tree" {
 }
 
 ///|
+/// A sink that keeps what it sees, for comparing the two readings.
+struct Recorder {
+  seen : Array[@event.Event]
+}
+
+///|
+impl @event.Sink for Recorder with fn push(self, event) {
+  self.seen.push(event)
+}
+
+///|
+/// One event as text, so two streams can be compared without a derived
+/// equality on `Event` that a caller would then depend on.
+fn describe(event : @event.Event) -> String {
+  match event {
+    StartTag(name~, attrs~, self_closing~) => {
+      let mut text = "start " + name
+      for pair in attrs {
+        text = text + " " + pair.0 + "=" + pair.1
+      }
+      if self_closing {
+        text = text + "/"
+      }
+      text
+    }
+    EndTag(name~) => "end " + name
+    Text(text~) => "text " + text
+    CData(text~) => "cdata " + text
+    Comment(text~) => "comment " + text
+    ProcessingInstruction(target~, data~) => "pi " + target + " " + data
+    Doctype(text~) => "doctype " + text
+  }
+}
+
+///|
+/// Reading a document twice gives one answer: what the streaming read hands a
+/// sink, and what a finished tree says about itself, are the same sequence. If
+/// they ever disagree, one of the two readings is wrong, and every caller that
+/// switched between them would be holding a different document.
+test "streaming and tree building agree" {
+  let documents = [
+    "<r/>", "<r>t</r>", "<r a=\"1\" b=\"2\"><b/></r>", "<!--c--><r><![CDATA[x < y]]></r>",
+    "<?xml version=\"1.0\"?><r><?pi data?></r>", "<r xmlns:p=\"urn:p\"><p:a p:x=\"1\"/></r>",
+    "<r><a>1</a><a>2</a></r>", "<r>a &amp; b<e></e>tail</r>",
+  ]
+  for source in documents {
+    let recorder : Recorder = { seen: [], }
+    scan(source, recorder)
+    let streamed : Array[String] = []
+    for event in recorder.seen {
+      streamed.push(describe(event))
+    }
+    let built : Array[String] = []
+    for event in loads(source).events() {
+      built.push(describe(event))
+    }
+    assert_eq(streamed, built)
+  }
+}
+
+///|
 test "bytes, the byte-order mark and fragments" {
   let doc = load(b"\xEF\xBB\xBF<a>x</a>")
   assert_eq(doc.css("a").text(), "x")
