@@ -444,7 +444,10 @@ fn char_at(text : String, at : Int32) -> Char {
 /// Text escapes `&` and `<` always; a `>` only when it would close a CDATA
 /// section that is not one — the minimal escape that keeps the text legal.
 fn escape_xml_text(text : String) -> String {
-  if !(text.contains("&") || text.contains("<") || text.contains(">")) {
+  if !(text.contains("&") ||
+    text.contains("<") ||
+    text.contains(">") ||
+    text.contains("\r")) {
     return text
   }
   let out = StringBuilder()
@@ -455,6 +458,12 @@ fn escape_xml_text(text : String) -> String {
       run = 0
     } else if ch == '<' {
       out.write_string("&lt;")
+      run = 0
+    } else if ch == '\r' {
+      // A reader turns a raw carriage return into a line feed; one that came
+      // in as a reference is still a carriage return here, and only a
+      // reference keeps it one.
+      out.write_string("&#13;")
       run = 0
     } else if ch == '>' && run >= 2 {
       out.write_string("&gt;")
@@ -468,9 +477,16 @@ fn escape_xml_text(text : String) -> String {
 }
 
 ///|
-/// Attribute values escape the quote they are written in, plus `&` and `<`.
+/// Attribute values escape the quote they are written in, plus `&` and `<`,
+/// and the three characters a reader normalises to spaces inside an attribute
+/// value (XML 1.0 §3.3.3), which survive only as references.
 fn escape_xml_attr(text : String) -> String {
-  if !(text.contains("&") || text.contains("<") || text.contains("\"")) {
+  if !(text.contains("&") ||
+    text.contains("<") ||
+    text.contains("\"") ||
+    text.contains("\t") ||
+    text.contains("\n") ||
+    text.contains("\r")) {
     return text
   }
   let out = StringBuilder()
@@ -479,6 +495,9 @@ fn escape_xml_attr(text : String) -> String {
       '&' => out.write_string("&amp;")
       '<' => out.write_string("&lt;")
       '"' => out.write_string("&quot;")
+      '\t' => out.write_string("&#9;")
+      '\n' => out.write_string("&#10;")
+      '\r' => out.write_string("&#13;")
       _ => out.write_char(ch)
     }
   }

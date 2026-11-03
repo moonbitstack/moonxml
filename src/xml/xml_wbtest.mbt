@@ -57,6 +57,29 @@ test "a well-formed document writes back byte for byte" {
 }
 
 ///|
+/// An attribute value is written so that reading it back gives the same string.
+/// XML normalises whitespace in an attribute value on the way in (1.0 §3.3.3),
+/// so a tab, a line feed or a carriage return has to be a reference, and the
+/// three characters the writer delimits with have to be escaped whatever the
+/// source used.
+test "an attribute value is written so that it reads back the same" {
+  let doc = loads("<r a=\"&lt;&amp;&quot;&#9;&#10;&#13;\"/>")
+  assert_eq(doc.css("r").attr("a"), Some("<&\"\t\n\r"))
+  assert_eq(doc.dumps(), "<r a=\"&lt;&amp;&quot;&#9;&#10;&#13;\"/>")
+  assert_eq(loads(doc.dumps()).dumps(), doc.dumps())
+}
+
+///|
+/// A character reference is not subject to line-end normalisation (1.0 §2.11),
+/// so a carriage return that came in as one is still a carriage return in the
+/// tree, and the writer has to write it as a reference again.
+test "a carriage return in text survives as a reference" {
+  let doc = loads("<r>a&#13;b</r>")
+  assert_eq(doc.css("r").text(), "a\rb")
+  assert_eq(doc.dumps(), "<r>a&#13;b</r>")
+}
+
+///|
 test "character references decode, and that is the one deviation" {
   // The DOM means them decoded; a document written with them normalizes on
   // the first write and is byte-stable from then on.
