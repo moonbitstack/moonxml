@@ -407,6 +407,32 @@ test "the namespace axis answers what is in scope" {
 }
 
 ///|
+/// A name test without prefix bindings: XPath 1.0 resolves a prefix through the
+/// context, and this engine binds none, so a test matches by its local part.
+/// A tree whose names are Clark names is still queryable by the name a reader
+/// would write.
+test "a name test matches the local part, whatever the namespace" {
+  let doc = Document::new(flavour=Xml)
+  let root = Element::new("r", attrs=[("xmlns:p", "urn:p")])
+  let qualified = Element::new("{urn:p}q")
+  qualified.set_text("x")
+  let plain = Element::new("q")
+  plain.set_text("y")
+  root.append(ElementNode(qualified))
+  root.append(ElementNode(plain))
+  doc.root.append(ElementNode(root))
+  assert_eq(doc.xpath("//q").length(), 2)
+  assert_eq(doc.xpath("//q").items[0].text(), "x")
+  assert_eq(doc.xpath("//q").items[1].text(), "y")
+  // A prefixed test behaves the same way: the prefix has no binding to resolve
+  // against, so the local part is what is compared.
+  assert_eq(doc.xpath("//p:q").length(), 2)
+  // The local name is not the whole name, so a test for the element the source
+  // spelt `r` still finds it.
+  assert_eq(doc.xpath("//r").length(), 1)
+}
+
+///|
 test "numbers follow IEEE 754 where the sign is observable" {
   let doc = library()
   assert_eq(doc.xpath_value("1 div -0").is_num(-1.0 / 0.0), true)
