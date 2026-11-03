@@ -323,6 +323,34 @@ test "a broken expression names the fault" {
 }
 
 ///|
+/// XPath 1.0 §4 gives every core function an argument count; a call that
+/// disagrees with it is an error. Reading past the argument list would answer a
+/// default instead, and `count()` would quietly be `0`.
+test "a call with the wrong number of arguments is refused" {
+  let doc = library()
+  let wrong : Array[String] = [
+    "count()", "count(//book, //book)", "position(1)", "last(1)", "substring(\"a\")",
+    "substring(\"a\", 1, 2, 3)", "concat(\"a\")", "starts-with(\"a\")", "translate(\"a\", \"b\")",
+    "boolean()", "not(1, 2)", "lang()", "floor()", "name(1, 2)",
+  ]
+  for query in wrong {
+    let failed = try {
+      ignore(doc.xpath_value(query))
+      false
+    } catch {
+      Refused::BadQuery(..) => true
+      _ => false
+    }
+    assert_eq(failed, true)
+  }
+  // The counts that are right still answer.
+  assert_eq(doc.xpath_value("count(//book)").to_string(), "2")
+  assert_eq(doc.xpath_value("substring(\"abc\", 2)").to_string(), "bc")
+  assert_eq(doc.xpath_value("concat(\"a\", \"b\", \"c\")").to_string(), "abc")
+  assert_eq(doc.xpath_value("normalize-space()").to_string() != "", true)
+}
+
+///|
 test "two text nodes with the same characters are still two nodes" {
   let doc = Document::new(flavour=Xml)
   let root = Element::new("root")

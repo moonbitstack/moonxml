@@ -832,6 +832,55 @@ fn is_node_type(name : String) -> Bool {
 }
 
 ///|
+/// The argument counts XPath 1.0 §4 gives each core function, checked where the
+/// call is parsed: a call with the wrong number of arguments is an error, not a
+/// call that reads past its own list and answers a default.
+fn check_arity(name : String, args : Array[Expr]) -> Unit raise Refused {
+  // `most` of -1 means the function takes any number from `least` on.
+  let (least, most) = match name {
+    "last" | "position" | "true" | "false" => (0, 0)
+    "local-name"
+    | "namespace-uri"
+    | "space-uri"
+    | "name"
+    | "string"
+    | "string-length"
+    | "normalize-space"
+    | "number" => (0, 1)
+    "count"
+    | "id"
+    | "boolean"
+    | "not"
+    | "lang"
+    | "sum"
+    | "floor"
+    | "ceiling"
+    | "round" => (1, 1)
+    "starts-with" | "contains" | "substring-before" | "substring-after" =>
+      (2, 2)
+    "translate" => (3, 3)
+    "substring" => (2, 3)
+    "concat" => (2, -1)
+    // A function this library does not carry is refused by name, further in.
+    _ => return
+  }
+  let given = args.length()
+  if given < least || (most >= 0 && given > most) {
+    let want = if least == most {
+      "\{least}"
+    } else if most < 0 {
+      "at least \{least}"
+    } else {
+      "\{least} to \{most}"
+    }
+    raise BadQuery(
+      at=0,
+      why="\{name}() takes \{want} argument(s), not \{given}",
+    )
+  }
+}
+
+///|
 fn parse_primary(p : Parser) -> Expr raise Refused {
   match p.peek() {
     Var(name) => {
@@ -865,6 +914,7 @@ fn parse_primary(p : Parser) -> Expr raise Refused {
           }
         }
         expect_rparen(p)
+        check_arity(name, args)
         Call(name~, args~)
       } else {
         raise BadQuery(at=0, why="a bare name is not an expression: \{name}")
