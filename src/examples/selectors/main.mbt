@@ -168,6 +168,20 @@ fn pseudo(
     "li:nth-last-child(1)",
     page.css("li:nth-last-child(1)"),
   )
+  row(
+    article,
+    g,
+    "css",
+    "li:nth-child(2 of .item)",
+    page.css("li:nth-child(2 of .item)"),
+  )
+  row(
+    article,
+    g,
+    "css",
+    "li:nth-last-child(1 of [data-kind=\"leaf\"])",
+    page.css("li:nth-last-child(1 of [data-kind=\"leaf\"])"),
+  )
   row(article, g, "css", "td:nth-of-type(2)", page.css("td:nth-of-type(2)"))
   row(article, g, "css", "p:first-of-type", page.css("p:first-of-type"))
   row(article, g, "css", "td:last-of-type", page.css("td:last-of-type"))

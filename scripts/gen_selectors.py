@@ -39,9 +39,11 @@ GROUPS = [
         "pseudo",
         "04",
         "Pseudo-classes",
-        "The ones a document can settle: position among siblings, the "
-        "functionals — <code>:not</code>, <code>:is</code>, <code>:where</code>, "
-        "<code>:has</code> — and the form states. <code>:hover</code> and "
+        "The ones a document can settle: position among siblings — including "
+        "<code>:nth-child(An+B of S)</code>, which counts only the siblings a "
+        "selector list accepts — the functionals — <code>:not</code>, "
+        "<code>:is</code>, <code>:where</code>, <code>:has</code> — and the form "
+        "states. <code>:hover</code> and "
         "<code>:visited</code> are not here because they need a browser, and "
         "the engine refuses them by name rather than answering wrongly.",
     ),

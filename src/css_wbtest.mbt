@@ -138,6 +138,71 @@ test "structural pseudo-classes" {
 }
 
 ///|
+/// A list whose items differ by class and by text, for the pseudo-classes that
+/// count siblings: `a` and `c` and `d` carry `.x`, `b` and `e` do not.
+fn counting_list() -> Document {
+  let doc = Document::new(flavour=Html)
+  let html = Element::new("html")
+  let body = Element::new("body")
+  let list = Element::new("ul")
+  for item in [("a", "x"), ("b", ""), ("c", "x"), ("d", "x"), ("e", "")] {
+    let li = Element::new(
+      "li",
+      attrs=if item.1 == "" { [] } else { [("class", item.1)] },
+    )
+    li.set_text(item.0)
+    list.append(ElementNode(li))
+  }
+  doc.root.append(ElementNode(html))
+  html.append(ElementNode(body))
+  body.append(ElementNode(list))
+  doc
+}
+
+///|
+fn item_texts(doc : Document, query : String) -> Array[String] raise Refused {
+  let out : Array[String] = []
+  for node in doc.css(query).items {
+    out.push(node.text())
+  }
+  out
+}
+
+///|
+/// `of S` narrows the siblings a positional pseudo-class counts, from the side
+/// the pseudo-class names; an element the list refuses is never a position.
+test "a positional pseudo-class counts only the siblings its of-filter takes" {
+  let doc = counting_list()
+  assert_eq(item_texts(doc, "li:nth-child(1 of .x)"), ["a"])
+  assert_eq(item_texts(doc, "li:nth-child(2 of .x)"), ["c"])
+  assert_eq(item_texts(doc, "li:nth-child(3 of .x)"), ["d"])
+  assert_eq(item_texts(doc, "li:nth-child(4 of .x)"), [])
+  assert_eq(item_texts(doc, "li:nth-last-child(1 of .x)"), ["d"])
+  assert_eq(item_texts(doc, "li:nth-last-child(3 of .x)"), ["a"])
+  assert_eq(item_texts(doc, "li:nth-child(odd of .x)"), ["a", "d"])
+  assert_eq(item_texts(doc, "li:nth-child(2n of .x)"), ["c"])
+  assert_eq(item_texts(doc, "li:nth-child(n+2 of .x)"), ["c", "d"])
+  // Without the filter every sibling counts.
+  assert_eq(item_texts(doc, "li:nth-child(2)"), ["b"])
+  assert_eq(item_texts(doc, "li:nth-child(2 of li)"), ["b"])
+  // An item the filter leaves out has no position, whatever the formula says.
+  assert_eq(item_texts(doc, "li:nth-child(2 of .x):not(.x)"), [])
+  // The filter is a selector list, and its own parentheses are not the
+  // argument's.
+  assert_eq(item_texts(doc, "li:nth-child(2 of :is(.x, .y))"), ["c"])
+  assert_eq(item_texts(doc, "li:nth-child(1 of .x, .y)"), ["a"])
+  // `of` belongs to the child formula only.
+  let refused = try {
+    ignore(doc.css("li:nth-of-type(1 of .x)"))
+    false
+  } catch {
+    Refused::BadQuery(..) => true
+    _ => false
+  }
+  assert_eq(refused, true)
+}
+
+///|
 test "the logical pseudo-classes" {
   let doc = page()
   assert_eq(hits(doc, "li:not(.first)"), ["li", "li"])
@@ -195,7 +260,9 @@ test "a malformed selector names the fault" {
 test "a function that is never closed is refused" {
   let doc = page()
   for
-    query in ["p:has(+ p", "p:not(", "li:nth-child(2", "p:has(> ", ":is(.item"] {
+    query in [
+      "p:has(+ p", "p:not(", "li:nth-child(2", "p:has(> ", ":is(.item", "li:nth-child(2 of .item",
+    ] {
     let failed = try {
       ignore(doc.css(query))
       false

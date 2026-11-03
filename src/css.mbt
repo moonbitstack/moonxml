@@ -75,8 +75,8 @@ priv enum Pseudo {
   FirstChild
   LastChild
   OnlyChild
-  NthChild(AnPlusB)
-  NthLastChild(AnPlusB)
+  NthChild(AnPlusB, Array[Complex])
+  NthLastChild(AnPlusB, Array[Complex])
   FirstOfType
   LastOfType
   NthOfType(AnPlusB)
@@ -637,8 +637,14 @@ fn parse_functional(
   at : Int32,
 ) -> Pseudo raise Refused {
   match name {
-    "nth-child" => NthChild(parse_an_plus_b(arg, at))
-    "nth-last-child" => NthLastChild(parse_an_plus_b(arg, at))
+    "nth-child" => {
+      let (anb, of) = parse_nth(arg, at)
+      NthChild(anb, of)
+    }
+    "nth-last-child" => {
+      let (anb, of) = parse_nth(arg, at)
+      NthLastChild(anb, of)
+    }
     "nth-of-type" => NthOfType(parse_an_plus_b(arg, at))
     "nth-last-of-type" => NthLastOfType(parse_an_plus_b(arg, at))
     "lang" => Lang(arg.trim().to_owned())
@@ -665,6 +671,89 @@ fn parse_inner(arg : String, at : Int32) -> Array[Complex] raise Refused {
     raise BadQuery(at~, why="a logical pseudo-class needs a selector")
   }
   out
+}
+
+///|
+/// The argument of `:nth-child()`, which may carry a selector list after `of`:
+/// the siblings the formula counts are the ones that list accepts.
+fn parse_nth(
+  text : String,
+  at : Int32,
+) -> (AnPlusB, Array[Complex]) raise Refused {
+  match split_of(text) {
+    Some(parts) => (parse_an_plus_b(parts.0, at), parse_inner(parts.1, at))
+    None => (parse_an_plus_b(text, at), [])
+  }
+}
+
+///|
+/// Split an `An+B of S` argument at the `of` that stands as a word of its own
+/// outside brackets and quotes. Everything before it is the formula, everything
+/// after it the selector list.
+fn split_of(text : String) -> (String, String)? {
+  let n = text.length()
+  let mut depth = 0
+  let mut quote : UInt16 = 0
+  let mut i = 0
+  while i < n {
+    let ch = text.at(i)
+    if quote != 0 {
+      if ch == quote {
+        quote = 0
+      }
+    } else if ch == 0x22 || ch == 0x27 {
+      quote = ch
+    } else if ch == 0x28 || ch == 0x5B {
+      depth = depth + 1
+    } else if ch == 0x29 || ch == 0x5D {
+      depth = depth - 1
+    } else if depth == 0 &&
+      (ch == 0x6F || ch == 0x4F) &&
+      i + 1 < n &&
+      (text.at(i + 1) == 0x66 || text.at(i + 1) == 0x46) &&
+      i > 0 &&
+      is_css_space(text.at(i - 1)) &&
+      (i + 2 == n || is_css_space(text.at(i + 2))) {
+      return Some((text[0:i].to_owned(), text[i + 2:n].trim().to_owned()))
+    }
+    i = i + 1
+  }
+  None
+}
+
+///|
+fn is_css_space(ch : UInt16) -> Bool {
+  ch == 0x20 || ch == 0x09 || ch == 0x0A || ch == 0x0C || ch == 0x0D
+}
+
+///|
+/// Whether `element` holds the position `anb` names among its siblings once
+/// `of` has filtered them. Both ends of the list are counted from the side the
+/// pseudo-class names, and an element the list refuses is never a position.
+fn position_matches(
+  anb : AnPlusB,
+  of : Array[Complex],
+  siblings : Array[Element],
+  element : Element,
+  namespaces : NamespaceMap,
+  from_end~ : Bool,
+) -> Bool {
+  let mut counted = 0
+  let mut at = 0
+  for k = 0; k < siblings.length(); k = k + 1 {
+    let sibling = if from_end {
+      siblings[siblings.length() - 1 - k]
+    } else {
+      siblings[k]
+    }
+    if of.is_empty() || complex_list_matches(of, sibling, namespaces) {
+      counted = counted + 1
+      if physical_equal(sibling, element) {
+        at = counted
+      }
+    }
+  }
+  at > 0 && an_plus_b_holds(anb, at)
 }
 
 ///|
@@ -1051,34 +1140,30 @@ fn pseudo_matches(
     OnlyChild =>
       element.previous_element_sibling() is None &&
       element.next_element_sibling() is None
-    NthChild(anb) =>
+    NthChild(anb, of) =>
       match element.parent {
-        Some(parent) => {
-          let siblings = parent.child_elements()
-          let mut at = 0
-          for k = 0; k < siblings.length(); k = k + 1 {
-            if physical_equal(siblings[k], element) {
-              at = k + 1
-              break
-            }
-          }
-          at > 0 && an_plus_b_holds(anb, at)
-        }
+        Some(parent) =>
+          position_matches(
+            anb,
+            of,
+            parent.child_elements(),
+            element,
+            namespaces,
+            from_end=false,
+          )
         None => false
       }
-    NthLastChild(anb) =>
+    NthLastChild(anb, of) =>
       match element.parent {
-        Some(parent) => {
-          let siblings = parent.child_elements()
-          let mut at = 0
-          for k = siblings.length() - 1; k >= 0; k = k - 1 {
-            if physical_equal(siblings[k], element) {
-              at = siblings.length() - k
-              break
-            }
-          }
-          at > 0 && an_plus_b_holds(anb, at)
-        }
+        Some(parent) =>
+          position_matches(
+            anb,
+            of,
+            parent.child_elements(),
+            element,
+            namespaces,
+            from_end=true,
+          )
         None => false
       }
     FirstOfType => of_type_position(element, from_end=false) == 1

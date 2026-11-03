@@ -31,7 +31,7 @@
     <h1>Every selector, run<br>against one <em>document</em>.</h1>
     <p class="lede">These tables are not examples of what the engines should answer — they are what they answered. Each row is a query, the number of nodes it returned, and those nodes, printed by a program that ran against the document in the box below.</p>
     <div class="colophon-line">
-      <span><b>88 rows</b></span><span class="sep">·</span>
+      <span><b>90 rows</b></span><span class="sep">·</span>
       <span>CSS Selectors</span><span class="sep">·</span>
       <span>XPath 1.0</span><span class="sep">·</span>
       <span>the chain</span>
@@ -55,7 +55,7 @@
       </div>
     </div>
     <div class="demo-box">
-      <div class="demo-cap"><span>the article, rendered</span><span>42 elements · 88 queries below</span></div>
+      <div class="demo-cap"><span>the article, rendered</span><span>42 elements · 90 queries below</span></div>
       <article id="shop" class="catalogue" data-region="eu">
         <header id="masthead" class="masthead">
           <h1>Field Notes</h1>
@@ -183,7 +183,7 @@
   </section>
   <section>
     <div class="sec-head"><span class="sec-num">04</span><h2>Pseudo-classes</h2></div>
-    <p class="sub">The ones a document can settle: position among siblings, the functionals — <code>:not</code>, <code>:is</code>, <code>:where</code>, <code>:has</code> — and the form states. <code>:hover</code> and <code>:visited</code> are not here because they need a browser, and the engine refuses them by name rather than answering wrongly.</p>
+    <p class="sub">The ones a document can settle: position among siblings — including <code>:nth-child(An+B of S)</code>, which counts only the siblings a selector list accepts — the functionals — <code>:not</code>, <code>:is</code>, <code>:where</code>, <code>:has</code> — and the form states. <code>:hover</code> and <code>:visited</code> are not here because they need a browser, and the engine refuses them by name rather than answering wrongly.</p>
 <table class="demos">
 <thead><tr><th>Query</th><th>Nodes</th><th>Answer</th></tr></thead>
 <tbody>
@@ -193,6 +193,8 @@
 <tr data-hit="1/0 1/2 1/4" tabindex="0"><td><code>li:nth-child(odd)</code></td><td class="n">3</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Sencha&quot; · li.item &quot;House&quot;</td></tr>
 <tr data-hit="1/0 1/3" tabindex="0"><td><code>li:nth-child(3n+1)</code></td><td class="n">2</td><td>li.item &quot;Yirgacheffe&quot; · li.item &quot;Assam&quot;</td></tr>
 <tr data-hit="1/4" tabindex="0"><td><code>li:nth-last-child(1)</code></td><td class="n">1</td><td>li.item &quot;House&quot;</td></tr>
+<tr data-hit="1/1" tabindex="0"><td><code>li:nth-child(2 of .item)</code></td><td class="n">1</td><td>li.item &quot;Huila&quot;</td></tr>
+<tr data-hit="1/3" tabindex="0"><td><code>li:nth-last-child(1 of [data-kind=&quot;leaf&quot;])</code></td><td class="n">1</td><td>li.item &quot;Assam&quot;</td></tr>
 <tr data-hit="3/2/0/1 3/2/1/1" tabindex="0"><td><code>td:nth-of-type(2)</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
 <tr data-hit="0/1 4 5/1" tabindex="0"><td><code>p:first-of-type</code></td><td class="n">3</td><td>p.dek · p.note · p &quot;One shipment a week.&quot;</td></tr>
 <tr data-hit="3/2/0/1 3/2/1/1" tabindex="0"><td><code>td:last-of-type</code></td><td class="n">2</td><td>td &quot;22&quot; · td &quot;9&quot;</td></tr>
