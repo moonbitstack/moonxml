@@ -459,6 +459,19 @@ test "an unclosed template at the end of a document still holds its content" {
 }
 
 ///|
+/// WHATWG's escaping, character by character: `&`, `<`, `>` and the no-break
+/// space in text, and `&`, `"` and the no-break space in an attribute value.
+/// Everything else is written as it stands.
+test "the writer escapes exactly the characters the serialiser names" {
+  let page = loads(
+    "<p title='a&quot;b&amp;c'>a &amp; b &lt; c &gt; d\u{A0}e</p>",
+  )
+  assert_eq(page.css("p").html(), "a &amp; b &lt; c &gt; d&nbsp;e")
+  assert_eq(page.css("p").attr("title"), Some("a\"b&c"))
+  assert_eq(page.dumps_html().contains("<p title=\"a&quot;b&amp;c\">"), true)
+}
+
+///|
 test "pre drops one leading newline, and the writer puts it back" {
   let doc = loads("<pre>\nfoo</pre>")
   assert_eq(doc.css("pre").text(), "foo")
