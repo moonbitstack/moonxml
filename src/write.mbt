@@ -355,16 +355,19 @@ fn quoted_parts(text : String) -> (String, String)? {
 }
 
 ///|
-/// The elements HTML leaves open on purpose. SVG's handful rides along as
-/// foreign content, which the writer knows by the `{` on the name.
+/// The elements HTML leaves open on purpose, the list WHATWG's serialisation
+/// gives (§13.3): the end tag is never written for them. SVG's handful rides
+/// along as foreign content, which the writer knows by the `{` on the name.
 fn is_void_element(tag : String) -> Bool {
   match tag {
     "area"
     | "base"
+    | "basefont"
+    | "bgsound"
     | "br"
     | "col"
-    | "command"
     | "embed"
+    | "frame"
     | "hr"
     | "img"
     | "input"
