@@ -310,9 +310,17 @@ fn parse_compound(
       let (name, next) = read_name(text, i)
       i = next
       if i < n && text.at(i) == 0x28 {
-        let (arg, after) = read_parens(text, i)
-        compound.pseudos.push(parse_functional(name, arg, start))
-        i = after
+        match read_parens(text, i) {
+          Some(parts) => {
+            compound.pseudos.push(parse_functional(name, parts.0, start))
+            i = parts.1
+          }
+          None =>
+            raise BadQuery(
+              at=start,
+              why="the pseudo-class :\{name}( is never closed",
+            )
+        }
       } else {
         compound.pseudos.push(parse_simple(name, start))
       }
@@ -551,8 +559,10 @@ fn find_close(text : String, from : Int32) -> Int32? {
 }
 
 ///|
-/// The text between balanced parentheses starting at the `(`.
-fn read_parens(text : String, from : Int32) -> (String, Int32) {
+/// The text between balanced parentheses starting at the `(`, and where the
+/// `)` after it ends. A function that is never closed has no argument to read,
+/// so the selector is refused rather than read to the end of the query.
+fn read_parens(text : String, from : Int32) -> (String, Int32)? {
   let n = text.length()
   let mut depth = 0
   let mut i = from
@@ -567,7 +577,7 @@ fn read_parens(text : String, from : Int32) -> (String, Int32) {
     } else if unit == 0x29 {
       depth = depth - 1
       if depth == 0 {
-        return (out.to_string(), i + 1)
+        return Some((out.to_string(), i + 1))
       }
       out.write_char(u16_char(unit))
     } else {
@@ -575,7 +585,7 @@ fn read_parens(text : String, from : Int32) -> (String, Int32) {
     }
     i = i + 1
   }
-  (out.to_string(), n)
+  None
 }
 
 ///|

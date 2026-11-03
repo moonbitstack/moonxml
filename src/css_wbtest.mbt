@@ -189,6 +189,25 @@ test "a malformed selector names the fault" {
 }
 
 ///|
+/// A function whose `)` never arrives has no argument: the selector is refused
+/// rather than read as if the query ended at the parenthesis. `:has()` is the
+/// one that can be fooled, because a relative selector after `(` is legal.
+test "a function that is never closed is refused" {
+  let doc = page()
+  for
+    query in ["p:has(+ p", "p:not(", "li:nth-child(2", "p:has(> ", ":is(.item"] {
+    let failed = try {
+      ignore(doc.css(query))
+      false
+    } catch {
+      Refused::BadQuery(..) => true
+      _ => false
+    }
+    assert_eq(failed, true)
+  }
+}
+
+///|
 test "the context is never a candidate" {
   let doc = page()
   let ul = doc.css("#nav").items[0]
