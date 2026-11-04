@@ -48,10 +48,11 @@ pub(all) struct ProcessingInstruction {
 
 ///|
 /// How a document was read, and therefore how it writes itself back.
+#derive(Eq, Debug)
 pub(all) enum Flavour {
   Xml
   Html
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Flavour with Eq::{equal, not_equal}

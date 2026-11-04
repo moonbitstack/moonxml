@@ -4,6 +4,7 @@
 ///|
 /// Why a document could not be read, or a query could not be run. One family
 /// for the whole library, so there is one thing to catch.
+#derive(Eq, Debug)
 pub(all) suberror Refused {
   /// The input is not well-formed where it must be: `at` is the offset in the
   /// input, counted in UTF-16 code units as `String::length` counts them.
@@ -19,7 +20,7 @@ pub(all) suberror Refused {
   /// The input went past a configured bound: `got` against `limit`, noticed at
   /// offset `at`.
   Exceeded(at~ : Int32, limit~ : Int32, got~ : Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Refused with Eq::{equal, not_equal}

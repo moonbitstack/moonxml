@@ -22,13 +22,14 @@ pub let namespace_map : NamespaceMap
 pub fn namespace_of(String) -> String?
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror Refused {
   Malformed(at~ : Int32, why~ : String)
   BadQuery(at~ : Int32, why~ : String)
   UnknownSelector(name~ : String)
   Unsupported(what~ : String)
   Exceeded(at~ : Int32, limit~ : Int32, got~ : Int32)
-} derive(Eq, @debug.Debug)
+}
 pub fn Refused::equal(Self, Self) -> Bool
 pub fn Refused::not_equal(Self, Self) -> Bool
 pub fn Refused::output(Self, &Logger) -> Unit
@@ -134,10 +135,11 @@ pub fn Element::wrap(Self, String) -> Self?
 pub fn Element::xpath(Self, String) -> Selection raise Refused
 pub fn Element::xpath_value(Self, String) -> XPathValue raise Refused
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Flavour {
   Xml
   Html
-} derive(Eq, @debug.Debug)
+}
 pub fn Flavour::equal(Self, Self) -> Bool
 pub fn Flavour::not_equal(Self, Self) -> Bool
 pub fn Flavour::output(Self, &Logger) -> Unit
