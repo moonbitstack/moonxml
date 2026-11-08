@@ -103,11 +103,9 @@ page.<span class="f">dumps</span>()</pre>
 <pre><span class="n">1</span>page.<span class="f">xpath</span>(<span class="s">"//table"</span>)        <span class="cm">  1 · xpath</span>
 <span class="n">2</span>    .<span class="f">css</span>(<span class="s">"tr:nth-child(2)"</span>)  <span class="cm">  2 · css</span>
 <span class="n">3</span>    .<span class="f">selector</span>(<span class="s">"mine"</span>, <span class="s">""</span>)      <span class="cm">  3 · a selector you registered</span>
-<span class="n">4</span>    .<span class="f">custom</span>(<span class="f">@moonxml.SelectorFn</span>::new(by_price))
-<span class="n">5</span>    .<span class="f">items</span>[<span class="s">0</span>]                <span class="cm">  5 · a node, not a selection</span>
-<span class="n">6</span>    .<span class="f">children</span>()[<span class="s">1</span>]           <span class="cm">  6 · walk down, one node</span>
-<span class="n">7</span>    .<span class="f">css</span>(<span class="s">"span"</span>)             <span class="cm">  7 · and query again</span>
-<span class="n">8</span>    .<span class="f">add_class</span>(<span class="s">"picked"</span>)      <span class="cm">  8 · edit in place</span></pre>
+<span class="n">4</span>    .<span class="f">items</span>[<span class="s">0</span>]                <span class="cm">  4 · a node, not a selection</span>
+<span class="n">5</span>    .<span class="f">css</span>(<span class="s">"span"</span>)             <span class="cm">  5 · and query again</span>
+<span class="n">6</span>    .<span class="f">set_text</span>(<span class="s">"done"</span>)         <span class="cm">  6 · edit in place</span></pre>
         <p class="sub" style="margin-top:24px">Every selector this engine implements, run against one document — the query, the nodes it answered, and the text or attribute taken out of them: <a href="selectors.html">the selector board</a>.</p>
         <div class="cols three">
           <div class="feature">
@@ -209,14 +207,18 @@ page.<span class="f">dumps</span>()</pre>
         <p class="filename">listing v — one submit, described and answered</p>
 <pre><span class="k">let</span> page = <span class="f">@html.loads</span>(
   <span class="s">"&lt;form hx-post='/todos' hx-target='#list' hx-swap='beforeend'&gt;"</span> +
-  <span class="s">"&lt;input name='title' value='write it down'&gt;&lt;/form&gt;&lt;ul id='list'&gt;&lt;/ul&gt;"</span>)
+  <span class="s">"&lt;input name='title' value='write it down'&gt;&lt;button&gt;Add&lt;/button&gt;&lt;/form&gt;"</span> +
+  <span class="s">"&lt;ul id='list'&gt;&lt;/ul&gt;"</span>)
 
-<span class="k">let</span> request = <span class="f">@htmx.Hx::of</span>(page.<span class="f">css</span>(<span class="s">"form"</span>).<span class="f">items</span>[<span class="s">0</span>])
-  .<span class="f">request</span>(<span class="s">"submit"</span>).<span class="f">unwrap</span>()
+<span class="k">let</span> form = <span class="k">match</span> page.<span class="f">css</span>(<span class="s">"form"</span>).<span class="f">items</span>[<span class="s">0</span>] {
+  <span class="f">ElementNode</span>(element) =&gt; element
+  _ =&gt; <span class="f">abort</span>(<span class="s">"no form"</span>)
+}
+<span class="k">let</span> request = <span class="f">@htmx.Hx::of</span>(form).<span class="f">request</span>(<span class="s">"submit"</span>).<span class="f">unwrap</span>()
 
 request.<span class="f">address</span>()   <span class="cm">  "/todos" — a post keeps its values out of the URL</span>
 request.<span class="f">query</span>()     <span class="cm">  "title=write+it+down"</span>
-request.<span class="f">headers</span>()   <span class="cm">  HX-Request, HX-Target, HX-Trigger</span>
+request.<span class="f">headers</span>()   <span class="cm">  HX-Request, HX-Target</span>
 
 <span class="k">ignore</span>(request.<span class="f">answer</span>(<span class="s">"&lt;li&gt;a second one&lt;/li&gt;"</span>))</pre>
         <div class="cols three">
