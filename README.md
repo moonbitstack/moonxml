@@ -264,6 +264,29 @@ inherit down the tree, and `hx-disinherit` and `unset` stop them, as htmx does.
 What it does not do is the two things a library cannot: send the request, and
 wait for the answer. It describes the first and applies the second.
 
+## Conformance
+
+Every case of the suites below is replayed and compared against what its source
+published, whole, rather than against whether it ran:
+
+| Suite | Cases | Result |
+|:--|--:|:--|
+| html5lib tree construction | 1792 | all, `scripting` off and on as each case asks |
+| html5lib tokenizer | 7017 | all |
+| W3C XML conformance suite | 1154 | all: every document it calls well-formed reads, every other is refused |
+| libxml2's XPath 1.0 corpus | 326 | 324 agree; the two below answer as XPath 1.0 asks |
+| W3C CSS3 Selectors test suite | 99 files | all |
+
+Two XPath cases part ways on purpose. `string(12345678901234567890)` and its
+negation: libxml2 prints a number that large in exponent form, and XPath 1.0
+wants the decimal form, which is what this library answers.
+
+A tree built from any of the 1792 documents is written back and read again, and
+what the writer emits has to read as the same tree. The trees a writer cannot
+express are counted by the construct that makes them unwritable, and each family
+has a ceiling: one more case in a family than the ceiling allows fails rather
+than hides.
+
 ## Examples
 
 | | |
