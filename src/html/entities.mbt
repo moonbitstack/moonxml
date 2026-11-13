@@ -6,9 +6,17 @@
 /// in the table the standard keeps, generated into `entities_table.mbt`.
 ///
 /// A name that may be written without its semicolon is in the table twice, so
-/// `named_reference("amp")` and `named_reference("amp;")` answer the same `&`.
+/// `@html.named_reference("amp")` and `@html.named_reference("amp;")` answer the same `&`.
 /// An unknown name answers `None`, which is the tokenizer's cue to leave the
 /// text as it stands.
+///
+/// ```mbt check
+/// test {
+///   assert_eq(@html.named_reference("amp"), Some("&"))
+///   assert_eq(@html.named_reference("amp;"), Some("&"))
+///   assert_eq(@html.named_reference("not-a-reference"), None)
+/// }
+/// ```
 pub fn named_reference(name : String) -> String? {
   let mut low = 0
   let mut high = named_table.length() - 1

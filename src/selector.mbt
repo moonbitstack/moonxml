@@ -49,6 +49,8 @@ pub fn SelectorFn::new(
 }
 
 ///|
+/// Run the closure on the current selection. Registering the function gives
+/// the chain one more link, callable by name like a built-in engine.
 pub impl Selector for SelectorFn with fn select(
   self,
   ctx : Selection,

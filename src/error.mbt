@@ -63,6 +63,13 @@ pub fn Repairs::new() -> Repairs {
 
 ///|
 /// Every repair the parser made, added up.
+///
+/// ```mbt check
+/// test {
+///   let repairs = @moonxml.Repairs::new()
+///   assert_eq(repairs.total(), 0)
+/// }
+/// ```
 pub fn Repairs::total(self : Repairs) -> Int32 {
   self.implied + self.dropped + self.reparented + self.closed_at_eof
 }

@@ -26,11 +26,11 @@
 </header>
 
 <main class="wrap" style="padding-top:44px">
-  <p class="eyebrow">201 public items</p>
+  <p class="eyebrow">216 public items</p>
   <h1 style="font-size:clamp(32px,4vw,44px);margin-bottom:10px">The API</h1>
   <p class="sub">Generated from each package's interface file, so it cannot describe something the code does not have — or miss something it does.</p>
   <div class="colophon-line">
-    <span><b>four packages</b></span><span class="sep">·</span>
+    <span><b>5 packages</b></span><span class="sep">·</span>
     <span>every public item</span><span class="sep">·</span>
     <span>generated, not typed</span>
   </div>
@@ -48,7 +48,12 @@
 <a href="#moonxml-namespace-map">namespace_map</a>
 <a href="#moonxml-namespace-of">namespace_of</a>
 <a href="#moonxml-refused">Refused</a>
-<a href="#moonxml-pub-impl-show-for-refused">pub impl Show for Refused</a>
+<a href="#moonxml-refused-equal">Refused::equal</a>
+<a href="#moonxml-refused-not-equal">Refused::not_equal</a>
+<a href="#moonxml-refused-output">Refused::output</a>
+<a href="#moonxml-refused-to-repr">Refused::to_repr</a>
+<a href="#moonxml-refused-to-string">Refused::to_string</a>
+<a href="#moonxml-refused-show">Refused::Show</a>
 <a href="#moonxml-attribute">Attribute</a>
 <a href="#moonxml-document">Document</a>
 <a href="#moonxml-document-append">Document::append</a>
@@ -71,6 +76,7 @@
 <a href="#moonxml-document-html">Document::html</a>
 <a href="#moonxml-document-new">Document::new</a>
 <a href="#moonxml-document-prepend">Document::prepend</a>
+<a href="#moonxml-document-push">Document::push</a>
 <a href="#moonxml-document-register">Document::register</a>
 <a href="#moonxml-document-repairs">Document::repairs</a>
 <a href="#moonxml-document-scripting">Document::scripting</a>
@@ -82,7 +88,7 @@
 <a href="#moonxml-document-unresolved">Document::unresolved</a>
 <a href="#moonxml-document-xpath">Document::xpath</a>
 <a href="#moonxml-document-xpath-value">Document::xpath_value</a>
-<a href="#moonxml-pub-impl-event-sink-for-document">pub impl @event.Sink for Document</a>
+<a href="#moonxml-document-sink">Document::Sink</a>
 <a href="#moonxml-element">Element</a>
 <a href="#moonxml-element-add-class">Element::add_class</a>
 <a href="#moonxml-element-append">Element::append</a>
@@ -129,7 +135,12 @@
 <a href="#moonxml-element-xpath">Element::xpath</a>
 <a href="#moonxml-element-xpath-value">Element::xpath_value</a>
 <a href="#moonxml-flavour">Flavour</a>
-<a href="#moonxml-pub-impl-show-for-flavour">pub impl Show for Flavour</a>
+<a href="#moonxml-flavour-equal">Flavour::equal</a>
+<a href="#moonxml-flavour-not-equal">Flavour::not_equal</a>
+<a href="#moonxml-flavour-output">Flavour::output</a>
+<a href="#moonxml-flavour-to-repr">Flavour::to_repr</a>
+<a href="#moonxml-flavour-to-string">Flavour::to_string</a>
+<a href="#moonxml-flavour-show">Flavour::Show</a>
 <a href="#moonxml-namespace">Namespace</a>
 <a href="#moonxml-namespacemap">NamespaceMap</a>
 <a href="#moonxml-node">Node</a>
@@ -194,9 +205,12 @@
 <a href="#moonxml-selection-xpath-value">Selection::xpath_value</a>
 <a href="#moonxml-selectorfn">SelectorFn</a>
 <a href="#moonxml-selectorfn-new">SelectorFn::new</a>
-<a href="#moonxml-pub-impl-selector-for-selectorfn">pub impl Selector for SelectorFn</a>
+<a href="#moonxml-selectorfn-select">SelectorFn::select</a>
+<a href="#moonxml-selectorfn-selector">SelectorFn::Selector</a>
 <a href="#moonxml-xpathvalue">XPathValue</a>
-<a href="#moonxml-pub-impl-show-for-xpathvalue">pub impl Show for XPathValue</a>
+<a href="#moonxml-xpathvalue-output">XPathValue::output</a>
+<a href="#moonxml-xpathvalue-to-string">XPathValue::to_string</a>
+<a href="#moonxml-xpathvalue-show">XPathValue::Show</a>
 <a href="#moonxml-selector">Selector</a>
 <h4><a href="#moonxml-html">html</a></h4>
 <a href="#moonxml-html-load">load</a>
@@ -225,6 +239,7 @@
 <a href="#moonxml-htmx-hx-of">Hx::of</a>
 <a href="#moonxml-htmx-hx-push-url">Hx::push_url</a>
 <a href="#moonxml-htmx-hx-request">Hx::request</a>
+<a href="#moonxml-htmx-hx-select">Hx::select</a>
 <a href="#moonxml-htmx-hx-target">Hx::target</a>
 <a href="#moonxml-htmx-hx-triggers">Hx::triggers</a>
 <a href="#moonxml-htmx-hx-url">Hx::url</a>
@@ -252,7 +267,7 @@
 <div class="sec-head"><h2>moonxml</h2></div>
 <p class="sub">The tree, the chain, and the two engines. Everything you need unless you are reading a document.</p>
 <h3 class="group" data-group="traits">Traits</h3>
-<div class="api-item" id="moonxml-pub-impl-show-for-xpathvalue" data-kind="fn">
+<div class="api-item" id="moonxml-xpathvalue-show" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">impl</span> <span class="ty">Show</span> for <span class="ty">XPathValue</span></span></pre>
 <p class="doc"><code>XPathValue</code> implements <code>Show</code>.</p>
@@ -262,13 +277,17 @@
 <pre><span class="sig"><span class="kw">pub</span>(<span class="kw">open</span>) <span class="kw">trait</span> <span class="ty">Selector</span> {
   <span class="kw">fn</span> select(<span class="ty">Self</span>, <span class="ty">Selection</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span>
 }</span></pre>
-<p class="doc">One query language plugged into the chain. Implement this to add your own, register it with <code>Document::register</code>, and run it with <code>selector(name, query)</code> — or pass it straight to <code>custom</code> and skip the registry entirely.  struct DeepLinks {} impl Selector for DeepLinks with select(_self, ctx, _query) { ctx.css("a[href]").filter(fn(node) { node is ElementNode(e) &amp;&amp; e.attr("href").has_prefix("https://") }) }</p>
+<p class="doc">Run the closure on the current selection. Registering the function gives
+the chain one more link, callable by name like a built-in engine.</p>
 </div>
 <h3 class="group" data-group="errors">Errors</h3>
 <div class="api-item" id="moonxml-namespace-of" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> namespace_of(<span class="ty">String</span>) -&gt; <span class="ty">String</span>?</span></pre>
-<p class="doc">The URI of a <code>{uri}local</code> name, or <code>None</code> when the name carries none.</p>
+<p class="doc">The URI of a <code>{uri}local</code> name, or <code>None</code> when the name carries none.</p><pre class="doc-code">test {
+assert_eq(@moonxml.namespace_of(&quot;{urn:a}entry&quot;), Some(&quot;urn:a&quot;))
+assert_eq(@moonxml.namespace_of(&quot;entry&quot;), None)
+}</pre>
 </div>
 <div class="api-item" id="moonxml-refused" data-kind="type">
 <span class="kind">type</span>
@@ -279,10 +298,36 @@
   <span class="ty">Unsupported</span>(what~ : <span class="ty">String</span>)
   <span class="ty">Exceeded</span>(at~ : <span class="ty">Int32</span>, limit~ : <span class="ty">Int32</span>, got~ : <span class="ty">Int32</span>)
 }</span></pre>
-<p class="doc">Why a document could not be read, or a query could not be run. One family for the whole library, so there is one thing to catch.</p>
+<p class="doc">Why a document could not be read, or a query could not be run. One family
+for the whole library, so there is one thing to catch.</p>
+</div>
+<div class="api-item" id="moonxml-refused-equal" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Refused</span>::equal(<span class="ty">Self</span>, <span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+<p class="doc">A method <code>Refused::equal</code> gets from a derived trait; see the <code>#derive</code> on its type.</p>
+</div>
+<div class="api-item" id="moonxml-refused-not-equal" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Refused</span>::not_equal(<span class="ty">Self</span>, <span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+<p class="doc">A method <code>Refused::not_equal</code> gets from a derived trait; see the <code>#derive</code> on its type.</p>
+</div>
+<div class="api-item" id="moonxml-refused-output" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Refused</span>::output(<span class="ty">Self</span>, &amp;<span class="ty">Logger</span>) -&gt; <span class="ty">Unit</span></span></pre>
+<p class="doc">A method <code>Refused::output</code> gets from a derived trait; see the <code>#derive</code> on its type.</p>
+</div>
+<div class="api-item" id="moonxml-refused-to-repr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Refused</span>::to_repr(<span class="ty">Self</span>) -&gt; @debug.<span class="ty">Repr</span></span></pre>
+<p class="doc">A method <code>Refused::to_repr</code> gets from a derived trait; see the <code>#derive</code> on its type.</p>
+</div>
+<div class="api-item" id="moonxml-refused-to-string" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Refused</span>::to_string(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+<p class="doc">A method <code>Refused::to_string</code> gets from a derived trait; see the <code>#derive</code> on its type.</p>
 </div>
 <h3 class="group" data-group="types">Types</h3>
-<div class="api-item" id="moonxml-pub-impl-show-for-refused" data-kind="fn">
+<div class="api-item" id="moonxml-refused-show" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">impl</span> <span class="ty">Show</span> for <span class="ty">Refused</span></span></pre>
 <p class="doc"><code>Refused</code> implements <code>Show</code>.</p>
@@ -294,7 +339,11 @@
   name : <span class="ty">String</span>
   value : <span class="ty">String</span>
 }</span></pre>
-<p class="doc">An attribute as a node of its own: XPath's attribute node. It is not a child of its element — the element's attributes stay in <code>attrs</code>, which is what the writer reads — but a query that asks for <code>@href</code> or for the attribute axis answers these, so that <code>attribute::x/self::node()</code> has something with an identity to answer.</p>
+<p class="doc">An attribute as a node of its own: XPath's attribute node. It is not a
+child of its element — the element's attributes stay in <code>attrs</code>, which is
+what the writer reads — but a query that asks for <code>@href</code> or for the
+attribute axis answers these, so that <code>attribute::x/self::node()</code> has
+something with an identity to answer.</p>
 </div>
 <div class="api-item" id="moonxml-document" data-kind="type">
 <span class="kind">type</span>
@@ -302,12 +351,16 @@
   root : <span class="ty">Element</span>
   // private fields
 }</span></pre>
-<p class="doc">A document: the virtual root (named <code>#document</code>) holding the top-level nodes, the flavour it was read as, the selector registry, and — for HTML — the tally of what the parser repaired.</p>
+<p class="doc">A document: the virtual root (named <code>#document</code>) holding the top-level
+nodes, the flavour it was read as, the selector registry, and — for HTML —
+the tally of what the parser repaired.</p>
 </div>
 <div class="api-item" id="moonxml-document-append" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::append(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Unit</span></span></pre>
-<p class="doc">Add a node at the end of the document: where a comment, a processing instruction or a second document element would go. The usual use is a doctype written before the root, which is what <code>prepend</code> is for.</p>
+<p class="doc">Add a node at the end of the document: where a comment, a processing
+instruction or a second document element would go. The usual use is a
+doctype written before the root, which is what <code>prepend</code> is for.</p>
 </div>
 <div class="api-item" id="moonxml-document-by-class" data-kind="fn">
 <span class="kind">fn</span>
@@ -317,7 +370,8 @@
 <div class="api-item" id="moonxml-document-by-id" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::by_id(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span></span></pre>
-<p class="doc">The elements whose <code>id</code> attribute is <code>id</code> — <code>getElementById</code>, over the whole document.</p>
+<p class="doc">The elements whose <code>id</code> attribute is <code>id</code> — <code>getElementById</code>, over the
+whole document.</p>
 </div>
 <div class="api-item" id="moonxml-document-by-name" data-kind="fn">
 <span class="kind">fn</span>
@@ -332,17 +386,20 @@
 <div class="api-item" id="moonxml-document-children" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::children(<span class="ty">Self</span>) -&gt; <span class="ty">Selection</span></span></pre>
-<p class="doc">The document's top-level nodes — the doctype, comments and processing instructions beside the document element, in document order.</p>
+<p class="doc">The document's top-level nodes — the doctype, comments and processing
+instructions beside the document element, in document order.</p>
 </div>
 <div class="api-item" id="moonxml-document-clear" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::clear(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
-<p class="doc">Empty the document: every top-level node goes, and the document is then what a freshly created one is.</p>
+<p class="doc">Empty the document: every top-level node goes, and the document is then
+what a freshly created one is.</p>
 </div>
 <div class="api-item" id="moonxml-document-css" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::css(<span class="ty">Self</span>, <span class="ty">String</span>, namespaces? : <span class="ty">NamespaceMap</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
-<p class="doc">Narrow with a CSS selector over the whole document. Descendant search from the virtual root, so every element is a candidate.</p>
+<p class="doc">Narrow with a CSS selector over the whole document. Descendant search from
+the virtual root, so every element is a candidate.</p>
 </div>
 <div class="api-item" id="moonxml-document-custom" data-kind="fn">
 <span class="kind">fn</span>
@@ -357,7 +414,8 @@
 <div class="api-item" id="moonxml-document-document-element" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::document_element(<span class="ty">Self</span>) -&gt; <span class="ty">Element</span>?</span></pre>
-<p class="doc">The document element — the root's first element child, <code>documentElement</code> in the DOM, <code>getroot()</code> in lxml.</p>
+<p class="doc">The document element — the root's first element child, <code>documentElement</code>
+in the DOM, <code>getroot()</code> in lxml.</p>
 </div>
 <div class="api-item" id="moonxml-document-dump" data-kind="fn">
 <span class="kind">fn</span>
@@ -397,22 +455,37 @@
 <div class="api-item" id="moonxml-document-new" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::new(flavour? : <span class="ty">Flavour</span>, scripting? : <span class="ty">Bool</span>) -&gt; <span class="ty">Self</span></span></pre>
-<p class="doc">A fresh document. A tree built by hand has no syntax it was read from, so it writes back with XML's exact rules; ask for <code>flavour=Html</code> when the tree came from HTML.</p>
+<p class="doc">A fresh document. A tree built by hand has no syntax it was read from, so
+it writes back with XML's exact rules; ask for <code>flavour=Html</code> when the tree
+came from HTML.</p>
 </div>
 <div class="api-item" id="moonxml-document-prepend" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::prepend(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Unit</span></span></pre>
 <p class="doc">Add a node before everything else in the document.</p>
 </div>
+<div class="api-item" id="moonxml-document-push" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::push(<span class="ty">Self</span>, @event.<span class="ty">Event</span>) -&gt; <span class="ty">Unit</span></span></pre>
+<p class="doc">The tree builder: one consumer of the event stream, shared by whoever
+emits events — the XML scanner, or a caller reading a log of them. The
+open-element stack is the builder's state; after a document it is empty.
+
+<code>push</code> consumes one event at a time, so a stream can be replayed into a
+document without parsing anything a second time.</p>
+</div>
 <div class="api-item" id="moonxml-document-register" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::register(<span class="ty">Self</span>, <span class="ty">String</span>, &amp;<span class="ty">Selector</span>) -&gt; <span class="ty">Unit</span></span></pre>
-<p class="doc">Register a selector under a name. Re-registering a name replaces what was there, built-in or not — and a built-in stays reachable through its own method, which calls the engine directly and never consults the registry.</p>
+<p class="doc">Register a selector under a name. Re-registering a name replaces what was
+there, built-in or not — and a built-in stays reachable through its own
+method, which calls the engine directly and never consults the registry.</p>
 </div>
 <div class="api-item" id="moonxml-document-repairs" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::repairs(<span class="ty">Self</span>) -&gt; <span class="ty">Repairs</span></span></pre>
-<p class="doc">What the HTML parser repaired; a tree that was not parsed as HTML has an empty tally.</p>
+<p class="doc">What the HTML parser repaired; a tree that was not parsed as HTML has an
+empty tally.</p>
 </div>
 <div class="api-item" id="moonxml-document-scripting" data-kind="fn">
 <span class="kind">fn</span>
@@ -437,7 +510,8 @@
 <div class="api-item" id="moonxml-document-smooth" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::smooth(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
-<p class="doc">Fuse adjacent text nodes everywhere in the document, which is what a writer wants after editing several places.</p>
+<p class="doc">Fuse adjacent text nodes everywhere in the document, which is what a
+writer wants after editing several places.</p>
 </div>
 <div class="api-item" id="moonxml-document-text" data-kind="fn">
 <span class="kind">fn</span>
@@ -447,7 +521,13 @@
 <div class="api-item" id="moonxml-document-unresolved" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::unresolved(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[<span class="ty">String</span>]</span></pre>
-<p class="doc">The external entities the document named but the parser did not read, in the order they were referenced, each name once.  The library does no I/O, so a document whose entities live in a file beside it is read without them: XML 1.0 says a non-validating processor need not read them, but must tell the application which ones it skipped. That is this list. It is empty for a document that needed nothing from outside.</p>
+<p class="doc">The external entities the document named but the parser did not read, in
+the order they were referenced, each name once.
+
+The library does no I/O, so a document whose entities live in a file beside
+it is read without them: XML 1.0 says a non-validating processor need not
+read them, but must tell the application which ones it skipped. That is
+this list. It is empty for a document that needed nothing from outside.</p>
 </div>
 <div class="api-item" id="moonxml-document-xpath" data-kind="fn">
 <span class="kind">fn</span>
@@ -459,7 +539,7 @@
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Document</span>::xpath_value(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">XPathValue</span> raise <span class="ty">Refused</span></span></pre>
 <p class="doc">The typed answer of an XPath 1.0 expression, read from the whole document.</p>
 </div>
-<div class="api-item" id="moonxml-pub-impl-event-sink-for-document" data-kind="fn">
+<div class="api-item" id="moonxml-document-sink" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">impl</span> @event.<span class="ty">Sink</span> for <span class="ty">Document</span></span></pre>
 <p class="doc"><code>Document</code> implements <code>Sink</code>.</p>
@@ -474,7 +554,10 @@
   mut closed : <span class="ty">Bool</span>
   // private fields
 }</span></pre>
-<p class="doc">An element: the <code>{uri}local</code> name — the James Clark spelling, chosen over registered prefixes so a node reads the same whichever prefixes the document declared — its attributes in document order, its children, its parent, and how it was closed (<code>&lt;a/&gt;</code> versus <code>&lt;a&gt;&lt;/a&gt;</code>) for the writer.</p>
+<p class="doc">An element: the <code>{uri}local</code> name — the James Clark spelling, chosen over
+registered prefixes so a node reads the same whichever prefixes the
+document declared — its attributes in document order, its children, its
+parent, and how it was closed (<code>&lt;a/&gt;</code> versus <code>&lt;a&gt;&lt;/a&gt;</code>) for the writer.</p>
 </div>
 <div class="api-item" id="moonxml-element-add-class" data-kind="fn">
 <span class="kind">fn</span>
@@ -519,12 +602,14 @@
 <div class="api-item" id="moonxml-element-classes" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::classes(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[<span class="ty">String</span>]</span></pre>
-<p class="doc">The class list: the <code>class</code> attribute split on whitespace, empty parts dropped, as HTML says.</p>
+<p class="doc">The class list: the <code>class</code> attribute split on whitespace, empty parts
+dropped, as HTML says.</p>
 </div>
 <div class="api-item" id="moonxml-element-clear" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::clear(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
-<p class="doc">Drop every child, answering each of them to no parent: a node that is no longer in a tree must not still name the tree it left.</p>
+<p class="doc">Drop every child, answering each of them to no parent: a node that is no
+longer in a tree must not still name the tree it left.</p>
 </div>
 <div class="api-item" id="moonxml-element-closest" data-kind="fn">
 <span class="kind">fn</span>
@@ -534,7 +619,13 @@
 <div class="api-item" id="moonxml-element-content" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::content(<span class="ty">Self</span>) -&gt; <span class="ty">Self</span>?</span></pre>
-<p class="doc">The contents of a <code>&lt;template&gt;</code>: a fragment of its own, the way the DOM keeps them, and <code>None</code> for every other element.  What sits in a template is inert — it is not a child of the element, so a query does not reach it and <code>text()</code> does not read it, which is what a browser does too. <code>set_content</code> is how a caller that builds a template by hand gives it contents.</p>
+<p class="doc">The contents of a <code>&lt;template&gt;</code>: a fragment of its own, the way the DOM keeps
+them, and <code>None</code> for every other element.
+
+What sits in a template is inert — it is not a child of the element, so a
+query does not reach it and <code>text()</code> does not read it, which is what a
+browser does too. <code>set_content</code> is how a caller that builds a template by
+hand gives it contents.</p>
 </div>
 <div class="api-item" id="moonxml-element-css" data-kind="fn">
 <span class="kind">fn</span>
@@ -549,7 +640,8 @@
 <div class="api-item" id="moonxml-element-document" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::document(<span class="ty">Self</span>) -&gt; <span class="ty">Document</span>?</span></pre>
-<p class="doc">The document an element belongs to, or <code>None</code> when it is detached: the registry a <code>selector(name, ..)</code> call consults lives on the document.</p>
+<p class="doc">The document an element belongs to, or <code>None</code> when it is detached: the
+registry a <code>selector(name, ..)</code> call consults lives on the document.</p>
 </div>
 <div class="api-item" id="moonxml-element-has-attr" data-kind="fn">
 <span class="kind">fn</span>
@@ -569,7 +661,8 @@
 <div class="api-item" id="moonxml-element-index-in-parent" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::index_in_parent(<span class="ty">Self</span>) -&gt; <span class="ty">Int32</span></span></pre>
-<p class="doc">The position among the parent's children, counting every node; <code>-1</code> when the element has no parent.</p>
+<p class="doc">The position among the parent's children, counting every node; <code>-1</code> when
+the element has no parent.</p>
 </div>
 <div class="api-item" id="moonxml-element-insert" data-kind="fn">
 <span class="kind">fn</span>
@@ -589,22 +682,26 @@
 <div class="api-item" id="moonxml-element-is-lang" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::is_lang(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Bool</span></span></pre>
-<p class="doc">Whether an element's language is <code>wanted</code>, or a regional variety of it: a document in <code>en-GB</code> answers <code>lang("en")</code> and <code>lang("en-gb")</code>.</p>
+<p class="doc">Whether an element's language is <code>wanted</code>, or a regional variety of it:
+a document in <code>en-GB</code> answers <code>lang("en")</code> and <code>lang("en-gb")</code>.</p>
 </div>
 <div class="api-item" id="moonxml-element-lang" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::lang(<span class="ty">Self</span>) -&gt; <span class="ty">String</span>?</span></pre>
-<p class="doc">The language an element declares: its <code>lang</code> attribute in HTML, <code>xml:lang</code> in XML. A tree read from either may carry both spellings, so both are read.</p>
+<p class="doc">The language an element declares: its <code>lang</code> attribute in HTML, <code>xml:lang</code>
+in XML. A tree read from either may carry both spellings, so both are read.</p>
 </div>
 <div class="api-item" id="moonxml-element-new" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::new(<span class="ty">String</span>, children? : <span class="ty">Array</span>[<span class="ty">Node</span>], attrs? : <span class="ty">Array</span>[(<span class="ty">String</span>, <span class="ty">String</span>)], closed? : <span class="ty">Bool</span>) -&gt; <span class="ty">Self</span></span></pre>
-<p class="doc">A fresh element. The constructor claims the parentage of the children it is given, so a tree built this way keeps its parent pointers true.</p>
+<p class="doc">A fresh element. The constructor claims the parentage of the children it
+is given, so a tree built this way keeps its parent pointers true.</p>
 </div>
 <div class="api-item" id="moonxml-element-next-element-sibling" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::next_element_sibling(<span class="ty">Self</span>) -&gt; <span class="ty">Self</span>?</span></pre>
-<p class="doc">The element just after this one among its siblings, skipping text and the other node kinds.</p>
+<p class="doc">The element just after this one among its siblings, skipping text and the
+other node kinds.</p>
 </div>
 <div class="api-item" id="moonxml-element-prepend" data-kind="fn">
 <span class="kind">fn</span>
@@ -614,12 +711,14 @@
 <div class="api-item" id="moonxml-element-previous-element-sibling" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::previous_element_sibling(<span class="ty">Self</span>) -&gt; <span class="ty">Self</span>?</span></pre>
-<p class="doc">The element just before this one among its siblings, skipping text and the other node kinds.</p>
+<p class="doc">The element just before this one among its siblings, skipping text and the
+other node kinds.</p>
 </div>
 <div class="api-item" id="moonxml-element-remove" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::remove(<span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
-<p class="doc">Detach self from the parent, answering true when there was one. bs4's <code>extract</code>; the collector owns the rest.</p>
+<p class="doc">Detach self from the parent, answering true when there was one. bs4's
+<code>extract</code>; the collector owns the rest.</p>
 </div>
 <div class="api-item" id="moonxml-element-remove-attr" data-kind="fn">
 <span class="kind">fn</span>
@@ -629,12 +728,14 @@
 <div class="api-item" id="moonxml-element-remove-class" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::remove_class(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
-<p class="doc">Remove one class. The attribute stays, empty if that is what is left — bs4's behaviour, so a caller is never surprised by a missing attribute.</p>
+<p class="doc">Remove one class. The attribute stays, empty if that is what is left —
+bs4's behaviour, so a caller is never surprised by a missing attribute.</p>
 </div>
 <div class="api-item" id="moonxml-element-replace-with" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::replace_with(<span class="ty">Self</span>, <span class="ty">Node</span>) -&gt; <span class="ty">Bool</span></span></pre>
-<p class="doc">Take self's place in the parent. bs4's <code>replace_with</code>; false when self has no parent.</p>
+<p class="doc">Take self's place in the parent. bs4's <code>replace_with</code>; false when self
+has no parent.</p>
 </div>
 <div class="api-item" id="moonxml-element-selector" data-kind="fn">
 <span class="kind">fn</span>
@@ -649,22 +750,29 @@
 <div class="api-item" id="moonxml-element-set-children" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::set_children(<span class="ty">Self</span>, <span class="ty">Array</span>[<span class="ty">Node</span>]) -&gt; <span class="ty">Unit</span></span></pre>
-<p class="doc">Replace the children with these, in this order. Every node named is taken out of wherever it sat, and every node the element held is let go, so the parent pointers are true afterwards whichever side of the edit a node was on.</p>
+<p class="doc">Replace the children with these, in this order. Every node named is taken
+out of wherever it sat, and every node the element held is let go, so the
+parent pointers are true afterwards whichever side of the edit a node was
+on.</p>
 </div>
 <div class="api-item" id="moonxml-element-set-content" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::set_content(<span class="ty">Self</span>, <span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
-<p class="doc">Give a <code>&lt;template&gt;</code> a content fragment. A caller who builds one by hand uses this; the parser does it on its own.</p>
+<p class="doc">Give a <code>&lt;template&gt;</code> a content fragment. A caller who builds one by hand
+uses this; the parser does it on its own.</p>
 </div>
 <div class="api-item" id="moonxml-element-set-text" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::set_text(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Unit</span></span></pre>
-<p class="doc">Replace the contents with one text node: the DOM's <code>textContent = …</code>, and what an edit that rewrites a label wants.</p>
+<p class="doc">Replace the contents with one text node: the DOM's <code>textContent = …</code>, and
+what an edit that rewrites a label wants.</p>
 </div>
 <div class="api-item" id="moonxml-element-smooth" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::smooth(<span class="ty">Self</span>) -&gt; <span class="ty">Unit</span></span></pre>
-<p class="doc">Fuse adjacent text nodes. What a writer wants after edits, and what keeps a tree that was cut and rebuilt from carrying confetti. CDATA is left alone: it is a distinct kind so it can round-trip.</p>
+<p class="doc">Fuse adjacent text nodes. What a writer wants after edits, and what keeps
+a tree that was cut and rebuilt from carrying confetti. CDATA is left
+alone: it is a distinct kind so it can round-trip.</p>
 </div>
 <div class="api-item" id="moonxml-element-text" data-kind="fn">
 <span class="kind">fn</span>
@@ -674,17 +782,20 @@
 <div class="api-item" id="moonxml-element-unwrap" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::unwrap(<span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
-<p class="doc">Unwrap the element: its children move up to its place, the element itself is dropped. bs4's <code>unwrap</code>; false when the element has no parent.</p>
+<p class="doc">Unwrap the element: its children move up to its place, the element itself
+is dropped. bs4's <code>unwrap</code>; false when the element has no parent.</p>
 </div>
 <div class="api-item" id="moonxml-element-walk" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::walk(<span class="ty">Self</span>, (<span class="ty">Node</span>) -&gt; <span class="ty">Unit</span>) -&gt; <span class="ty">Unit</span></span></pre>
-<p class="doc">Pre-order walk over the whole subtree. Iterative, so a deep tree cannot outrun the stack.</p>
+<p class="doc">Pre-order walk over the whole subtree. Iterative, so a deep tree cannot
+outrun the stack.</p>
 </div>
 <div class="api-item" id="moonxml-element-wrap" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Element</span>::wrap(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span>?</span></pre>
-<p class="doc">Wrap self in a fresh element with the given name, answering the wrapper. <code>None</code> when self has no parent to be replaced in.</p>
+<p class="doc">Wrap self in a fresh element with the given name, answering the wrapper.
+<code>None</code> when self has no parent to be replaced in.</p>
 </div>
 <div class="api-item" id="moonxml-element-xpath" data-kind="fn">
 <span class="kind">fn</span>
@@ -704,7 +815,32 @@
 }</span></pre>
 <p class="doc">How a document was read, and therefore how it writes itself back.</p>
 </div>
-<div class="api-item" id="moonxml-pub-impl-show-for-flavour" data-kind="fn">
+<div class="api-item" id="moonxml-flavour-equal" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavour</span>::equal(<span class="ty">Self</span>, <span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+<p class="doc">A method <code>Flavour::equal</code> gets from a derived trait; see the <code>#derive</code> on its type.</p>
+</div>
+<div class="api-item" id="moonxml-flavour-not-equal" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavour</span>::not_equal(<span class="ty">Self</span>, <span class="ty">Self</span>) -&gt; <span class="ty">Bool</span></span></pre>
+<p class="doc">A method <code>Flavour::not_equal</code> gets from a derived trait; see the <code>#derive</code> on its type.</p>
+</div>
+<div class="api-item" id="moonxml-flavour-output" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavour</span>::output(<span class="ty">Self</span>, &amp;<span class="ty">Logger</span>) -&gt; <span class="ty">Unit</span></span></pre>
+<p class="doc">A method <code>Flavour::output</code> gets from a derived trait; see the <code>#derive</code> on its type.</p>
+</div>
+<div class="api-item" id="moonxml-flavour-to-repr" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavour</span>::to_repr(<span class="ty">Self</span>) -&gt; @debug.<span class="ty">Repr</span></span></pre>
+<p class="doc">A method <code>Flavour::to_repr</code> gets from a derived trait; see the <code>#derive</code> on its type.</p>
+</div>
+<div class="api-item" id="moonxml-flavour-to-string" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Flavour</span>::to_string(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+<p class="doc">A method <code>Flavour::to_string</code> gets from a derived trait; see the <code>#derive</code> on its type.</p>
+</div>
+<div class="api-item" id="moonxml-flavour-show" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">impl</span> <span class="ty">Show</span> for <span class="ty">Flavour</span></span></pre>
 <p class="doc"><code>Flavour</code> implements <code>Show</code>.</p>
@@ -716,7 +852,8 @@
   prefix : <span class="ty">String</span>
   uri : <span class="ty">String</span>
 }</span></pre>
-<p class="doc">A namespace as a node of its own: XPath's namespace node, answered by the <code>namespace</code> axis. <code>prefix</code> is <code>""</code> for the default namespace.</p>
+<p class="doc">A namespace as a node of its own: XPath's namespace node, answered by the
+<code>namespace</code> axis. <code>prefix</code> is <code>""</code> for the default namespace.</p>
 </div>
 <div class="api-item" id="moonxml-namespacemap" data-kind="type">
 <span class="kind">type</span>
@@ -724,7 +861,10 @@
   default : <span class="ty">String</span>
   prefixes : <span class="ty">Array</span>[(<span class="ty">String</span>, <span class="ty">String</span>)]
 }</span></pre>
-<p class="doc">The namespaces a selector's prefixes resolve against — what <code>@namespace</code> declares in a stylesheet, handed over by the caller.  doc.css("a|ref", namespaces={ default: "", prefixes: [("a", "urn:x")] })</p>
+<p class="doc">The namespaces a selector's prefixes resolve against — what <code>@namespace</code>
+declares in a stylesheet, handed over by the caller.
+
+doc.css("a|ref", namespaces={ default: "", prefixes: [("a", "urn:x")] })</p>
 </div>
 <div class="api-item" id="moonxml-node" data-kind="type">
 <span class="kind">type</span>
@@ -738,7 +878,10 @@
   <span class="ty">AttributeNode</span>(<span class="ty">Attribute</span>)
   <span class="ty">NamespaceNode</span>(<span class="ty">Namespace</span>)
 }</span></pre>
-<p class="doc">One node of the tree. Mixed content survives: text, CDATA, elements, comments, processing instructions and the doctype are all nodes, in document order — none of which fits in a JSON-shaped value, which is why this is not moonjson.</p>
+<p class="doc">One node of the tree. Mixed content survives: text, CDATA, elements,
+comments, processing instructions and the doctype are all nodes, in
+document order — none of which fits in a JSON-shaped value, which is why
+this is not moonjson.</p>
 </div>
 <div class="api-item" id="moonxml-node-by-class" data-kind="fn">
 <span class="kind">fn</span>
@@ -763,12 +906,27 @@
 <div class="api-item" id="moonxml-node-children" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::children(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[<span class="ty">Self</span>]</span></pre>
-<p class="doc">The children of a node that is an element; a node with no children answers an empty list.</p>
+<p class="doc">The children of a node that is an element; a node with no children
+answers an empty list.</p>
 </div>
 <div class="api-item" id="moonxml-node-clone-deep" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::clone_deep(<span class="ty">Self</span>) -&gt; <span class="ty">Self</span></span></pre>
-<p class="doc">A copy of this node and everything under it, belonging to no tree: editing the copy leaves the original alone. An attribute or a namespace node answers itself — it is not a tree of its own, it is a name on an element, and copying the element copies it.</p>
+<p class="doc">A copy of this node and everything under it, belonging to no tree: editing
+the copy leaves the original alone. An attribute or a namespace node answers
+itself — it is not a tree of its own, it is a name on an element, and
+copying the element copies it.</p><pre class="doc-code">test {
+let original = @moonxml.ElementNode(
+@moonxml.Element::new(&quot;a&quot;, children=[@moonxml.TextNode(&quot;one&quot;)]),
+)
+let copy = original.clone_deep()
+assert_eq(@moonxml.dumps(copy), &quot;&lt;a&gt;one&lt;/a&gt;&quot;)
+match copy {
+@moonxml.ElementNode(element) =&gt; element.set_text(&quot;two&quot;)
+_ =&gt; ()
+}
+assert_eq(@moonxml.dumps(original), &quot;&lt;a&gt;one&lt;/a&gt;&quot;)
+}</pre>
 </div>
 <div class="api-item" id="moonxml-node-closest" data-kind="fn">
 <span class="kind">fn</span>
@@ -808,7 +966,9 @@
 <div class="api-item" id="moonxml-node-text" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Node</span>::text(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
-<p class="doc">A node's text content — the DOM's <code>textContent</code>: an element answers the text of its descendants, a text, CDATA, comment or processing-instruction node answers what it carries.</p>
+<p class="doc">A node's text content — the DOM's <code>textContent</code>: an element answers the
+text of its descendants, a text, CDATA, comment or processing-instruction
+node answers what it carries.</p>
 </div>
 <div class="api-item" id="moonxml-node-xpath" data-kind="fn">
 <span class="kind">fn</span>
@@ -826,7 +986,8 @@
   target : <span class="ty">String</span>
   data : <span class="ty">String</span>
 }</span></pre>
-<p class="doc">A processing instruction: <code>&lt;?target data?&gt;</code>, with <code>data</code> the raw text between the target and the <code>?&gt;</code>, so an instruction round-trips exactly.</p>
+<p class="doc">A processing instruction: <code>&lt;?target data?&gt;</code>, with <code>data</code> the raw text
+between the target and the <code>?&gt;</code>, so an instruction round-trips exactly.</p>
 </div>
 <div class="api-item" id="moonxml-repairs" data-kind="type">
 <span class="kind">type</span>
@@ -836,7 +997,8 @@
   mut reparented : <span class="ty">Int32</span>
   mut closed_at_eof : <span class="ty">Int32</span>
 }</span></pre>
-<p class="doc">What the HTML parser repaired. WHATWG says repairs happen silently; this tally makes them answerable afterwards, for a caller who wants to ask.</p>
+<p class="doc">What the HTML parser repaired. WHATWG says repairs happen silently; this
+tally makes them answerable afterwards, for a caller who wants to ask.</p>
 </div>
 <div class="api-item" id="moonxml-repairs-any" data-kind="fn">
 <span class="kind">fn</span>
@@ -851,7 +1013,10 @@
 <div class="api-item" id="moonxml-repairs-total" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Repairs</span>::total(<span class="ty">Self</span>) -&gt; <span class="ty">Int32</span></span></pre>
-<p class="doc">Every repair the parser made, added up.</p>
+<p class="doc">Every repair the parser made, added up.</p><pre class="doc-code">test {
+let repairs = @moonxml.Repairs::new()
+assert_eq(repairs.total(), 0)
+}</pre>
 </div>
 <div class="api-item" id="moonxml-selection" data-kind="type">
 <span class="kind">type</span>
@@ -859,7 +1024,14 @@
   items : <span class="ty">Array</span>[<span class="ty">Node</span>]
   // private fields
 }</span></pre>
-<p class="doc">A selection: the nodes a query returned, and the document they belong to. The empty result is an empty list, never a special value, so a chain never branches — and every query method exists on <code>Selection</code>, on <code>Element</code> and on <code>Document</code>, so a chain never has to stop at a node.  doc.xpath("//ul").css("li.external").xpath("@href") .selector("tag", "a").custom(DeepLinks::new()) .items[2].children[0].css("span").text()</p>
+<p class="doc">A selection: the nodes a query returned, and the document they belong to.
+The empty result is an empty list, never a special value, so a chain never
+branches — and every query method exists on <code>Selection</code>, on <code>Element</code> and
+on <code>Document</code>, so a chain never has to stop at a node.
+
+doc.xpath("//ul").css("li.external").xpath("@href")
+.selector("tag", "a").custom(DeepLinks::new())
+.items[2].children[0].css("span").text()</p>
 </div>
 <div class="api-item" id="moonxml-selection-add-class" data-kind="fn">
 <span class="kind">fn</span>
@@ -874,7 +1046,9 @@
 <div class="api-item" id="moonxml-selection-at" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::at(<span class="ty">Self</span>, <span class="ty">Int32</span>) -&gt; <span class="ty">Node</span></span></pre>
-<p class="doc"><code>selection[i]</code> in the chain: the node at that position, so a chain can step down into one node and carry on. Out of range answers a detached empty element rather than panicking.</p>
+<p class="doc"><code>selection[i]</code> in the chain: the node at that position, so a chain can step
+down into one node and carry on. Out of range answers a detached empty
+element rather than panicking.</p>
 </div>
 <div class="api-item" id="moonxml-selection-attr" data-kind="fn">
 <span class="kind">fn</span>
@@ -899,7 +1073,8 @@
 <div class="api-item" id="moonxml-selection-by-tag" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::by_tag(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span></span></pre>
-<p class="doc">The elements among the descendants whose name is <code>name</code>; <code>*</code> answers them all.</p>
+<p class="doc">The elements among the descendants whose name is <code>name</code>; <code>*</code> answers them
+all.</p>
 </div>
 <div class="api-item" id="moonxml-selection-children" data-kind="fn">
 <span class="kind">fn</span>
@@ -919,7 +1094,12 @@
 <div class="api-item" id="moonxml-selection-css" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::css(<span class="ty">Self</span>, <span class="ty">String</span>, namespaces? : <span class="ty">NamespaceMap</span>) -&gt; <span class="ty">Self</span> raise <span class="ty">Refused</span></span></pre>
-<p class="doc">Narrow with a CSS selector, Selectors Level 4's statically decidable subset. Searches the descendants of the selected nodes — the context itself is never a candidate, <code>querySelectorAll</code>'s rule.  <code>namespaces</code> resolves the prefixes a selector writes, the way a stylesheet's <code>@namespace</code> rules do; the default matches no prefix at all.</p>
+<p class="doc">Narrow with a CSS selector, Selectors Level 4's statically decidable
+subset. Searches the descendants of the selected nodes — the context
+itself is never a candidate, <code>querySelectorAll</code>'s rule.
+
+<code>namespaces</code> resolves the prefixes a selector writes, the way a
+stylesheet's <code>@namespace</code> rules do; the default matches no prefix at all.</p>
 </div>
 <div class="api-item" id="moonxml-selection-custom" data-kind="fn">
 <span class="kind">fn</span>
@@ -934,7 +1114,8 @@
 <div class="api-item" id="moonxml-selection-eq" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::eq(<span class="ty">Self</span>, <span class="ty">Int32</span>) -&gt; <span class="ty">Self</span></span></pre>
-<p class="doc">The selected node at <code>i</code>; a negative index counts from the end, the way jQuery's <code>eq</code> does. Out of range answers empty.</p>
+<p class="doc">The selected node at <code>i</code>; a negative index counts from the end, the way
+jQuery's <code>eq</code> does. Out of range answers empty.</p>
 </div>
 <div class="api-item" id="moonxml-selection-filter" data-kind="fn">
 <span class="kind">fn</span>
@@ -949,7 +1130,8 @@
 <div class="api-item" id="moonxml-selection-html" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::html(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
-<p class="doc">The inner HTML of the first selected element, written in the flavour its document was read as; <code>""</code> when the selection holds no element.</p>
+<p class="doc">The inner HTML of the first selected element, written in the flavour its
+document was read as; <code>""</code> when the selection holds no element.</p>
 </div>
 <div class="api-item" id="moonxml-selection-last" data-kind="fn">
 <span class="kind">fn</span>
@@ -969,7 +1151,8 @@
 <div class="api-item" id="moonxml-selection-of" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::of(<span class="ty">Array</span>[<span class="ty">Node</span>]) -&gt; <span class="ty">Self</span></span></pre>
-<p class="doc">A selection of these nodes, in the order given, carrying the document the first of them belongs to.</p>
+<p class="doc">A selection of these nodes, in the order given, carrying the document the
+first of them belongs to.</p>
 </div>
 <div class="api-item" id="moonxml-selection-parent" data-kind="fn">
 <span class="kind">fn</span>
@@ -1004,7 +1187,8 @@
 <div class="api-item" id="moonxml-selection-selector" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::selector(<span class="ty">Self</span>, <span class="ty">String</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span> raise <span class="ty">Refused</span></span></pre>
-<p class="doc">Run a selector by the name it was registered under, built-in or the caller's own. An unregistered name raises.</p>
+<p class="doc">Run a selector by the name it was registered under, built-in or the
+caller's own. An unregistered name raises.</p>
 </div>
 <div class="api-item" id="moonxml-selection-set-attr" data-kind="fn">
 <span class="kind">fn</span>
@@ -1039,7 +1223,13 @@
 <div class="api-item" id="moonxml-selection-xpath" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Selection</span>::xpath(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Self</span> raise <span class="ty">Refused</span></span></pre>
-<p class="doc">Narrow the selection with an XPath 1.0 expression, evaluated with each selected node as the context node.  The answer is a node-set; an expression that evaluates to a string, number or boolean answers its string value as one text node, so the chain never breaks — <code>doc.xpath("string(//h1)").text()</code> reads the way it should. <code>xpath_value</code> is the typed answer.</p>
+<p class="doc">Narrow the selection with an XPath 1.0 expression, evaluated with each
+selected node as the context node.
+
+The answer is a node-set; an expression that evaluates to a string, number
+or boolean answers its string value as one text node, so the chain never
+breaks — <code>doc.xpath("string(//h1)").text()</code> reads the way it should.
+<code>xpath_value</code> is the typed answer.</p>
 </div>
 <div class="api-item" id="moonxml-selection-xpath-value" data-kind="fn">
 <span class="kind">fn</span>
@@ -1051,14 +1241,22 @@
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">struct</span> <span class="ty">SelectorFn</span> {
   f : (<span class="ty">Selection</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span>
 }</span></pre>
-<p class="doc">A selector that is a closure — the shape a selector with no state of its own takes. A selector that carries configuration is a struct implementing <code>Selector</code> directly, with a constructor of its own.</p>
+<p class="doc">A selector that is a closure — the shape a selector with no state of its
+own takes. A selector that carries configuration is a struct implementing
+<code>Selector</code> directly, with a constructor of its own.</p>
 </div>
 <div class="api-item" id="moonxml-selectorfn-new" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">SelectorFn</span>::new((<span class="ty">Selection</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span>) -&gt; <span class="ty">Self</span></span></pre>
 <p class="doc">A selector made of a closure: the shape one with no state of its own takes.</p>
 </div>
-<div class="api-item" id="moonxml-pub-impl-selector-for-selectorfn" data-kind="fn">
+<div class="api-item" id="moonxml-selectorfn-select" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">SelectorFn</span>::select(<span class="ty">Self</span>, <span class="ty">Selection</span>, <span class="ty">String</span>) -&gt; <span class="ty">Selection</span> raise <span class="ty">Refused</span></span></pre>
+<p class="doc">Run the closure on the current selection. Registering the function gives
+the chain one more link, callable by name like a built-in engine.</p>
+</div>
+<div class="api-item" id="moonxml-selectorfn-selector" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">impl</span> <span class="ty">Selector</span> for <span class="ty">SelectorFn</span></span></pre>
 <p class="doc"><code>SelectorFn</code> implements <code>Selector</code>.</p>
@@ -1072,6 +1270,16 @@
   <span class="ty">Flag</span>(<span class="ty">Bool</span>)
 }</span></pre>
 <p class="doc">An XPath 1.0 result: what the expression actually answered.</p>
+</div>
+<div class="api-item" id="moonxml-xpathvalue-output" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">XPathValue</span>::output(<span class="ty">Self</span>, &amp;<span class="ty">Logger</span>) -&gt; <span class="ty">Unit</span></span></pre>
+<p class="doc">A method <code>XPathValue::output</code> gets from a derived trait; see the <code>#derive</code> on its type.</p>
+</div>
+<div class="api-item" id="moonxml-xpathvalue-to-string" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">XPathValue</span>::to_string(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
+<p class="doc">A method <code>XPathValue::to_string</code> gets from a derived trait; see the <code>#derive</code> on its type.</p>
 </div>
 <h3 class="group" data-group="values">Values</h3>
 <div class="api-item" id="moonxml-dump" data-kind="fn">
@@ -1087,22 +1295,32 @@
 <div class="api-item" id="moonxml-dumps" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> dumps(<span class="ty">Node</span>) -&gt; <span class="ty">String</span></span></pre>
-<p class="doc">The XML serialization of a node.</p>
+<p class="doc">The XML serialization of a node.</p><pre class="doc-code">test {
+let element = @moonxml.Element::new(&quot;a&quot;, children=[TextNode(&quot;hi&quot;)])
+assert_eq(@moonxml.dumps(ElementNode(element)), &quot;&lt;a&gt;hi&lt;/a&gt;&quot;)
+}</pre>
 </div>
 <div class="api-item" id="moonxml-dumps-html" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> dumps_html(<span class="ty">Node</span>) -&gt; <span class="ty">String</span></span></pre>
-<p class="doc">The HTML serialization of a node, WHATWG's rules.</p>
+<p class="doc">The HTML serialization of a node, WHATWG's rules.</p><pre class="doc-code">test {
+let element = @moonxml.Element::new(&quot;div&quot;, children=[TextNode(&quot;hi&quot;)])
+assert_eq(@moonxml.dumps_html(ElementNode(element)), &quot;&lt;div&gt;hi&lt;/div&gt;&quot;)
+}</pre>
 </div>
 <div class="api-item" id="moonxml-local-of" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> local_of(<span class="ty">String</span>) -&gt; <span class="ty">String</span></span></pre>
-<p class="doc">The local part of a <code>{uri}local</code> name.</p>
+<p class="doc">The local part of a <code>{uri}local</code> name.</p><pre class="doc-code">test {
+assert_eq(@moonxml.local_of(&quot;{urn:a}entry&quot;), &quot;entry&quot;)
+assert_eq(@moonxml.local_of(&quot;entry&quot;), &quot;entry&quot;)
+}</pre>
 </div>
 <div class="api-item" id="moonxml-namespace-map" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">let</span> namespace_map : <span class="ty">NamespaceMap</span></span></pre>
-<p class="doc">No namespaces declared: type selectors match any namespace, and an unprefixed attribute selector matches the attribute with no namespace.</p>
+<p class="doc">No namespaces declared: type selectors match any namespace, and an
+unprefixed attribute selector matches the attribute with no namespace.</p>
 </div>
 </section>
 <section id="moonxml-html">
@@ -1112,28 +1330,60 @@
 <div class="api-item" id="moonxml-html-scan" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> scan(<span class="ty">String</span>, &amp;@event.<span class="ty">Sink</span>, scripting? : <span class="ty">Bool</span>) -&gt; <span class="ty">Unit</span></span></pre>
-<p class="doc">Read a text as the token stream the tokenizer answers, before any tree is built: the runs of characters, the start tags with their attributes, the end tags, the comments and the doctype, in the order they come.  This is the tokenizer's own reading, not the tree builder's: an end tag that matches nothing is still an end tag here, a stray table cell is still a cell, and the attributes a tag repeats are still repeated. <code>Document::events</code> answers the same shape for a document that has been built.</p>
+<p class="doc">Read a text as the token stream the tokenizer answers, before any tree is
+built: the runs of characters, the start tags with their attributes, the end
+tags, the comments and the doctype, in the order they come.
+
+This is the tokenizer's own reading, not the tree builder's: an end tag that
+matches nothing is still an end tag here, a stray table cell is still a cell,
+and the attributes a tag repeats are still repeated. <code>Document::events</code>
+answers the same shape for a document that has been built.</p>
 </div>
 <h3 class="group" data-group="values">Values</h3>
 <div class="api-item" id="moonxml-html-load" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> load(<span class="ty">Bytes</span>, scripting? : <span class="ty">Bool</span>) -&gt; @moonxml.<span class="ty">Document</span></span></pre>
-<p class="doc">Read a document from bytes; UTF-8, with a leading byte-order mark skipped. A byte that is not UTF-8 reads as U+FFFD, the way a browser reads it.</p>
+<p class="doc">Read a document from bytes; UTF-8, with a leading byte-order mark skipped.
+A byte that is not UTF-8 reads as U+FFFD, the way a browser reads it.</p>
 </div>
 <div class="api-item" id="moonxml-html-loads" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads(<span class="ty">String</span>, scripting? : <span class="ty">Bool</span>) -&gt; @moonxml.<span class="ty">Document</span></span></pre>
-<p class="doc">Read a document.  <code>scripting</code> is whether the reader may run what it reads. It changes one thing: a <code>noscript</code>'s content is markup when nothing is going to run it, and raw text when something is, which is what a browser does. Off by default — a library reads documents, and reading them is not running them.</p>
+<p class="doc">Read a document.
+
+<code>scripting</code> is whether the reader may run what it reads. It changes one
+thing: a <code>noscript</code>'s content is markup when nothing is going to run it, and
+raw text when something is, which is what a browser does. Off by default —
+a library reads documents, and reading them is not running them.</p><pre class="doc-code">test {
+let doc = @html.loads(&quot;&lt;ul&gt;&lt;li&gt;coffee&lt;li&gt;tea&lt;/ul&gt;&quot;)
+assert_eq(doc.css(&quot;li&quot;).length(), 2)
+assert_eq(doc.css(&quot;li&quot;).last().text(), &quot;tea&quot;)
+}</pre>
 </div>
 <div class="api-item" id="moonxml-html-loads-fragment" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads_fragment(<span class="ty">String</span>, context? : <span class="ty">String</span>, scripting? : <span class="ty">Bool</span>) -&gt; @moonxml.<span class="ty">Document</span></span></pre>
-<p class="doc">Read a fragment the way <code>innerHTML</code> does: the markup is read inside <code>context</code>, an element named as one would write it, and the fragment's nodes come back under the document's root.  The name may be a foreign one — <code>svg desc</code>, <code>math mi</code> — in the spelling the standard's test corpus uses, since an SVG <code>&lt;title&gt;</code> is not an HTML one.</p>
+<p class="doc">Read a fragment the way <code>innerHTML</code> does: the markup is read inside
+<code>context</code>, an element named as one would write it, and the fragment's nodes
+come back under the document's root.
+
+The name may be a foreign one — <code>svg desc</code>, <code>math mi</code> — in the spelling the
+standard's test corpus uses, since an SVG <code>&lt;title&gt;</code> is not an HTML one.</p>
 </div>
 <div class="api-item" id="moonxml-html-named-reference" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> named_reference(<span class="ty">String</span>) -&gt; <span class="ty">String</span>?</span></pre>
-<p class="doc">The named character references HTML defines — all 2231 spellings of them, in the table the standard keeps, generated into <code>entities_table.mbt</code>.  A name that may be written without its semicolon is in the table twice, so <code>named_reference("amp")</code> and <code>named_reference("amp;")</code> answer the same <code>&amp;</code>. An unknown name answers <code>None</code>, which is the tokenizer's cue to leave the text as it stands.</p>
+<p class="doc">The named character references HTML defines — all 2231 spellings of them,
+in the table the standard keeps, generated into <code>entities_table.mbt</code>.
+
+A name that may be written without its semicolon is in the table twice, so
+<code>@html.named_reference("amp")</code> and <code>@html.named_reference("amp;")</code> answer the same <code>&amp;</code>.
+An unknown name answers <code>None</code>, which is the tokenizer's cue to leave the
+text as it stands.</p><pre class="doc-code">test {
+assert_eq(@html.named_reference(&quot;amp&quot;), Some(&quot;&amp;&quot;))
+assert_eq(@html.named_reference(&quot;amp;&quot;), Some(&quot;&amp;&quot;))
+assert_eq(@html.named_reference(&quot;not-a-reference&quot;), None)
+}</pre>
 </div>
 </section>
 <section id="moonxml-xml">
@@ -1143,33 +1393,45 @@
 <div class="api-item" id="moonxml-xml-scan" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> scan(<span class="ty">String</span>, &amp;@event.<span class="ty">Sink</span>, fragment? : <span class="ty">Bool</span>, limit? : <span class="ty">Int32</span>, entity_limit? : <span class="ty">Int32</span>) -&gt; <span class="ty">Unit</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
-<p class="doc">Stream a document's events into a sink, building nothing. <code>limit</code> and <code>entity_limit</code> are as for <code>loads</code>.</p>
+<p class="doc">Stream a document's events into a sink, building nothing. <code>limit</code> and
+<code>entity_limit</code> are as for <code>loads</code>.</p>
 </div>
 <h3 class="group" data-group="values">Values</h3>
 <div class="api-item" id="moonxml-xml-entity-limit" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">let</span> entity_limit : <span class="ty">Int32</span></span></pre>
-<p class="doc">How many characters of entity expansion one document may spend. A million is well past what a document that means something needs, and well under what one built to expand for ever would ask for.</p>
+<p class="doc">How many characters of entity expansion one document may spend. A million
+is well past what a document that means something needs, and well under
+what one built to expand for ever would ask for.</p>
 </div>
 <div class="api-item" id="moonxml-xml-limit" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">let</span> limit : <span class="ty">Int32</span></span></pre>
-<p class="doc">How deep elements may nest before a document is refused. Chrome and WebKit stop at 512 nested elements; a document deeper than that is a stack to eat, not a document.</p>
+<p class="doc">How deep elements may nest before a document is refused. Chrome and WebKit
+stop at 512 nested elements; a document deeper than that is a stack to eat,
+not a document.</p>
 </div>
 <div class="api-item" id="moonxml-xml-load" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> load(<span class="ty">Bytes</span>, limit? : <span class="ty">Int32</span>, entity_limit? : <span class="ty">Int32</span>) -&gt; @moonxml.<span class="ty">Document</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
-<p class="doc">Read a document from bytes; UTF-8, with a leading byte-order mark skipped. <code>limit</code> and <code>entity_limit</code> are as for <code>loads</code>.</p>
+<p class="doc">Read a document from bytes; UTF-8, with a leading byte-order mark skipped.
+<code>limit</code> and <code>entity_limit</code> are as for <code>loads</code>.</p>
 </div>
 <div class="api-item" id="moonxml-xml-loads" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads(<span class="ty">String</span>, limit? : <span class="ty">Int32</span>, entity_limit? : <span class="ty">Int32</span>) -&gt; @moonxml.<span class="ty">Document</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
-<p class="doc">Read a document and answer its tree. <code>limit</code> bounds the element nesting, <code>entity_limit</code> the total expansion of entities.</p>
+<p class="doc">Read a document and answer its tree. <code>limit</code> bounds the element nesting,
+<code>entity_limit</code> the total expansion of entities.</p><pre class="doc-code">test {
+let doc = @xml.loads(&quot;&lt;a&gt;&lt;b/&gt;&lt;/a&gt;&quot;)
+assert_eq(doc.css(&quot;b&quot;).length(), 1)
+}</pre>
 </div>
 <div class="api-item" id="moonxml-xml-loads-fragment" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> loads_fragment(<span class="ty">String</span>, limit? : <span class="ty">Int32</span>, entity_limit? : <span class="ty">Int32</span>) -&gt; @moonxml.<span class="ty">Document</span> raise @moonxml.<span class="ty">Refused</span></span></pre>
-<p class="doc">Read content that has no single root — several elements, or text beside them — into a document whose root holds them. Not a well-formed document, which is the point: it is for a snippet.</p>
+<p class="doc">Read content that has no single root — several elements, or text beside
+them — into a document whose root holds them. Not a well-formed document,
+which is the point: it is for a snippet.</p>
 </div>
 </section>
 <section id="moonxml-event">
@@ -1187,14 +1449,21 @@
   <span class="ty">ProcessingInstruction</span>(target~ : <span class="ty">String</span>, data~ : <span class="ty">String</span>)
   <span class="ty">Doctype</span>(text~ : <span class="ty">String</span>)
 }</span></pre>
-<p class="doc">One event of a document being read: a tag opening, a run of text, a comment. libexpat's second reading of a document, in one type.  <code>@xml.scan</code> and <code>@html.scan</code> stream these; <code>Document::events</code> reads a finished tree back as the same stream. HTML's stream is its tokenizer's: the tree construction that follows needs to see the tree it is building, so a document's events describe a tree that already exists.</p>
+<p class="doc">One event of a document being read: a tag opening, a run of text, a
+comment. libexpat's second reading of a document, in one type.
+
+<code>@xml.scan</code> and <code>@html.scan</code> stream these; <code>Document::events</code> reads a
+finished tree back as the same stream. HTML's stream is its tokenizer's:
+the tree construction that follows needs to see the tree it is building, so
+a document's events describe a tree that already exists.</p>
 </div>
 <div class="api-item" id="moonxml-event-sink" data-kind="type">
 <span class="kind">type</span>
 <pre><span class="sig"><span class="kw">pub</span>(<span class="kw">open</span>) <span class="kw">trait</span> <span class="ty">Sink</span> {
   <span class="kw">fn</span> push(<span class="ty">Self</span>, <span class="ty">Event</span>) -&gt; <span class="ty">Unit</span>
 }</span></pre>
-<p class="doc">Where events go. The tree builder is one implementation; a caller counting tags or writing rows to a database is another, and it never builds a tree.</p>
+<p class="doc">Where events go. The tree builder is one implementation; a caller counting
+tags or writing rows to a database is another, and it never builds a tree.</p>
 </div>
 </section>
 <section id="moonxml-htmx">
@@ -1204,7 +1473,10 @@
 <div class="api-item" id="moonxml-htmx-trigger-parse" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Trigger</span>::parse(<span class="ty">String</span>) -&gt; <span class="ty">Self</span></span></pre>
-<p class="doc">One trigger, from its spelling.  The spelling is the event — possibly with a bracketed condition — followed by modifiers separated by spaces. An empty spelling is a <code>click</code>.</p>
+<p class="doc">One trigger, from its spelling.
+
+The spelling is the event — possibly with a bracketed condition — followed
+by modifiers separated by spaces. An empty spelling is a <code>click</code>.</p>
 </div>
 <h3 class="group" data-group="types">Types</h3>
 <div class="api-item" id="moonxml-htmx-hx" data-kind="type">
@@ -1212,12 +1484,19 @@
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">struct</span> <span class="ty">Hx</span> {
   element : @moonxml.<span class="ty">Element</span>
 }</span></pre>
-<p class="doc">An element's htmx attributes — its own, or the ones it inherits.  htmx's attributes travel down the tree: <code>hx-target</code> on a container is the target of every button inside it, until something nearer says otherwise or <code>hx-disinherit</code> stops the inheritance at a boundary. Reading an attribute through <code>Hx</code> is reading it the way htmx would.</p>
+<p class="doc">An element's htmx attributes — its own, or the ones it inherits.
+
+htmx's attributes travel down the tree: <code>hx-target</code> on a container is the
+target of every button inside it, until something nearer says otherwise or
+<code>hx-disinherit</code> stops the inheritance at a boundary. Reading an attribute
+through <code>Hx</code> is reading it the way htmx would.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-hx-attr" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::attr(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">String</span>?</span></pre>
-<p class="doc">The value of <code>hx-&lt;name&gt;</code> — <code>attr("target")</code> is <code>hx-target</code> — inherited from the nearest ancestor that declares it. <code>None</code> when nothing does, and when the nearest declaration is <code>unset</code>.</p>
+<p class="doc">The value of <code>hx-&lt;name&gt;</code> — <code>attr("target")</code> is <code>hx-target</code> — inherited
+from the nearest ancestor that declares it. <code>None</code> when nothing does, and
+when the nearest declaration is <code>unset</code>.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-hx-boosted" data-kind="fn">
 <span class="kind">fn</span>
@@ -1242,7 +1521,8 @@
 <div class="api-item" id="moonxml-htmx-hx-indicator" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::indicator(<span class="ty">Self</span>) -&gt; @moonxml.<span class="ty">Element</span>?</span></pre>
-<p class="doc">The element that says the request is in flight: <code>hx-indicator</code>, resolved the way a target is.</p>
+<p class="doc">The element that says the request is in flight: <code>hx-indicator</code>, resolved
+the way a target is.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-hx-of" data-kind="fn">
 <span class="kind">fn</span>
@@ -1252,37 +1532,58 @@
 <div class="api-item" id="moonxml-htmx-hx-push-url" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::push_url(<span class="ty">Self</span>) -&gt; <span class="ty">Bool</span>?</span></pre>
-<p class="doc">Whether the address bar should follow: <code>hx-push-url</code>. <code>Some(true)</code> and <code>Some(false)</code> are the two things htmx lets it say, <code>None</code> is silence.</p>
+<p class="doc">Whether the address bar should follow: <code>hx-push-url</code>. <code>Some(true)</code> and
+<code>Some(false)</code> are the two things htmx lets it say, <code>None</code> is silence.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-hx-request" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::request(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; <span class="ty">Request</span>?</span></pre>
-<p class="doc">The request an event on this element would make, or <code>None</code> when it would make none: no verb, no address, or a trigger that is about something else.</p>
+<p class="doc">The request an event on this element would make, or <code>None</code> when it would
+make none: no verb, no address, or a trigger that is about something else.</p>
+</div>
+<div class="api-item" id="moonxml-htmx-hx-select" data-kind="fn">
+<span class="kind">fn</span>
+<pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::select(<span class="ty">Self</span>) -&gt; <span class="ty">String</span>?</span></pre>
+<p class="doc">The part of the answer to use: <code>hx-select</code>, a selector over the response.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-hx-target" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::target(<span class="ty">Self</span>) -&gt; @moonxml.<span class="ty">Element</span>?</span></pre>
-<p class="doc">Where the answer goes: <code>hx-target</code>, resolved. A bare selector is looked up in the document; <code>this</code>, <code>closest …</code>, <code>find …</code>, <code>next …</code> and <code>previous …</code> are resolved from the element that wrote them.</p>
+<p class="doc">Where the answer goes: <code>hx-target</code>, resolved. A bare selector is looked up
+in the document; <code>this</code>, <code>closest …</code>, <code>find …</code>, <code>next …</code> and <code>previous …</code>
+are resolved from the element that wrote them.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-hx-triggers" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::triggers(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[<span class="ty">Trigger</span>]</span></pre>
-<p class="doc">What an event on this element asks: the <code>hx-trigger</code> it declares, or the event an element of its kind listens for when it declares none.</p>
+<p class="doc">What an event on this element asks: the <code>hx-trigger</code> it declares, or the
+event an element of its kind listens for when it declares none.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-hx-url" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::url(<span class="ty">Self</span>) -&gt; <span class="ty">String</span>?</span></pre>
-<p class="doc">Where the request goes: the value of the verb's attribute, or the <code>href</code> of a boosted link, or the <code>action</code> of a boosted form.</p>
+<p class="doc">Where the request goes: the value of the verb's attribute, or the <code>href</code>
+of a boosted link, or the <code>action</code> of a boosted form.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-hx-values" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::values(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[(<span class="ty">String</span>, <span class="ty">String</span>)]</span></pre>
-<p class="doc">The values this element's request carries: what <code>hx-include</code> names, the element's own fields, and <code>hx-vals</code> over the top of them.  A form contributes every control inside it that has a name and is not disabled; a field contributes itself; <code>hx-include</code> adds the fields of whatever its selectors answer. <code>hx-params</code> then keeps or drops names, the way a server would expect.</p>
+<p class="doc">The values this element's request carries: what <code>hx-include</code> names, the
+element's own fields, and <code>hx-vals</code> over the top of them.
+
+A form contributes every control inside it that has a name and is not
+disabled; a field contributes itself; <code>hx-include</code> adds the fields of
+whatever its selectors answer. <code>hx-params</code> then keeps or drops names, the
+way a server would expect.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-hx-verb" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Hx</span>::verb(<span class="ty">Self</span>) -&gt; <span class="ty">String</span>?</span></pre>
-<p class="doc">The verb this element asks with, in lower case — <code>get</code>, <code>post</code>, <code>put</code>, <code>patch</code> or <code>delete</code> — taken from the first of those it declares.  A boosted link asks with <code>get</code> and a boosted form with <code>post</code>, which is what <code>hx-boost</code> is: an ordinary element that becomes a request.</p>
+<p class="doc">The verb this element asks with, in lower case — <code>get</code>, <code>post</code>, <code>put</code>,
+<code>patch</code> or <code>delete</code> — taken from the first of those it declares.
+
+A boosted link asks with <code>get</code> and a boosted form with <code>post</code>, which is
+what <code>hx-boost</code> is: an ordinary element that becomes a request.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-request" data-kind="type">
 <span class="kind">type</span>
@@ -1299,22 +1600,32 @@
   push_url : <span class="ty">Bool</span>?
   trigger : <span class="ty">String</span>
 }</span></pre>
-<p class="doc">A request htmx would have made: the verb, the address, what it carries, and how the answer is put back.  Nothing here is sent. A caller reads this, sends it however it likes, and hands the answer to <code>answer</code>.</p>
+<p class="doc">A request htmx would have made: the verb, the address, what it carries,
+and how the answer is put back.
+
+Nothing here is sent. A caller reads this, sends it however it likes, and
+hands the answer to <code>answer</code>.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-request-address" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Request</span>::address(<span class="ty">Self</span>) -&gt; <span class="ty">String</span></span></pre>
-<p class="doc">The address to send to: a <code>get</code> carries its values in the query, and the other verbs carry them in the body, so only a <code>get</code> has them added here.</p>
+<p class="doc">The address to send to: a <code>get</code> carries its values in the query, and the
+other verbs carry them in the body, so only a <code>get</code> has them added here.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-request-answer" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Request</span>::answer(<span class="ty">Self</span>, <span class="ty">String</span>) -&gt; @moonxml.<span class="ty">Selection</span></span></pre>
-<p class="doc">Put an answer into the page: parse it, take the part the element asked for, send the out-of-band pieces to the places they name, and swap the rest into the target.  The nodes that went in are answered, in the order they were put there.</p>
+<p class="doc">Put an answer into the page: parse it, take the part the element asked
+for, send the out-of-band pieces to the places they name, and swap the
+rest into the target.
+
+The nodes that went in are answered, in the order they were put there.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-request-headers" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Request</span>::headers(<span class="ty">Self</span>) -&gt; <span class="ty">Array</span>[(<span class="ty">String</span>, <span class="ty">String</span>)]</span></pre>
-<p class="doc">The headers to send: what the element declared, and the four htmx adds so that a server knows what it is answering.</p>
+<p class="doc">The headers to send: what the element declared, and the four htmx adds so
+that a server knows what it is answering.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-request-query" data-kind="fn">
 <span class="kind">fn</span>
@@ -1333,7 +1644,10 @@
   <span class="ty">Delete</span>
   <span class="ty">NoSwap</span>
 }</span></pre>
-<p class="doc">Where an answer goes. The first six are the ones the DOM can be told to do without asking a stylesheet; <code>Delete</code> takes the target away, and <code>NoSwap</code> keeps the answer out of the page entirely — for a response that is only out-of-band content.</p>
+<p class="doc">Where an answer goes. The first six are the ones the DOM can be told to do
+without asking a stylesheet; <code>Delete</code> takes the target away, and <code>NoSwap</code>
+keeps the answer out of the page entirely — for a response that is only
+out-of-band content.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-swap-spec" data-kind="fn">
 <span class="kind">fn</span>
@@ -1349,7 +1663,8 @@
   mut transition : <span class="ty">Bool</span>
   mut ignore_title : <span class="ty">Bool</span>
 }</span></pre>
-<p class="doc">How an answer goes there: the position, and the timing a page might want to know about.</p>
+<p class="doc">How an answer goes there: the position, and the timing a page might want
+to know about.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-swapspec-new" data-kind="fn">
 <span class="kind">fn</span>
@@ -1359,7 +1674,13 @@
 <div class="api-item" id="moonxml-htmx-swapspec-parse" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">SwapSpec</span>::parse(<span class="ty">String</span>) -&gt; <span class="ty">Self</span></span></pre>
-<p class="doc">A <code>hx-swap</code> spelling: a position and, after it, modifiers.  <code>innerHTML</code>, <code>outerHTML</code>, <code>beforebegin</code>, <code>afterbegin</code>, <code>beforeend</code>, <code>afterend</code>, <code>delete</code> and <code>none</code> are the positions; <code>swap:100ms</code>, <code>settle:50ms</code>, <code>transition:true</code> and <code>ignoreTitle:true</code> are the modifiers this reader keeps. <code>scroll:</code> and <code>show:</code> are the page's business, and are read but not carried out.</p>
+<p class="doc">A <code>hx-swap</code> spelling: a position and, after it, modifiers.
+
+<code>innerHTML</code>, <code>outerHTML</code>, <code>beforebegin</code>, <code>afterbegin</code>, <code>beforeend</code>,
+<code>afterend</code>, <code>delete</code> and <code>none</code> are the positions; <code>swap:100ms</code>,
+<code>settle:50ms</code>, <code>transition:true</code> and <code>ignoreTitle:true</code> are the modifiers
+this reader keeps. <code>scroll:</code> and <code>show:</code> are the page's business, and are
+read but not carried out.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-trigger" data-kind="type">
 <span class="kind">type</span>
@@ -1375,17 +1696,24 @@
   mut queue : <span class="ty">String</span>?
   mut consume : <span class="ty">Bool</span>
 }</span></pre>
-<p class="doc">When an element asks: the event, and the conditions htmx puts on it.  <code>hx-trigger="keyup changed delay:500ms from:#search"</code> is one trigger; <code>hx-trigger="click, keyup[key=='Enter']"</code> is two.</p>
+<p class="doc">When an element asks: the event, and the conditions htmx puts on it.
+
+<code>hx-trigger="keyup changed delay:500ms from:#search"</code> is one trigger;
+<code>hx-trigger="click, keyup[key=='Enter']"</code> is two.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-trigger-default-for" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Trigger</span>::default_for(@moonxml.<span class="ty">Element</span>) -&gt; <span class="ty">Self</span></span></pre>
-<p class="doc">What an element listens for when it does not say: a form is submitted, a field changes, and everything else is clicked.</p>
+<p class="doc">What an element listens for when it does not say: a form is submitted, a
+field changes, and everything else is clicked.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-trigger-list" data-kind="fn">
 <span class="kind">fn</span>
 <pre><span class="sig"><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Trigger</span>::list(<span class="ty">String</span>) -&gt; <span class="ty">Array</span>[<span class="ty">Self</span>]</span></pre>
-<p class="doc">Every trigger a spelling names, in the order it names them.  <code>click, keyup[key=='Enter'] changed delay:500ms</code> is two triggers. A comma inside a condition does not split.</p>
+<p class="doc">Every trigger a spelling names, in the order it names them.
+
+<code>click, keyup[key=='Enter'] changed delay:500ms</code> is two triggers. A comma
+inside a condition does not split.</p>
 </div>
 <div class="api-item" id="moonxml-htmx-trigger-matches" data-kind="fn">
 <span class="kind">fn</span>
@@ -1411,13 +1739,13 @@
 (function () {
   var root = document.documentElement;
   var saved = null;
-  try { saved = localStorage.getItem("moonxml-theme"); } catch (e) {}
+  try { saved = sessionStorage.getItem("moonxml-theme"); } catch (e) {}
   var system = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   root.setAttribute("data-theme", saved || system);
   document.getElementById("theme").addEventListener("click", function () {
     var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
     root.setAttribute("data-theme", next);
-    try { localStorage.setItem("moonxml-theme", next); } catch (e) {}
+    try { sessionStorage.setItem("moonxml-theme", next); } catch (e) {}
   });
 
   var box = document.getElementById("q");

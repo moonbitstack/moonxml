@@ -17,6 +17,14 @@
 /// thing: a `noscript`'s content is markup when nothing is going to run it, and
 /// raw text when something is, which is what a browser does. Off by default —
 /// a library reads documents, and reading them is not running them.
+///
+/// ```mbt check
+/// test {
+///   let doc = @html.loads("<ul><li>coffee<li>tea</ul>")
+///   assert_eq(doc.css("li").length(), 2)
+///   assert_eq(doc.css("li").last().text(), "tea")
+/// }
+/// ```
 pub fn loads(text : String, scripting~ : Bool = false) -> @moonxml.Document {
   let doc = @moonxml.Document::new(flavour=@moonxml.Html, scripting~)
   let builder = Builder::new(doc)

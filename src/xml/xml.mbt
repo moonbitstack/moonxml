@@ -50,6 +50,13 @@ pub let entity_limit : Int32 = 1048576
 ///|
 /// Read a document and answer its tree. `limit` bounds the element nesting,
 /// `entity_limit` the total expansion of entities.
+///
+/// ```mbt check
+/// test {
+///   let doc = @xml.loads("<a><b/></a>")
+///   assert_eq(doc.css("b").length(), 1)
+/// }
+/// ```
 pub fn loads(
   text : String,
   limit~ : Int32 = limit,

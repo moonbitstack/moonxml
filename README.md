@@ -59,7 +59,7 @@ import {
 }
 ```
 
-Two dependencies: `moonbitlang/core`, and nothing else.
+The module has no dependencies outside MoonBit's core.
 
 ## The chain
 
@@ -207,7 +207,11 @@ documents too. What the parser fixed is countable afterwards on
 **XML** — XML 1.0 with Namespaces 1.0, strict: a document reads whole or is
 refused with the offset of the fault. Names become `{uri}local`, and writing
 back reproduces attribute order, CDATA, comments, processing instructions, the
-doctype with its internal subset, and `<a/>` versus `<a></a>`.
+doctype with its internal subset, and `<a/>` versus `<a></a>`. Three spellings
+have no node to hold them and are therefore normalized: character references
+are decoded, declared general entities are expanded, and attribute values are
+quoted with double quotes. Those are the only byte-level differences; every XML
+processor reads the result as the same document.
 
 The internal subset is read: entity declarations, general and parameter, nested
 and with recursion refused; attribute defaults and their types; the content
@@ -276,6 +280,18 @@ published, whole, rather than against whether it ran:
 | W3C XML conformance suite | 1154 | all: every document it calls well-formed reads, every other is refused |
 | libxml2's XPath 1.0 corpus | 326 | 324 agree; the two below answer as XPath 1.0 asks |
 | W3C CSS3 Selectors test suite | 99 files | all |
+| lxml + html5lib differential | 51 documents | all 51 agree; 41 also byte-identical |
+
+The last row is a two-way exchange with mature implementations in CI: `moon
+run src/interop` writes each document back, then lxml (XML) and html5lib (HTML)
+read both the source and what this library wrote. The trees agree in all 51
+cases. The ten that are not byte-identical differ in syntax, not content:
+the three XML spellings described above, `&nbsp;` against a literal
+non-breaking space, document-level comments and doctypes that html5lib's
+serializer omits, `<frame>` written without a closing tag, a `<template>` that
+html5lib places in `body` where the browser and this library place it in
+`head`, and foreign attributes html5lib spells in its internal form
+(`xml:lang` as `lang`).
 
 Two XPath cases part ways on purpose. `string(12345678901234567890)` and its
 negation: libxml2 prints a number that large in exponent form, and XPath 1.0
@@ -297,13 +313,21 @@ than hides.
 | [`src/examples/scrape`](src/examples/scrape/main.mbt) | a page in, a table out: query, filter, reshape, serialize |
 | [`src/examples/rewrite`](src/examples/rewrite/main.mbt) | read a feed, edit every entry, write it back byte-faithfully |
 
+The [home page](https://moonbitstack.github.io/moonxml/) and the [selector
+board](https://moonbitstack.github.io/moonxml/selectors.html) run the library in
+the browser, compiled from this module: type markup, choose CSS or XPath, and
+the engine answers the query and writes the document back.
+
 ## What is not here
 
 `document.write`, scripting-enabled branches, and the CSS pseudo-classes that
 need a live browser (`:hover`, `:visited`) — none of those can be decided from
 a document alone, so each is a named answer rather than a silent miss. XSLT,
 DTD validation and XPath 2.0 are transformations and languages of their own,
-not features of a tree library. The same goes for htmx's `ws:` and `sse:`
+not features of a tree library. An indented writer is not a tree operation
+either: pretty-printing inserts text nodes, and in HTML that changes what a
+browser renders inside a `<span>` or a `<pre>`. The writer reproduces the tree
+as it is; spacing is the caller's to choose. The same goes for htmx's `ws:` and `sse:`
 extensions, `hx-on` handlers and history cache: they need an event loop and a
 connection, so `moonxml/htmx` stops at the request and the swap.
 

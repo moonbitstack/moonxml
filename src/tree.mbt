@@ -648,6 +648,21 @@ pub fn Element::smooth(self : Element) -> Unit {
 /// the copy leaves the original alone. An attribute or a namespace node answers
 /// itself — it is not a tree of its own, it is a name on an element, and
 /// copying the element copies it.
+///
+/// ```mbt check
+/// test {
+///   let original = @moonxml.ElementNode(
+///     @moonxml.Element::new("a", children=[@moonxml.TextNode("one")]),
+///   )
+///   let copy = original.clone_deep()
+///   assert_eq(@moonxml.dumps(copy), "<a>one</a>")
+///   match copy {
+///     @moonxml.ElementNode(element) => element.set_text("two")
+///     _ => ()
+///   }
+///   assert_eq(@moonxml.dumps(original), "<a>one</a>")
+/// }
+/// ```
 pub fn Node::clone_deep(self : Node) -> Node {
   match self {
     ElementNode(element) => ElementNode(clone_element(element))

@@ -82,14 +82,16 @@ def parse(path):
 
 
 DECL = re.compile(
-    r"^pub(?:\((?:all|open)\))?\s+(?:fn(?:\[[^\]]*\])?|let|struct|enum|suberror|trait|type)\s+"
-    r"([A-Za-z_]\w*(?:::[A-Za-z_]\w*)?)"
+    r"^pub(?:\((?:all|open)\))?\s+(?:fn(?:\[[^\]]*\])?|let|struct|enum|suberror|trait|type|impl)\s+"
+    r"(?:@\w+\.)?([A-Za-z_]\w*(?:::[A-Za-z_]\w*)?)"
 )
 
 
-BOILERPLATE = re.compile(
-    r"::(equal|not_equal|output|to_string|to_repr|hash|compare|push|select)\("
-)
+# These come from `#derive`, not from a declaration in the source; the page
+# still lists them, because `pkg.generated.mbti` is the API. Everything else —
+# including a method named `select` or `push` — is a hand-written public item
+# and must carry its own `///` line.
+DERIVED = re.compile(r"::(equal|not_equal|output|to_string|to_repr|hash|compare)\(")
 IMPL = re.compile(r"pub impl (?:@\w+\.)?(\w+) for (\w+)")
 
 
@@ -111,9 +113,18 @@ def docs_of(folder):
                     # an attribute between the doc and what it documents
                     continue
                 else:
+                    method = re.match(
+                        r"pub impl (?:@\w+\.)?(\w+) for (\w+) with fn (\w+)\(",
+                        raw,
+                    )
                     match = DECL.match(raw)
+                    if pending and method:
+                        # `moon info` prints an impl's method as a public
+                        # function `T::m`, so the comment above the impl is
+                        # that function's documentation.
+                        out["%s::%s" % (method.group(2), method.group(3))] = "\n".join(pending)
                     if match and pending:
-                        out[match.group(1)] = " ".join(pending)
+                        out[match.group(1)] = "\n".join(pending)
                     pending = []
     return out
 
@@ -121,6 +132,19 @@ def docs_of(folder):
 def prose(text):
     text = html.escape(text, quote=False)
     return re.sub(r"`([^`]+)`", r"<code>\1</code>", text)
+
+
+def doc_html(text):
+    """A `///` comment is prose; a fenced `mbt check` block in it is a
+    running example, shown as a listing rather than running into the prose."""
+    parts = re.split(r"```(?:mbt check|moonbit)\n(.*?)```", text, flags=re.S)
+    out = []
+    for index, part in enumerate(parts):
+        if index % 2 == 1:
+            out.append('<pre class="doc-code">%s</pre>' % html.escape(part.strip()))
+        elif part.strip():
+            out.append('<p class="doc">%s</p>' % prose(part.strip()))
+    return "".join(out)
 
 
 def highlight(sig):
@@ -132,10 +156,38 @@ def highlight(sig):
 
 
 def item_title(sig):
-    match = re.match(r"(?:pub\S*\s+)?(?:fn|struct|enum|trait|suberror|type|let)\s+([A-Za-z0-9_:]+)", sig)
+    impl = IMPL.match(sig)
+    if impl:
+        return "%s::%s" % (impl.group(2), impl.group(1))
+    match = re.match(
+        r"(?:pub\S*\s+)?(?:fn(?:\[[^]]*\])?|struct|enum|trait|suberror|type|let)\s+([A-Za-z0-9_:]+)",
+        sig,
+    )
     if match:
         return match.group(1)
     return sig.split("(")[0]
+
+
+DECL_PATTERN = r"^pub(?:\((?:all|open)\))?\s+(?:fn(?:\[[^]]*\])?|let|struct|enum|suberror|trait|type|impl)\s+"
+
+
+def declared_names(path):
+    """Every public declaration in an interface file, by the name the page
+    gives it. `moon info` prints one declaration per line; the body of a type
+    is indented, so the `^pub` anchor alone finds the top-level ones."""
+    names = []
+    with open(path, encoding="utf-8") as handle:
+        for line in handle:
+            if not line.startswith("pub"):
+                continue
+            impl = IMPL.match(line)
+            if impl:
+                names.append("%s::%s" % (impl.group(2), impl.group(1)))
+                continue
+            match = re.match(DECL_PATTERN + r"([A-Za-z_][A-Za-z0-9_:]*)", line)
+            if match:
+                names.append(match.group(1))
+    return names
 
 
 MISSING = []
@@ -159,8 +211,6 @@ def render(pkg, path, intro, out):
             continue
         out.append('<h3 class="group" data-group="%s">%s</h3>' % (section, section.capitalize()))
         for sig in group:
-            if BOILERPLATE.search(sig):
-                continue
             title = item_title(sig)
             anchor = "%s-%s" % (pkg.replace("/", "-"), re.sub(r"[^A-Za-z0-9]+", "-", title).lower())
             kind = "type" if "{" in sig else "fn"
@@ -168,16 +218,23 @@ def render(pkg, path, intro, out):
             out.append('<span class="kind">%s</span>' % ("type" if kind == "type" else "fn"))
             out.append('<pre><span class="sig">%s</span></pre>' % highlight(sig))
             impl = IMPL.match(sig)
+            derived = DERIVED.search(sig)
             doc = docs.get(title) or (impl and "`%s` implements `%s`." % (impl.group(2), impl.group(1)))
+            if derived and not doc:
+                doc = "A method `%s` gets from a derived trait; see the `#derive` on its type." % title
             if not doc:
                 missing.append("%s: %s" % (pkg, title))
             if doc:
-                out.append('<p class="doc">%s</p>' % prose(doc))
+                out.append(doc_html(doc))
             out.append("</div>")
     out.append("</section>")
 
+    rendered = [item_title(s) for _section, s in items]
+    missing = [name for name in declared_names(path) if name not in rendered]
+    if missing:
+        MISSING.append("%s: the page omits %s" % (pkg, ", ".join(missing)))
     return [
-        (pkg.replace("/", "-"), pkg.split("/")[-1], g, [item_title(s) for s in group if not BOILERPLATE.search(s)])
+        (pkg.replace("/", "-"), pkg.split("/")[-1], g, [item_title(s) for s in group])
         for g, group in by_group.items()
     ]
 
@@ -218,6 +275,7 @@ def main():
         TEMPLATE.replace("__NAV__", "\n".join(nav_html))
         .replace("__BODY__", "\n".join(body))
         .replace("__TOTAL__", str(total))
+        .replace("__PACKAGES__", str(len(PACKAGES)))
     )
     with open(out_path, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(page)
@@ -261,7 +319,7 @@ TEMPLATE = """<!DOCTYPE html>
   <h1 style="font-size:clamp(32px,4vw,44px);margin-bottom:10px">The API</h1>
   <p class="sub">Generated from each package's interface file, so it cannot describe something the code does not have — or miss something it does.</p>
   <div class="colophon-line">
-    <span><b>four packages</b></span><span class="sep">·</span>
+    <span><b>__PACKAGES__ packages</b></span><span class="sep">·</span>
     <span>every public item</span><span class="sep">·</span>
     <span>generated, not typed</span>
   </div>
@@ -293,13 +351,13 @@ __BODY__
 (function () {
   var root = document.documentElement;
   var saved = null;
-  try { saved = localStorage.getItem("moonxml-theme"); } catch (e) {}
+  try { saved = sessionStorage.getItem("moonxml-theme"); } catch (e) {}
   var system = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   root.setAttribute("data-theme", saved || system);
   document.getElementById("theme").addEventListener("click", function () {
     var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
     root.setAttribute("data-theme", next);
-    try { localStorage.setItem("moonxml-theme", next); } catch (e) {}
+    try { sessionStorage.setItem("moonxml-theme", next); } catch (e) {}
   });
 
   var box = document.getElementById("q");

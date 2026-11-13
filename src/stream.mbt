@@ -5,6 +5,9 @@
 /// The tree builder: one consumer of the event stream, shared by whoever
 /// emits events — the XML scanner, or a caller reading a log of them. The
 /// open-element stack is the builder's state; after a document it is empty.
+///
+/// `push` consumes one event at a time, so a stream can be replayed into a
+/// document without parsing anything a second time.
 pub impl @event.Sink for Document with fn push(self, event) {
   let parent = match self.nesting.last() {
     Some(top) => top
