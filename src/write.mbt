@@ -16,6 +16,13 @@
 
 ///|
 /// The XML serialization of a node.
+///
+/// ```mbt check
+/// test {
+///   let element = @moonxml.Element::new("a", children=[TextNode("hi")])
+///   assert_eq(@moonxml.dumps(ElementNode(element)), "<a>hi</a>")
+/// }
+/// ```
 pub fn dumps(node : Node) -> String {
   let out = StringBuilder()
   write_xml(node, out)
@@ -30,6 +37,13 @@ pub fn dump(node : Node) -> Bytes {
 
 ///|
 /// The HTML serialization of a node, WHATWG's rules.
+///
+/// ```mbt check
+/// test {
+///   let element = @moonxml.Element::new("div", children=[TextNode("hi")])
+///   assert_eq(@moonxml.dumps_html(ElementNode(element)), "<div>hi</div>")
+/// }
+/// ```
 pub fn dumps_html(node : Node) -> String {
   let out = StringBuilder()
   write_html(node, out, raw=false, scripting=false)
@@ -84,7 +98,10 @@ pub fn Document::dump_html(self : Document) -> Bytes {
 
 ///|
 fn write_xml(node : Node, out : StringBuilder) -> Unit {
-  write_xml_in(node, out, [])
+  // `xml` is bound before any document says anything and never needs a
+  // declaration of its own, so an `xml:lang` keeps its prefix instead of
+  // being given an invented one that nothing declares.
+  write_xml_in(node, out, [("xml", "http://www.w3.org/XML/1998/namespace")])
 }
 
 ///|
@@ -108,20 +125,21 @@ fn write_xml_in(
       }
       let declared : Array[(String, String)] = []
       let tag = qualify(data.name, local_scope, declared, false)
+      // Every name is resolved before anything is written: an attribute whose
+      // space nothing declares earns a declaration, and a declaration written
+      // after the attribute it covers would not cover it.
+      let written : Array[(String, String)] = []
+      for pair in data.attrs {
+        written.push((qualify(pair.0, local_scope, declared, true), pair.1))
+      }
       out.write_string("<" + tag)
       for pair in declared {
         out.write_string(
           " xmlns:" + pair.0 + "=\"" + escape_xml_attr(pair.1) + "\"",
         )
       }
-      for pair in data.attrs {
-        out.write_string(
-          " " +
-          qualify(pair.0, local_scope, declared, true) +
-          "=\"" +
-          escape_xml_attr(pair.1) +
-          "\"",
-        )
+      for pair in written {
+        out.write_string(" " + pair.0 + "=\"" + escape_xml_attr(pair.1) + "\"")
       }
       if data.children.is_empty() && data.closed {
         out.write_string("/>")
@@ -399,6 +417,13 @@ fn is_raw_text_element(tag : String) -> Bool {
 
 ///|
 /// The local part of a `{uri}local` name.
+///
+/// ```mbt check
+/// test {
+///   assert_eq(@moonxml.local_of("{urn:a}entry"), "entry")
+///   assert_eq(@moonxml.local_of("entry"), "entry")
+/// }
+/// ```
 pub fn local_of(name : String) -> String {
   match rfind(name, '}') {
     Some(at) => name[at + 1:name.length()].to_owned()
@@ -408,6 +433,13 @@ pub fn local_of(name : String) -> String {
 
 ///|
 /// The URI of a `{uri}local` name, or `None` when the name carries none.
+///
+/// ```mbt check
+/// test {
+///   assert_eq(@moonxml.namespace_of("{urn:a}entry"), Some("urn:a"))
+///   assert_eq(@moonxml.namespace_of("entry"), None)
+/// }
+/// ```
 pub fn namespace_of(name : String) -> String? {
   if name.has_prefix("{") {
     match rfind(name, '}') {
