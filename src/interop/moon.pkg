@@ -1,0 +1,9 @@
+// The differential corpus: every document here is read and written by this
+// library, and the result is handed to a mature implementation to read back.
+// `scripts/check_interop.py` compares the two answers.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonxml/html",
+  "moonbitstack/moonxml/xml",
+}
