@@ -1,0 +1,13 @@
+// The site's live demo: the library itself, built to JavaScript, so the page
+// runs the queries it shows instead of replaying answers taken earlier.
+//
+// Everything crosses the boundary as a string — markup in, a JSON document
+// out — so the page needs to know nothing about MoonBit values.
+import {
+  "moonbitstack/moonxml",
+  "moonbitstack/moonxml/html",
+}
+
+options(
+  link: { "js": { "exports": [ "probe", "rewrite", "read" ], "format": "esm" } },
+)

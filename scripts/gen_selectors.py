@@ -139,6 +139,13 @@ def table(rows):
     return "\n".join(out)
 
 
+SPECIMEN = """<article id=note>
+  <h2>Field notes</h2>
+  <p>Tea, <b>coffee</b>, and a list that closes itself:
+  <ul><li>oolong<li>sencha<li>matcha</ul>
+</article>"""
+
+
 def page(source, rows):
     by_group = {}
     for row in rows:
@@ -158,6 +165,7 @@ def page(source, rows):
 <meta name="description" content="Every selector moonxml implements, run against one document: CSS, XPath, the chain, and the values and attributes they answer with.">
 <link rel="stylesheet" href="assets/site.css">
 <script type="module" src="assets/scrollbar.js"></script>
+<script type="module" src="assets/demo.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%%237d2f22'>&lt;/&gt;</text></svg>">
 </head>
 <body>
@@ -236,8 +244,43 @@ def page(source, rows):
             % (number, title, blurb, table(by_group[key]))
         )
     parts.append(
-        """  <section>
-    <div class="sec-head"><span class="sec-num">08</span><h2>What is not on this board</h2></div>
+        """  <section id="try">
+    <div class="sec-head"><span class="sec-num">08</span><h2>Run it yourself</h2></div>
+    <p class="sub">The tables above were answered when this page was built. This box is the same engine, running now: the library is compiled to JavaScript by the workflow that publishes the page, so the markup and the query are yours, and the answer is the engine's.</p>
+    <div class="demo-box try" data-demo>
+      <div class="demo-cap"><span>the engine, in this page</span><span data-role="status">loading…</span></div>
+      <form autocomplete="off">
+        <label for="try-markup">markup</label>
+        <textarea id="try-markup" data-role="markup" rows="5" spellcheck="false">""" + html.escape(SPECIMEN) + """</textarea>
+        <div class="try-row">
+          <label for="try-engine">engine</label>
+          <select id="try-engine" data-role="engine">
+            <option value="css">CSS</option>
+            <option value="xpath">XPath</option>
+          </select>
+          <label for="try-query">query</label>
+          <input id="try-query" data-role="query" value="li" spellcheck="false">
+          <button class="btn" type="submit">run</button>
+        </div>
+        <div class="try-row">
+          <label for="try-text">every match says</label>
+          <input id="try-text" data-role="text" value="written over" spellcheck="false">
+          <button class="btn" type="button" data-role="edit">write it back</button>
+        </div>
+      </form>
+      <p class="note" data-role="out"></p>
+      <table class="demos" data-role="rows">
+        <thead><tr><th>Node</th><th>Text</th><th>Markup</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <p class="filename">the document, written back</p>
+      <pre data-role="doc"></pre>
+    </div>
+    <p class="sub demo-hint">Nothing leaves the page, and nothing on it is a recording: the markup is read by the tolerance parser, repaired, queried, edited and written back by the library's own code, compiled from the same commit as the tables above.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">09</span><h2>What is not on this board</h2></div>
     <p class="sub"><code>:hover</code>, <code>:active</code>, <code>:focus</code>, <code>:visited</code> and <code>:target</code> describe a browser's state, not a document's, so the engine refuses them by name — <code>@moonxml.Refused.BadQuery</code> with the offset — instead of answering a question it cannot see. Everything a tree can settle is above; <code>page.css("a:hover")</code> is a sentence the library will not pretend to understand.</p>
   </section>
 
@@ -323,13 +366,13 @@ def page(source, rows):
   (function () {
     var root = document.documentElement;
     var saved = null;
-    try { saved = localStorage.getItem("moonxml-theme"); } catch (e) {}
+    try { saved = sessionStorage.getItem("moonxml-theme"); } catch (e) {}
     var system = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     root.setAttribute("data-theme", saved || system);
     document.getElementById("theme").addEventListener("click", function () {
       var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
       root.setAttribute("data-theme", next);
-      try { localStorage.setItem("moonxml-theme", next); } catch (e) {}
+      try { sessionStorage.setItem("moonxml-theme", next); } catch (e) {}
     });
   })();
 </script>

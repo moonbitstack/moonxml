@@ -283,13 +283,13 @@ println(priced.<span class="f">last</span>().<span class="f">text</span>())   <s
 (function () {
   var root = document.documentElement;
   var saved = null;
-  try { saved = localStorage.getItem("moonxml-theme"); } catch (e) {}
+  try { saved = sessionStorage.getItem("moonxml-theme"); } catch (e) {}
   var system = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   root.setAttribute("data-theme", saved || system);
   document.getElementById("theme").addEventListener("click", function () {
     var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
     root.setAttribute("data-theme", next);
-    try { localStorage.setItem("moonxml-theme", next); } catch (e) {}
+    try { sessionStorage.setItem("moonxml-theme", next); } catch (e) {}
   });
 })();
 </script>

@@ -857,6 +857,56 @@ footer.site a:hover { color: var(--brick); border-bottom-color: var(--brick); }
 footer.site .spacer { margin-left: auto; }
 footer.site .colophon { flex-basis: 100%; font-size: 9px; letter-spacing: 0.16em; opacity: 0.85; }
 
+/* ------------------------------------------------- the live demonstration
+   The box the visitor types into. It borrows the specimen's frame and the
+   listing's paper: a form is set like a form, in the same ink. */
+
+/* the specimen's form is a row of controls; this one is a column of them */
+.try form { display: block; }
+.try form > label { display: block; margin: 0 0 6px; }
+.try textarea {
+  display: block;
+  width: 100%;
+  min-height: 92px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--paper-lift) 62%, transparent);
+  border: 1px solid var(--rule-strong);
+  resize: vertical;
+}
+.try textarea:focus-visible { outline: 1px solid var(--brick); outline-offset: 1px; }
+.try-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin: 0 0 12px; }
+.try-row input { min-width: 12ch; }
+.try .demos { margin: 0 0 16px; }
+.try .demos th:nth-child(1) { width: 20%; }
+.try .demos th:nth-child(2) { width: 34%; }
+.try .demos td { vertical-align: top; }
+.try .demos td:nth-child(2) { color: var(--ink-soft); }
+.try .note {
+  margin: 0 0 10px;
+  font-family: var(--typewriter);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--olive);
+}
+.try pre { margin-bottom: 0; max-height: 300px; overflow: auto; }
+.try pre:empty { display: none; }
+
+/* a running example inside an API entry is a listing, not prose */
+.api-item .doc-code {
+  margin: 10px 0 0;
+  padding: 12px 16px;
+  font-size: 12px;
+  line-height: 1.6;
+  max-height: 260px;
+  overflow: auto;
+}
+
 /* ------------------------------------------------------------- scrollbars
    A scrollbar is furniture, so it gets the same treatment as a rule: a ruled
    channel with a squared thumb running in it, never the system's grey.
@@ -943,13 +993,14 @@ pre::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hot); backgr
 ::selection { background: var(--brick-soft); color: var(--ink); }
 :focus-visible { outline: 1px solid var(--brick); outline-offset: 2px; }
 
-/* The page scroll bar shows while the page moves or under the pointer and
-   hides a moment after; it keeps its place, so nothing shifts. */
+/* The page scroll bar is a hairline rule in the margin: it appears once the
+   page has left its top, and stays while the reader is in the text. It keeps
+   its place either way, so nothing shifts when it arrives. */
 @supports selector(::-webkit-scrollbar) {
-  html:not(.scrolling)::-webkit-scrollbar-thumb { background: transparent; border-color: transparent; box-shadow: none; }
+  html.at-top::-webkit-scrollbar-thumb { background: transparent; border-color: transparent; box-shadow: none; }
 }
 @supports not selector(::-webkit-scrollbar) {
-  html:not(.scrolling) { scrollbar-color: transparent transparent; }
+  html.at-top { scrollbar-color: transparent transparent; }
 }
 
 /* Long identifiers in running text break rather than widen the page. */

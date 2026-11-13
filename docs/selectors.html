@@ -7,6 +7,7 @@
 <meta name="description" content="Every selector moonxml implements, run against one document: CSS, XPath, the chain, and the values and attributes they answer with.">
 <link rel="stylesheet" href="assets/site.css">
 <script type="module" src="assets/scrollbar.js"></script>
+<script type="module" src="assets/demo.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%237d2f22'>&lt;/&gt;</text></svg>">
 </head>
 <body>
@@ -281,8 +282,47 @@
 <tr data-hit="2" tabindex="0"><td><span class="eng">xpath</span><code>//*[@action]</code></td><td class="n">1</td><td>form#order &quot;Quantity Fine Coarse Order&quot;</td></tr>
 </tbody></table>
   </section>
+  <section id="try">
+    <div class="sec-head"><span class="sec-num">08</span><h2>Run it yourself</h2></div>
+    <p class="sub">The tables above were answered when this page was built. This box is the same engine, running now: the library is compiled to JavaScript by the workflow that publishes the page, so the markup and the query are yours, and the answer is the engine's.</p>
+    <div class="demo-box try" data-demo>
+      <div class="demo-cap"><span>the engine, in this page</span><span data-role="status">loading…</span></div>
+      <form autocomplete="off">
+        <label for="try-markup">markup</label>
+        <textarea id="try-markup" data-role="markup" rows="5" spellcheck="false">&lt;article id=note&gt;
+  &lt;h2&gt;Field notes&lt;/h2&gt;
+  &lt;p&gt;Tea, &lt;b&gt;coffee&lt;/b&gt;, and a list that closes itself:
+  &lt;ul&gt;&lt;li&gt;oolong&lt;li&gt;sencha&lt;li&gt;matcha&lt;/ul&gt;
+&lt;/article&gt;</textarea>
+        <div class="try-row">
+          <label for="try-engine">engine</label>
+          <select id="try-engine" data-role="engine">
+            <option value="css">CSS</option>
+            <option value="xpath">XPath</option>
+          </select>
+          <label for="try-query">query</label>
+          <input id="try-query" data-role="query" value="li" spellcheck="false">
+          <button class="btn" type="submit">run</button>
+        </div>
+        <div class="try-row">
+          <label for="try-text">every match says</label>
+          <input id="try-text" data-role="text" value="written over" spellcheck="false">
+          <button class="btn" type="button" data-role="edit">write it back</button>
+        </div>
+      </form>
+      <p class="note" data-role="out"></p>
+      <table class="demos" data-role="rows">
+        <thead><tr><th>Node</th><th>Text</th><th>Markup</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <p class="filename">the document, written back</p>
+      <pre data-role="doc"></pre>
+    </div>
+    <p class="sub demo-hint">Nothing leaves the page, and nothing on it is a recording: the markup is read by the tolerance parser, repaired, queried, edited and written back by the library's own code, compiled from the same commit as the tables above.</p>
+  </section>
+
   <section>
-    <div class="sec-head"><span class="sec-num">08</span><h2>What is not on this board</h2></div>
+    <div class="sec-head"><span class="sec-num">09</span><h2>What is not on this board</h2></div>
     <p class="sub"><code>:hover</code>, <code>:active</code>, <code>:focus</code>, <code>:visited</code> and <code>:target</code> describe a browser's state, not a document's, so the engine refuses them by name — <code>@moonxml.Refused.BadQuery</code> with the offset — instead of answering a question it cannot see. Everything a tree can settle is above; <code>page.css("a:hover")</code> is a sentence the library will not pretend to understand.</p>
   </section>
 
@@ -368,13 +408,13 @@
   (function () {
     var root = document.documentElement;
     var saved = null;
-    try { saved = localStorage.getItem("moonxml-theme"); } catch (e) {}
+    try { saved = sessionStorage.getItem("moonxml-theme"); } catch (e) {}
     var system = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     root.setAttribute("data-theme", saved || system);
     document.getElementById("theme").addEventListener("click", function () {
       var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
       root.setAttribute("data-theme", next);
-      try { localStorage.setItem("moonxml-theme", next); } catch (e) {}
+      try { sessionStorage.setItem("moonxml-theme", next); } catch (e) {}
     });
   })();
 </script>

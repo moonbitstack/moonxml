@@ -1,0 +1,17 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonxml/examples/browser"
+
+// Values
+pub fn probe(String, String, String) -> String
+
+pub fn read(String) -> String
+
+pub fn rewrite(String, String, String, String) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

@@ -7,6 +7,7 @@
 <meta name="description" content="One mutable tree for HTML, XML and SVG in MoonBit. Read it the way a browser reads it, query it by CSS selector or XPath 1.0, edit it in place, write it back exactly.">
 <link rel="stylesheet" href="assets/site.css">
 <script type="module" src="assets/scrollbar.js"></script>
+<script type="module" src="assets/demo.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14' font-family='monospace' fill='%237d2f22'>&lt;/&gt;</text></svg>">
 </head>
 <body>
@@ -127,7 +128,37 @@ page.<span class="f">dumps</span>()</pre>
 
   <section>
     <div class="chapter">
-      <div class="chapter-mark">III<span>the verbs</span></div>
+      <div class="chapter-mark">III<span>the engine</span></div>
+      <div>
+        <h2>The engine is in this page</h2>
+        <p class="sub">Everything above is a claim; this is the code that makes it. The library is compiled to JavaScript from the same commit that publishes this page, so the markup and the query below are yours, and the answer is the engine's, not a recording.</p>
+        <div class="demo-box try" data-demo>
+          <div class="demo-cap"><span>read · query · write back</span><span data-role="status">loading…</span></div>
+          <form autocomplete="off">
+            <textarea data-role="markup" rows="4" spellcheck="false" aria-label="markup">&lt;ul id=list&gt;&lt;li&gt;coffee&lt;li&gt;tea&lt;/ul&gt;</textarea>
+            <div class="try-row">
+              <label for="home-engine">engine</label>
+              <select id="home-engine" data-role="engine">
+                <option value="css">CSS</option>
+                <option value="xpath">XPath</option>
+              </select>
+              <label for="home-query">query</label>
+              <input id="home-query" data-role="query" value="li" spellcheck="false">
+              <button class="btn" type="submit">run</button>
+            </div>
+          </form>
+          <p class="note" data-role="out"></p>
+          <p class="filename">the document, written back</p>
+          <pre data-role="doc"></pre>
+        </div>
+        <p class="sub" style="margin-top:18px">Try a query the document cannot answer, <code>li:hover</code>, and the engine says so instead of guessing. Every selector it does answer is on <a href="selectors.html">the selector board</a>, each row a query that ran.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="chapter">
+      <div class="chapter-mark">IV<span>the verbs</span></div>
       <div>
         <h2>Editing is not a second library</h2>
         <p class="sub">The verbs a scraping job needs, on the same selection the query returned. Parents stay true, so a node you moved knows where it is.</p>
@@ -146,7 +177,7 @@ page.<span class="f">dumps</span>()</pre>
 
   <section>
     <div class="chapter">
-      <div class="chapter-mark">IV<span>the reading</span></div>
+      <div class="chapter-mark">V<span>the reading</span></div>
       <div>
         <h2>Two ways to read a document</h2>
         <p class="sub">Build the tree, or do not build it at all. The XML scanner emits events to any sink, which is how the tree builder itself works — one parser, and no drift between it and a second one written for streaming.</p>
@@ -200,7 +231,7 @@ page.<span class="f">dumps</span>()</pre>
 
   <section>
     <div class="chapter">
-      <div class="chapter-mark">V<span>the hypermedia</span></div>
+      <div class="chapter-mark">VI<span>the hypermedia</span></div>
       <div>
         <h2>A page that declares its requests</h2>
         <p class="sub">htmx puts the wiring in attributes: when to ask, what to ask, where the answer goes. <code>moonxml/htmx</code> reads those attributes the way htmx reads them — inherited down the tree, resolved from the element that wrote them — and hands back the request a click would have made, then puts the answer where it said.</p>
@@ -241,7 +272,7 @@ request.<span class="f">headers</span>()   <span class="cm">  HX-Request, HX-Tar
 
   <section>
     <div class="chapter">
-      <div class="chapter-mark">VI<span>the limits</span></div>
+      <div class="chapter-mark">VII<span>the limits</span></div>
       <div>
         <h2>Small, and stated plainly</h2>
         <div class="cols three">
@@ -264,7 +295,7 @@ request.<span class="f">headers</span>()   <span class="cm">  HX-Request, HX-Tar
 
   <section>
     <div class="chapter">
-      <div class="chapter-mark">VII<span>the copy</span></div>
+      <div class="chapter-mark">VIII<span>the copy</span></div>
       <div>
         <h2>Install</h2>
         <div class="cols two">
@@ -299,7 +330,7 @@ request.<span class="f">headers</span>()   <span class="cm">  HX-Request, HX-Tar
     <span>Apache-2.0 · moonbitstack</span>
     <span><a href="https://github.com/moonbitstack/moonxml">github.com/moonbitstack/moonxml</a></span>
     <span class="spacer"><a href="index.html">top ↑</a></span>
-    <span class="colophon">Set in Iowan Old Style and Hoefler Text, labels in typewriter capitals · 120 tests on four backends · printed to the web on kraft</span>
+    <span class="colophon">Set in Iowan Old Style and Hoefler Text, labels in typewriter capitals · read on four backends · printed to the web on kraft</span>
   </div>
 </footer>
 
@@ -307,13 +338,13 @@ request.<span class="f">headers</span>()   <span class="cm">  HX-Request, HX-Tar
 (function () {
   var root = document.documentElement;
   var saved = null;
-  try { saved = localStorage.getItem("moonxml-theme"); } catch (e) {}
+  try { saved = sessionStorage.getItem("moonxml-theme"); } catch (e) {}
   var system = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   root.setAttribute("data-theme", saved || system);
   document.getElementById("theme").addEventListener("click", function () {
     var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
     root.setAttribute("data-theme", next);
-    try { localStorage.setItem("moonxml-theme", next); } catch (e) {}
+    try { sessionStorage.setItem("moonxml-theme", next); } catch (e) {}
   });
 })();
 </script>
