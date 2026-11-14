@@ -963,7 +963,7 @@ pre::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hot); backgr
   body { font-size: 16.8px; }
   .hero { padding-top: 56px; }
   .hero-grid, .cols.two, .cols.three { grid-template-columns: 1fr; gap: 32px; }
-  .api-layout { grid-template-columns: 1fr; gap: 30px; }
+  .api-layout { grid-template-columns: minmax(0, 1fr); gap: 30px; }
   .api-nav { position: static; border-right: none; border-bottom: 1px solid var(--rule); padding: 0 0 16px; }
   .api-nav a { display: inline-block; margin-right: 12px; }
   nav.top-nav { gap: 14px; }
@@ -984,7 +984,7 @@ pre::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hot); backgr
   nav.top-nav a.hide-sm { display: inline; }
 }
 
-.hero-grid > * { min-width: 0; }
+.hero-grid > *, .api-layout > * { min-width: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
