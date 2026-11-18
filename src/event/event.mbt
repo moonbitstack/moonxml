@@ -13,7 +13,7 @@ pub(all) enum Event {
   StartTag(
     name~ : String,
     attrs~ : Array[(String, String)],
-    self_closing~ : Bool
+    self_closing~ : Bool,
   )
   EndTag(name~ : String)
   Text(text~ : String)

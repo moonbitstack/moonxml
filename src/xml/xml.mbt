@@ -733,7 +733,7 @@ fn character_reference(scanner : Scan) -> Char raise @moonxml.Refused {
   }
   let digits = text[start:scanner.at].to_owned()
   expect(scanner, 0x3B, "a character reference ends at `;`")
-  let code = Some(@string.parse_int(digits, base=if hex { 16 } else { 10 })) catch {
+  let code = Some(@string.parse_int(digits, radix=if hex { 16 } else { 10 })) catch {
     _ => None
   }
   match code {

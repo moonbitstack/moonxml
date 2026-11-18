@@ -100,7 +100,7 @@ priv enum Token {
   StartTag(
     name~ : String,
     attrs~ : Array[(String, String)],
-    self_closing~ : Bool
+    self_closing~ : Bool,
   )
   EndTag(name~ : String)
   Characters(text~ : String)
@@ -109,7 +109,7 @@ priv enum Token {
     name~ : String?,
     public_id~ : String?,
     system_id~ : String?,
-    force_quirks~ : Bool
+    force_quirks~ : Bool,
   )
   Eof
 }

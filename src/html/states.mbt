@@ -1270,7 +1270,7 @@ fn numeric_end_state(lexer : Lexer, ch : Int32) -> Unit {
   } else {
     spelling
   }
-  let parsed = Some(@string.parse_int(digits, base=if hex { 16 } else { 10 })) catch {
+  let parsed = Some(@string.parse_int(digits, radix=if hex { 16 } else { 10 })) catch {
     _ => None
   }
   let value = match parsed {

@@ -990,7 +990,7 @@ fn numeric(spelling : String, at : Int32) -> Char raise @moonxml.Refused {
   } else {
     spelling[1:spelling.length()].to_owned()
   }
-  let code = Some(@string.parse_int(digits, base=if hex { 16 } else { 10 })) catch {
+  let code = Some(@string.parse_int(digits, radix=if hex { 16 } else { 10 })) catch {
     _ => None
   }
   match code {
